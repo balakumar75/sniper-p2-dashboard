@@ -1,38 +1,31 @@
 import json
-from datetime import datetime
+from trades import get_all_trades
+from jinja2 import Template
 
 def run_sniper_system():
-    print("🔍 Simulating sniper trade engine...")
+    print("📊 Running Sniper System...")
 
-    sample_trades = [
-        {
-            "symbol": "RELIANCE JUL FUT",
-            "entry_price": 2750.0,
-            "cmp": 2765.5,
-            "sl": 2710.0,
-            "target": 2800.0,
-            "pop": 85,
-            "status": "Open",
-            "action": "Hold",
-            "sector": "Energy",
-            "expiry": "July Monthly",
-            "buy_date": datetime.today().strftime("%Y-%m-%d")
-        },
-        {
-            "symbol": "LTIM JUL FUT",
-            "entry_price": 5050.0,
-            "cmp": 5085.0,
-            "sl": 4980.0,
-            "target": 5150.0,
-            "pop": 82,
-            "status": "Open",
-            "action": "Hold",
-            "sector": "IT",
-            "expiry": "July Monthly",
-            "buy_date": datetime.today().strftime("%Y-%m-%d")
-        }
-    ]
+    # Get trades from trades.py
+    trades = get_all_trades()
 
+    if not trades:
+        print("⚠️ No trades found.")
+    else:
+        print(f"✅ {len(trades)} trades generated.")
+
+    # Write to trades.json
     with open("trades.json", "w") as f:
-        json.dump(sample_trades, f, indent=4)
-        print("✅ Trades written to trades.json")
+        json.dump(trades, f, indent=2)
+        print("✅ trades.json saved.")
+
+    # Load HTML template
+    with open("templates/index_template.html", "r") as f:
+        template = Template(f.read())
+
+    # Render and write index.html
+    html = template.render(trades=trades)
+    with open("index.html", "w") as f:
+        f.write(html)
+        print("✅ index.html updated.")
+
+    print("🏁 Sniper run complete.")
