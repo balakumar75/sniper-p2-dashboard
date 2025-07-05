@@ -4,7 +4,6 @@ from datetime import datetime
 def run_sniper_system():
     print("🔍 Simulating sniper trade engine...")
 
-    # Simulated trades for now
     sample_trades = [
         {
             "symbol": "RELIANCE JUL FUT",
@@ -18,12 +17,22 @@ def run_sniper_system():
             "sector": "Energy",
             "expiry": "July Monthly",
             "buy_date": datetime.today().strftime("%Y-%m-%d")
+        },
+        {
+            "symbol": "LTIM JUL FUT",
+            "entry_price": 5050.0,
+            "cmp": 5085.0,
+            "sl": 4980.0,
+            "target": 5150.0,
+            "pop": 82,
+            "status": "Open",
+            "action": "Hold",
+            "sector": "IT",
+            "expiry": "July Monthly",
+            "buy_date": datetime.today().strftime("%Y-%m-%d")
         }
     ]
 
-    # Save trades to JSON
     with open("trades.json", "w") as f:
         json.dump(sample_trades, f, indent=4)
         print("✅ Trades written to trades.json")
-
-    # Update index.html if needed (we can automate dashboard later)
