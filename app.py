@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return '<h1 style="color:green;">✅ Sniper Dashboard is Working Locally!</h1><p>You can now deploy to Render.</p>'
+    return '<h1 style="color:green;">✅ Sniper Dashboard is Working Online!</h1><p>Accessible from mobile now.</p>'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
