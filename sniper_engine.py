@@ -1,11 +1,11 @@
 import json
 from trades import get_all_trades
 from jinja2 import Template
+from datetime import datetime
 
 def run_sniper_system():
     print("📊 Running Sniper System...")
 
-    # Get trades from trades.py
     trades = get_all_trades()
 
     if not trades:
@@ -13,7 +13,7 @@ def run_sniper_system():
     else:
         print(f"✅ {len(trades)} trades generated.")
 
-    # Write to trades.json
+    # Save trades.json
     with open("trades.json", "w") as f:
         json.dump(trades, f, indent=2)
         print("✅ trades.json saved.")
@@ -23,7 +23,7 @@ def run_sniper_system():
         template = Template(f.read())
 
     # Render and write index.html
-    html = template.render(trades=trades)
+    html = template.render(trades=trades, updated=datetime.now().strftime('%d %b %Y – %I:%M %p'))
     with open("index.html", "w") as f:
         f.write(html)
         print("✅ index.html updated.")
