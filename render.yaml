@@ -3,4 +3,4 @@ services:
     name: sniper-auto-engine
     schedule: "15 4 * * *"
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python sniper_engine.py"
+    startCommand: "python sniper_run_all.py"
