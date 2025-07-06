@@ -33,7 +33,7 @@ def render_dashboard(trades):
             var selected = document.getElementById('statusFilter').value.toLowerCase();
             var rows = document.querySelectorAll('tbody tr');
             rows.forEach(function(row) {{
-                var status = row.getAttribute('data-status').toLowerCase();
+                var status = row.getAttribute('data-status')?.toLowerCase() || 'open';
                 row.style.display = (selected === 'all' || selected === status) ? '' : 'none';
             }});
         }}
