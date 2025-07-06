@@ -1,23 +1,21 @@
 from datetime import datetime
-import random
 
 def get_all_trades():
     today = datetime.today().strftime("%Y-%m-%d")
 
-    # Simulated trades with logic tags (replace with live data later)
     trades = [
         {
             "date": today,
             "symbol": "CIPLA JUL FUT",
             "type": "Futures",
             "entry": 1520,
-            "cmp": 1531.50,
+            "cmp": 1531.5,
             "target": 1548,
             "sl": 1502,
             "pop": "87%",
             "action": "Buy",
             "sector": "Pharma ✅",
-            "tags": ["High PoP / Clean Structure", "VWAP Support", "MACD Crossover", "RSI > 55", "OBV Confirmed", "No Trap", "Heikin Ashi"]
+            "tags": ["RSI > 55", "MACD Bullish", "VWAP Support", "OBV Confirmed", "Clean Structure", "Heikin Ashi ✅"]
         },
         {
             "date": today,
@@ -30,7 +28,7 @@ def get_all_trades():
             "pop": "82%",
             "action": "Buy",
             "sector": "Energy ✅",
-            "tags": ["High PoP / Trap Risk", "RSI > 60", "OBV Divergence", "VWAP Tested", "Option Validated", "ICT Liquidity Grab"]
+            "tags": ["MACD Cross", "OBV Divergence", "VWAP Retest", "ICT Liquidity Grab", "Trap Risk ⚠️"]
         },
         {
             "date": today,
@@ -43,7 +41,7 @@ def get_all_trades():
             "pop": "89%",
             "action": "Sell",
             "sector": "Banking ✅",
-            "tags": ["1.5 SD Range", "IV Neutral", "High OI", "Consolidation Zone", "High PoP / Clean Structure", "VWAP Centered"]
+            "tags": ["1.5 SD Range", "IV Stable", "High OI", "Consolidation Zone", "VWAP Centered", "High PoP ✅"]
         }
     ]
 
