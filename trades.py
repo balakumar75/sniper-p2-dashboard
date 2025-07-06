@@ -11,6 +11,7 @@ SNIPER_TRADES = [
         "pop": "85%",
         "action": "Buy",
         "sector": "Defense ✅",
+        "status": "Open",
         "tags": ["RSI > 55", "Volume Surge", "MACD Bullish"]
     },
     {
@@ -24,6 +25,7 @@ SNIPER_TRADES = [
         "pop": "89%",
         "action": "Sell",
         "sector": "Banking ✅",
+        "status": "Open",
         "tags": ["1.5 SD Range", "Low IV", "High OI"]
     },
     {
@@ -37,6 +39,7 @@ SNIPER_TRADES = [
         "pop": "84%",
         "action": "Buy",
         "sector": "IT Services ✅",
+        "status": "Open",
         "tags": ["OBV Confirmed", "Donchian Midline", "RSI > 60"]
     },
     {
@@ -50,6 +53,7 @@ SNIPER_TRADES = [
         "pop": "82%",
         "action": "Buy",
         "sector": "Index",
+        "status": "Open",
         "tags": ["Clean Structure", "ADX > 20", "MACD Bullish"]
     },
     {
@@ -63,6 +67,7 @@ SNIPER_TRADES = [
         "pop": "86%",
         "action": "Buy",
         "sector": "Energy ✅",
+        "status": "Open",
         "tags": ["Delta 0.5", "VWAP Bounce", "Volume Spike"]
     },
     {
@@ -76,6 +81,7 @@ SNIPER_TRADES = [
         "pop": "88%",
         "action": "Sell",
         "sector": "Index",
+        "status": "Open",
         "tags": ["1 SD Zone", "OI Build-up", "Low IV"]
     },
     {
@@ -89,6 +95,7 @@ SNIPER_TRADES = [
         "pop": "87%",
         "action": "Buy",
         "sector": "Pharma ✅",
+        "status": "Open",
         "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"]
     }
 ]
