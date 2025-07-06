@@ -8,33 +8,25 @@ def render_dashboard(trades):
     <meta charset="UTF-8">
     <title>Sniper Dashboard</title>
     <style>
-        body {{
-            font-family: Arial; background: #0f0f0f; color: #ffffff; padding: 20px;
-        }}
+        body {{ font-family: Arial; background: #0f0f0f; color: #ffffff; padding: 20px; }}
         h1 {{ color: #00ff88; }}
-        .tag {{
-            padding: 4px 6px; margin: 2px; background: #1e1e1e;
-            border-radius: 5px; display: inline-block;
-        }}
-        table {{
-            width: 100%; border-collapse: collapse; margin-top: 20px;
-        }}
-        th, td {{
-            border: 1px solid #444; padding: 8px; text-align: left;
-        }}
+        .tag {{ padding: 4px 6px; margin: 2px; background: #1e1e1e; border-radius: 5px; display: inline-block; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+        th, td {{ border: 1px solid #444; padding: 8px; text-align: left; }}
         th {{ background-color: #1f1f1f; color: #00ff88; }}
-        select {{
-            margin-top: 10px; padding: 5px; font-size: 14px;
-            background-color: #1f1f1f; color: #00ff88; border: 1px solid #444;
-        }}
+        .filter-section {{ margin-top: 10px; }}
     </style>
     <script>
-        function filterStatus() {{
-            var selected = document.getElementById('statusFilter').value.toLowerCase();
-            var rows = document.querySelectorAll('tbody tr');
-            rows.forEach(function(row) {{
-                var status = row.getAttribute('data-status')?.toLowerCase() || 'open';
-                row.style.display = (selected === 'all' || selected === status) ? '' : 'none';
+        function filterByStatus() {{
+            var selectedStatus = document.getElementById("statusFilter").value;
+            var rows = document.querySelectorAll("tbody tr");
+            rows.forEach(row => {{
+                var status = row.getAttribute("data-status");
+                if (selectedStatus === "All" || status === selectedStatus) {{
+                    row.style.display = "";
+                }} else {{
+                    row.style.display = "none";
+                }}
             }});
         }}
     </script>
@@ -43,13 +35,15 @@ def render_dashboard(trades):
     <h1>🎯 Sniper Trade Dashboard</h1>
     <p><strong>Last Refreshed:</strong> {datetime.datetime.now().strftime("%d %b %Y, %I:%M:%S %p")}</p>
 
-    <label for="statusFilter">Filter by Status:</label>
-    <select id="statusFilter" onchange="filterStatus()">
-        <option value="all">All</option>
-        <option value="open">Open</option>
-        <option value="closed">Closed</option>
-        <option value="sl">SL</option>
-    </select>
+    <div class="filter-section">
+        <label for="statusFilter"><strong>Filter by Status:</strong></label>
+        <select id="statusFilter" onchange="filterByStatus()">
+            <option value="All">All</option>
+            <option value="Open">Open</option>
+            <option value="Closed">Closed</option>
+            <option value="SL Hit">SL Hit</option>
+        </select>
+    </div>
 
     <table>
         <thead>
@@ -73,29 +67,29 @@ def render_dashboard(trades):
 
     for trade in trades:
         tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade['tags'])
-        status = trade.get("status", "Open")
         html += f"""
-        <tr data-status="{status}">
-            <td>{trade['date']}</td>
-            <td>{trade['symbol']}</td>
-            <td>{trade['type']}</td>
-            <td>{trade['entry']}</td>
-            <td>{trade['cmp']}</td>
-            <td>{trade['target']}</td>
-            <td>{trade['sl']}</td>
-            <td>{trade['pop']}</td>
-            <td>{trade['action']}</td>
-            <td>{trade['sector']}</td>
-            <td>{status}</td>
-            <td>{tags_html}</td>
-        </tr>
+            <tr data-status="{trade['status']}">
+                <td>{trade['date']}</td>
+                <td>{trade['symbol']}</td>
+                <td>{trade['type']}</td>
+                <td>{trade['entry']}</td>
+                <td>{trade['cmp']}</td>
+                <td>{trade['target']}</td>
+                <td>{trade['sl']}</td>
+                <td>{trade['pop']}</td>
+                <td>{trade['action']}</td>
+                <td>{trade['sector']}</td>
+                <td>{trade['status']}</td>
+                <td>{tags_html}</td>
+            </tr>
         """
 
     html += """
         </tbody>
     </table>
 </body>
-</html>"""
+</html>
+"""
 
     os.makedirs("dashboard", exist_ok=True)
     with open("dashboard/index.html", "w", encoding="utf-8") as f:
