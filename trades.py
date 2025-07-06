@@ -1,6 +1,6 @@
 # ✅ trades.py
 # Master trade history from July 1 onward
-trades = [
+SNIPER_TRADES = [
     {
         "date": "2025-07-01",
         "symbol": "BEL JUL FUT",
