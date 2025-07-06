@@ -33,10 +33,12 @@ def run_sniper_system():
         # Step 4: Render HTML
         html = template.render(trades=trades, updated=datetime.now().strftime('%d %b %Y – %I:%M %p'))
 
-        # Step 5: Write to index.html at ROOT
-        with open("index.html", "w") as f:
+        # Step 5: Write to dashboard/index.html ✅
+        output_path = os.path.join("dashboard", "index.html")
+        os.makedirs("dashboard", exist_ok=True)  # Ensure folder exists
+        with open(output_path, "w") as f:
             f.write(html)
-            print("✅ index.html updated at root")
+            print(f"✅ index.html updated at {output_path}")
 
         print("🏁 Sniper run complete.")
 
