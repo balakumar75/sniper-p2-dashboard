@@ -1,15 +1,8 @@
+# ✅ templates/index_template.py
 import datetime
 import os
 
 def render_dashboard(trades):
-    def get_status(trade):
-        if trade["cmp"] >= trade["target"]:
-            return "🎯 Target Hit"
-        elif trade["cmp"] <= trade["sl"]:
-            return "🛑 SL Hit"
-        else:
-            return "📈 Open"
-
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -37,36 +30,33 @@ def render_dashboard(trades):
                 <th>CMP</th>
                 <th>Target</th>
                 <th>SL</th>
+                <th>Status</th>
                 <th>PoP</th>
                 <th>Action</th>
                 <th>Sector</th>
-                <th>Status</th>
                 <th>Tags</th>
             </tr>
         </thead>
         <tbody>
     """
-
     for trade in trades:
-        status = get_status(trade)
-        tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade['tags'])
+        tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade.get('tags', []))
         html += f"""
         <tr>
-            <td>{trade['date']}</td>
-            <td>{trade['symbol']}</td>
-            <td>{trade['type']}</td>
-            <td>{trade['entry']}</td>
-            <td>{trade['cmp']}</td>
-            <td>{trade['target']}</td>
-            <td>{trade['sl']}</td>
-            <td>{trade['pop']}</td>
-            <td>{trade['action']}</td>
-            <td>{trade['sector']}</td>
-            <td>{status}</td>
+            <td>{trade.get('date', '')}</td>
+            <td>{trade.get('symbol', '')}</td>
+            <td>{trade.get('type', '')}</td>
+            <td>{trade.get('entry', '')}</td>
+            <td>{trade.get('cmp', '')}</td>
+            <td>{trade.get('target', '')}</td>
+            <td>{trade.get('sl', '')}</td>
+            <td>{trade.get('status', '📈 Open')}</td>
+            <td>{trade.get('pop', '')}</td>
+            <td>{trade.get('action', '')}</td>
+            <td>{trade.get('sector', '')}</td>
             <td>{tags_html}</td>
         </tr>
         """
-
     html += """
         </tbody>
     </table>
