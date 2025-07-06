@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Sniper Trade Dashboard</title>
+    <title>Sniper Dashboard</title>
     <style>
         body { font-family: Arial; background: #0f0f0f; color: #ffffff; padding: 20px; }
         h1 { color: #00ff88; }
@@ -14,12 +14,13 @@
 </head>
 <body>
     <h1>🎯 Sniper Trade Dashboard</h1>
-    <p><strong>Updated:</strong> {{ updated_time }}</p>
+    <p><strong>Updated:</strong> {{ updated }}</p>
 
+    {% if trades %}
     <table>
         <thead>
             <tr>
-                <th>Buy Date</th>
+                <th>Date</th>
                 <th>Symbol</th>
                 <th>Type</th>
                 <th>Entry</th>
@@ -27,10 +28,8 @@
                 <th>Target</th>
                 <th>SL</th>
                 <th>PoP</th>
-                <th>Status</th>
                 <th>Action</th>
                 <th>Sector</th>
-                <th>Trap Zone</th>
                 <th>Tags</th>
             </tr>
         </thead>
@@ -45,10 +44,8 @@
                 <td>{{ trade.target }}</td>
                 <td>{{ trade.sl }}</td>
                 <td>{{ trade.pop }}</td>
-                <td>{{ trade.status or "" }}</td>
                 <td>{{ trade.action }}</td>
                 <td>{{ trade.sector }}</td>
-                <td>{{ trade.trap_zone if trade.trap_zone else "" }}</td>
                 <td>
                     {% for tag in trade.tags %}
                         <span class="tag">{{ tag }}</span>
@@ -58,5 +55,8 @@
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <p>No trades available.</p>
+    {% endif %}
 </body>
 </html>
