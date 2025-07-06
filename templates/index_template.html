@@ -14,8 +14,7 @@
 </head>
 <body>
     <h1>🎯 Sniper Trade Dashboard</h1>
-    <p>This dashboard will show sniper trades fetched at 10:15 AM every day.</p>
-    <p><strong>Last Updated:</strong> {{ updated }}</p>
+    <p><strong>Updated:</strong> {{ updated }}</p>
 
     {% if trades %}
     <table>
@@ -57,7 +56,7 @@
         </tbody>
     </table>
     {% else %}
-    <p><strong>No trades available.</strong></p>
+    <p>No trades available.</p>
     {% endif %}
 </body>
 </html>
