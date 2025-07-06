@@ -10,13 +10,26 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #444; padding: 8px; text-align: left; }
         th { background-color: #1f1f1f; color: #00ff88; }
+        .refresh-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .refresh-btn:hover {
+            background-color: #00cc77;
+        }
     </style>
 </head>
 <body>
     <h1>🎯 Sniper Trade Dashboard</h1>
-    <p><strong>Updated:</strong> {{ updated }}</p>
+    <p><strong>Last Refreshed:</strong> <span id="refreshTime"></span></p>
+    <button class="refresh-btn" onclick="location.reload()">🔄 Refresh Dashboard</button>
 
-    {% if trades %}
     <table>
         <thead>
             <tr>
@@ -34,29 +47,28 @@
             </tr>
         </thead>
         <tbody>
-            {% for trade in trades %}
             <tr>
-                <td>{{ trade.date }}</td>
-                <td>{{ trade.symbol }}</td>
-                <td>{{ trade.type }}</td>
-                <td>{{ trade.entry }}</td>
-                <td>{{ trade.cmp }}</td>
-                <td>{{ trade.target }}</td>
-                <td>{{ trade.sl }}</td>
-                <td>{{ trade.pop }}</td>
-                <td>{{ trade.action }}</td>
-                <td>{{ trade.sector }}</td>
+                <td>2025-07-06</td>
+                <td>CIPLA JUL FUT</td>
+                <td>Futures</td>
+                <td>1520</td>
+                <td>1531.5</td>
+                <td>1548</td>
+                <td>1502</td>
+                <td>87%</td>
+                <td>Buy</td>
+                <td>Pharma ✅</td>
                 <td>
-                    {% for tag in trade.tags %}
-                        <span class="tag">{{ tag }}</span>
-                    {% endfor %}
+                    <span class="tag">RSI > 55</span>
+                    <span class="tag">VWAP Support</span>
+                    <span class="tag">OBV Confirmed</span>
                 </td>
             </tr>
-            {% endfor %}
         </tbody>
     </table>
-    {% else %}
-    <p>No trades available.</p>
-    {% endif %}
+
+    <script>
+        document.getElementById("refreshTime").innerText = new Date().toLocaleString();
+    </script>
 </body>
 </html>
