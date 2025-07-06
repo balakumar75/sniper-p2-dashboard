@@ -2,6 +2,14 @@ import datetime
 import os
 
 def render_dashboard(trades):
+    def get_status(trade):
+        if trade["cmp"] >= trade["target"]:
+            return "🎯 Target Hit"
+        elif trade["cmp"] <= trade["sl"]:
+            return "🛑 SL Hit"
+        else:
+            return "📈 Open"
+
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -32,12 +40,15 @@ def render_dashboard(trades):
                 <th>PoP</th>
                 <th>Action</th>
                 <th>Sector</th>
+                <th>Status</th>
                 <th>Tags</th>
             </tr>
         </thead>
         <tbody>
     """
+
     for trade in trades:
+        status = get_status(trade)
         tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade['tags'])
         html += f"""
         <tr>
@@ -51,9 +62,11 @@ def render_dashboard(trades):
             <td>{trade['pop']}</td>
             <td>{trade['action']}</td>
             <td>{trade['sector']}</td>
+            <td>{status}</td>
             <td>{tags_html}</td>
         </tr>
         """
+
     html += """
         </tbody>
     </table>
