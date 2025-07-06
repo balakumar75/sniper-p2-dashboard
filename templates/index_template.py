@@ -8,35 +8,41 @@ def render_dashboard(trades):
     <meta charset="UTF-8">
     <title>Sniper Dashboard</title>
     <style>
-        body {{ font-family: Arial; background: #0f0f0f; color: #ffffff; padding: 20px; }}
-        h1 {{ color: #00ff88; }}
-        .tag {{ padding: 4px 6px; margin: 2px; background: #1e1e1e; border-radius: 5px; display: inline-block; }}
-        table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-        th, td {{ border: 1px solid #444; padding: 8px; text-align: left; }}
-        th {{ background-color: #1f1f1f; color: #00ff88; }}
-        select {{ margin-bottom: 10px; padding: 5px; }}
-    </style>
-    <script>
-        function filterStatus() {{
-            var selected = document.getElementById("statusFilter").value.toLowerCase();
-            var rows = document.querySelectorAll("tbody tr");
-            rows.forEach(row => {{
-                var status = row.getAttribute("data-status").toLowerCase();
-                row.style.display = (selected === "all" || status === selected) ? "" : "none";
-            }});
+        body {{
+            font-family: Arial; background: #0f0f0f; color: #ffffff; padding: 20px;
         }}
-    </script>
+        h1 {{
+            color: #00ff88;
+        }}
+        .tag {{
+            padding: 4px 6px; margin: 2px; background: #1e1e1e; border-radius: 5px; display: inline-block;
+        }}
+        table {{
+            width: 100%; border-collapse: collapse; margin-top: 20px;
+        }}
+        th, td {{
+            border: 1px solid #444; padding: 8px; text-align: left;
+        }}
+        th {{
+            background-color: #1f1f1f; color: #00ff88;
+        }}
+        select {{
+            padding: 6px; background: #1f1f1f; color: #00ff88; border: 1px solid #00ff88; margin-bottom: 10px;
+        }}
+    </style>
 </head>
 <body>
     <h1>🎯 Sniper Trade Dashboard</h1>
     <p><strong>Last Refreshed:</strong> {datetime.datetime.now().strftime("%d %b %Y, %I:%M:%S %p")}</p>
-    <label for="statusFilter">🔍 Filter by Status:</label>
-    <select id="statusFilter" onchange="filterStatus()">
-        <option value="all">All</option>
+
+    <label for="statusFilter"><strong>Filter by Status:</strong></label>
+    <select id="statusFilter">
+        <option value="All">All</option>
         <option value="Open">Open</option>
         <option value="Target Hit">Target Hit</option>
         <option value="SL Hit">SL Hit</option>
     </select>
+
     <table>
         <thead>
             <tr>
@@ -57,27 +63,41 @@ def render_dashboard(trades):
         <tbody>
     """
     for trade in trades:
-        tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade.get('tags', []))
-        status = trade.get("status", "Open")
+        tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade['tags'])
         html += f"""
-        <tr data-status="{status}">
-            <td>{trade.get('date', '')}</td>
-            <td>{trade.get('symbol', '')}</td>
-            <td>{trade.get('type', '')}</td>
-            <td>{trade.get('entry', '')}</td>
-            <td>{trade.get('cmp', '')}</td>
-            <td>{trade.get('target', '')}</td>
-            <td>{trade.get('sl', '')}</td>
-            <td>{status}</td>
-            <td>{trade.get('pop', '')}</td>
-            <td>{trade.get('action', '')}</td>
-            <td>{trade.get('sector', '')}</td>
+        <tr data-status="{trade['status']}">
+            <td>{trade['date']}</td>
+            <td>{trade['symbol']}</td>
+            <td>{trade['type']}</td>
+            <td>{trade['entry']}</td>
+            <td>{trade['cmp']}</td>
+            <td>{trade['target']}</td>
+            <td>{trade['sl']}</td>
+            <td>{trade['status']}</td>
+            <td>{trade['pop']}</td>
+            <td>{trade['action']}</td>
+            <td>{trade['sector']}</td>
             <td>{tags_html}</td>
         </tr>
         """
     html += """
         </tbody>
     </table>
+
+    <script>
+        document.getElementById("statusFilter").addEventListener("change", function () {
+            const selected = this.value;
+            const rows = document.querySelectorAll("tbody tr");
+
+            rows.forEach(row => {
+                if (selected === "All" || row.dataset.status === selected) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    </script>
 </body>
 </html>"""
 
