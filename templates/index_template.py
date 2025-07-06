@@ -1,4 +1,3 @@
-# ✅ templates/index_template.py
 import datetime
 import os
 
@@ -15,11 +14,29 @@ def render_dashboard(trades):
         table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
         th, td {{ border: 1px solid #444; padding: 8px; text-align: left; }}
         th {{ background-color: #1f1f1f; color: #00ff88; }}
+        select {{ margin-bottom: 10px; padding: 5px; }}
     </style>
+    <script>
+        function filterStatus() {{
+            var selected = document.getElementById("statusFilter").value.toLowerCase();
+            var rows = document.querySelectorAll("tbody tr");
+            rows.forEach(row => {{
+                var status = row.getAttribute("data-status").toLowerCase();
+                row.style.display = (selected === "all" || status === selected) ? "" : "none";
+            }});
+        }}
+    </script>
 </head>
 <body>
     <h1>🎯 Sniper Trade Dashboard</h1>
     <p><strong>Last Refreshed:</strong> {datetime.datetime.now().strftime("%d %b %Y, %I:%M:%S %p")}</p>
+    <label for="statusFilter">🔍 Filter by Status:</label>
+    <select id="statusFilter" onchange="filterStatus()">
+        <option value="all">All</option>
+        <option value="Open">Open</option>
+        <option value="Target Hit">Target Hit</option>
+        <option value="SL Hit">SL Hit</option>
+    </select>
     <table>
         <thead>
             <tr>
@@ -41,8 +58,9 @@ def render_dashboard(trades):
     """
     for trade in trades:
         tags_html = ''.join(f'<span class="tag">{tag}</span>' for tag in trade.get('tags', []))
+        status = trade.get("status", "Open")
         html += f"""
-        <tr>
+        <tr data-status="{status}">
             <td>{trade.get('date', '')}</td>
             <td>{trade.get('symbol', '')}</td>
             <td>{trade.get('type', '')}</td>
@@ -50,7 +68,7 @@ def render_dashboard(trades):
             <td>{trade.get('cmp', '')}</td>
             <td>{trade.get('target', '')}</td>
             <td>{trade.get('sl', '')}</td>
-            <td>{trade.get('status', '📈 Open')}</td>
+            <td>{status}</td>
             <td>{trade.get('pop', '')}</td>
             <td>{trade.get('action', '')}</td>
             <td>{trade.get('sector', '')}</td>
