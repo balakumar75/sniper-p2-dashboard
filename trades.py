@@ -1,18 +1,35 @@
+import json
 from datetime import datetime
 
-def get_all_trades():
-    return [
-        {
-            "date": datetime.today().strftime("%Y-%m-%d"),
-            "symbol": "CIPLA JUL FUT",
-            "type": "Futures",
-            "entry": 1520,
-            "cmp": 1531.5,
-            "target": 1548,
-            "sl": 1502,
-            "pop": "87%",
-            "action": "Buy",
-            "sector": "Pharma ✅",
-            "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"]
-        }
-    ]
+TRADES_FILE = "data/trades.json"
+
+def load_trades():
+    try:
+        with open(TRADES_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def save_trades(trades):
+    with open(TRADES_FILE, "w") as f:
+        json.dump(trades, f, indent=2)
+
+def add_trade(new_trade):
+    trades = load_trades()
+    # Check if this trade already exists by symbol and date
+    exists = any(t["symbol"] == new_trade["symbol"] and t["date"] == new_trade["date"] for t in trades)
+    if not exists:
+        new_trade["status"] = "Open"
+        new_trade["holding_days"] = 0
+        new_trade["exit_reason"] = ""
+        trades.append(new_trade)
+        save_trades(trades)
+
+def update_trade_status(symbol, status, exit_reason=""):
+    trades = load_trades()
+    for t in trades:
+        if t["symbol"] == symbol and t["status"] == "Open":
+            t["status"] = status
+            t["exit_reason"] = exit_reason
+            t["exit_date"] = datetime.now().strftime("%Y-%m-%d")
+    save_trades(trades)
