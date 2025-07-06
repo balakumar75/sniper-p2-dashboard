@@ -1,15 +1,11 @@
 from flask import Flask, send_file
-import os
+from sniper_run_all import *  # Ensures dashboard is generated on server start
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route('/')
 def serve_dashboard():
-    try:
-        dashboard_path = os.path.join("dashboard", "index.html")
-        return send_file(dashboard_path)
-    except Exception as e:
-        return f"❌ Error loading dashboard: {e}"
+    return send_file('dashboard/index.html')
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
