@@ -17,7 +17,7 @@
     <p>This dashboard will show sniper trades fetched at 10:15 AM every day.</p>
     <p><strong>Last Updated:</strong> {{ updated }}</p>
 
-    {% if trades and trades|length > 0 %}
+    {% if trades %}
     <table>
         <thead>
             <tr>
@@ -57,7 +57,7 @@
         </tbody>
     </table>
     {% else %}
-    <p><strong>No trades found.</strong></p>
+    <p><strong>No trades available.</strong></p>
     {% endif %}
 </body>
 </html>
