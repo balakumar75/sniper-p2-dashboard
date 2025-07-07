@@ -1,101 +1,59 @@
-# ✅ trades.py
-SNIPER_TRADES = [
-    {
-        "date": "2025-07-01",
-        "symbol": "BEL JUL FUT",
-        "type": "Futures",
-        "entry": 295,
-        "cmp": 302.5,
-        "target": 310,
-        "sl": 288,
-        "pop": "85%",
-        "action": "Buy",
-        "sector": "Defense ✅",
-        "status": "Open",
-        "tags": ["RSI > 55", "Volume Surge", "MACD Bullish"]
-    },
-    {
-        "date": "2025-07-01",
-        "symbol": "HDFCBANK JUL 1540 PE + 1620 CE",
-        "type": "Short Strangle (Monthly)",
-        "entry": 28.5,
-        "cmp": 19.7,
-        "target": 12,
-        "sl": 36,
-        "pop": "89%",
-        "action": "Sell",
-        "sector": "Banking ✅",
-        "status": "Open",
-        "tags": ["1.5 SD Range", "Low IV", "High OI"]
-    },
-    {
-        "date": "2025-07-02",
-        "symbol": "LTIM JUL FUT",
-        "type": "Futures",
-        "entry": 5350,
-        "cmp": 5418,
-        "target": 5485,
-        "sl": 5285,
-        "pop": "84%",
-        "action": "Buy",
-        "sector": "IT Services ✅",
-        "status": "Open",
-        "tags": ["OBV Confirmed", "Donchian Midline", "RSI > 60"]
-    },
-    {
-        "date": "2025-07-02",
-        "symbol": "NIFTY JUL FUT",
-        "type": "Futures",
-        "entry": 24120,
-        "cmp": 24215,
-        "target": 24350,
-        "sl": 23980,
-        "pop": "82%",
-        "action": "Buy",
-        "sector": "Index",
-        "status": "Open",
-        "tags": ["Clean Structure", "ADX > 20", "MACD Bullish"]
-    },
-    {
-        "date": "2025-07-02",
-        "symbol": "RELIANCE 1540 CE (JULY Monthly)",
-        "type": "Options - Long Call",
-        "entry": 22.5,
-        "cmp": 27.3,
-        "target": 32,
-        "sl": 17,
-        "pop": "86%",
-        "action": "Buy",
-        "sector": "Energy ✅",
-        "status": "Open",
-        "tags": ["Delta 0.5", "VWAP Bounce", "Volume Spike"]
-    },
-    {
-        "date": "2025-07-02",
-        "symbol": "NIFTY 24200 CE + 24100 PE (WEEKLY)",
-        "type": "Short Strangle",
-        "entry": 31.2,
-        "cmp": 23.5,
-        "target": 15,
-        "sl": 40,
-        "pop": "88%",
-        "action": "Sell",
-        "sector": "Index",
-        "status": "Open",
-        "tags": ["1 SD Zone", "OI Build-up", "Low IV"]
-    },
-    {
-        "date": "2025-07-03",
-        "symbol": "CIPLA JUL FUT",
-        "type": "Futures",
-        "entry": 1520,
-        "cmp": 1531.5,
-        "target": 1548,
-        "sl": 1502,
-        "pop": "87%",
-        "action": "Buy",
-        "sector": "Pharma ✅",
-        "status": "Open",
-        "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"]
-    }
-]
+from kiteconnect import KiteConnect
+import os
+from sniper_engine.utils import get_rsi, get_macd, get_obv, get_adx, get_vwap, calculate_pop
+
+# Initialize KiteConnect using your API key and token from environment variables
+kite = KiteConnect(api_key=os.getenv("KITE_API_KEY"))
+kite.set_access_token(os.getenv("KITE_ACCESS_TOKEN"))
+
+def generate_sniper_trades():
+    fno_symbols = [
+        "CIPLA", "BEL", "HDFCBANK", "LTIM", "RELIANCE", "ICICIBANK", "SBIN", "TCS"
+    ]
+    trades = []
+
+    for symbol in fno_symbols:
+        try:
+            instrument = f"NSE:{symbol}"
+            ltp_data = kite.ltp(instrument)
+            cmp = ltp_data[instrument]['last_price']
+
+            # Calculate indicators
+            rsi = get_rsi(symbol)
+            macd = get_macd(symbol)
+            obv = get_obv(symbol)
+            adx = get_adx(symbol)
+            vwap = get_vwap(symbol)
+
+            # Strategy conditions
+            if rsi > 55 and macd["signal"] == "bullish" and obv == "up" and adx > 20 and cmp > vwap:
+                entry = round(cmp)
+                sl = round(entry * 0.98)
+                target = round(entry * 1.025)
+                pop = calculate_pop(rsi, macd, adx, obv)
+
+                trade = {
+                    "date": "2025-07-08",
+                    "symbol": f"{symbol} JUL FUT",
+                    "type": "Futures",
+                    "entry": entry,
+                    "cmp": cmp,
+                    "target": target,
+                    "sl": sl,
+                    "pop": f"{pop}%",
+                    "action": "Buy",
+                    "sector": "To be tagged",
+                    "tags": [
+                        "RSI Buy âœ…",
+                        "MACD âœ…" if macd["signal"] == "bullish" else "MACD âŒ",
+                        "OBV Up âœ…" if obv == "up" else "OBV âŒ",
+                        "VWAP Hold âœ…" if cmp > vwap else "VWAP âŒ"
+                    ],
+                    "status": "Open"
+                }
+
+                trades.append(trade)
+        except Exception as e:
+            print(f"âš ï¸ Error processing {symbol}: {e}")
+
+    return trades
