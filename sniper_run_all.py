@@ -1,30 +1,34 @@
-# ✅ sniper_run_all.py
-from templates.index_template import render_dashboard
 from trades import SNIPER_TRADES
+import json
+from datetime import datetime
+import os
 
-def determine_status(trade):
-    cmp = trade["cmp"]
-    target = trade["target"]
-    sl = trade["sl"]
+# ✅ Create a standard JSON structure
+def format_trade(trade):
+    return {
+        "date": datetime.today().strftime("%Y-%m-%d"),
+        "symbol": trade.get("symbol", ""),
+        "type": trade.get("type", ""),
+        "entry": trade.get("entry", ""),
+        "cmp": trade.get("cmp", ""),
+        "target": trade.get("target", ""),
+        "sl": trade.get("sl", ""),
+        "pop": trade.get("pop", ""),
+        "action": trade.get("action", ""),
+        "sector": trade.get("sector", ""),
+        "tags": trade.get("tags", []),
+        "trap_zone": trade.get("trap_zone", ""),
+        "expiry": trade.get("expiry", ""),
+        "status": trade.get("status", "Open")
+    }
 
-    if cmp >= target:
-        return "🎯 Target Hit"
-    elif cmp <= sl:
-        return "🛑 SL Hit"
-    else:
-        return "📈 Open"
+# ✅ Format all trades
+formatted_trades = [format_trade(trade) for trade in SNIPER_TRADES]
 
-if __name__ == "__main__":
-    print("Running Sniper System...")
-    
-    # Assign status dynamically
-    for trade in SNIPER_TRADES:
-        trade["status"] = determine_status(trade)
+# ✅ Save to JSON
+output_path = os.path.join(os.path.dirname(__file__), "trades.json")
 
-    print(f"✅ {len(SNIPER_TRADES)} trades generated.")
-    print("🔍 Trade Preview:", SNIPER_TRADES[:1])
+with open(output_path, "w") as f:
+    json.dump(formatted_trades, f, indent=2)
 
-    render_dashboard(SNIPER_TRADES)
-
-    print("✅ index.html updated at dashboard/index.html")
-    print("🏁 Sniper run complete.")
+print(f"✅ {len(formatted_trades)} trades exported to trades.json")
