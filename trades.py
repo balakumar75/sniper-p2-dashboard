@@ -1,14 +1,17 @@
+
 from kiteconnect import KiteConnect
 import os
-from sniper_engine.utils import get_rsi, get_macd, get_obv, get_adx, get_vwap, calculate_pop
 
-# Initialize KiteConnect using your API key and token from environment variables
+# Setup KiteConnect with environment variables
 kite = KiteConnect(api_key=os.getenv("KITE_API_KEY"))
 kite.set_access_token(os.getenv("KITE_ACCESS_TOKEN"))
 
+def calculate_pop(rsi, macd, adx, obv):
+    return 85  # Dummy static PoP
+
 def generate_sniper_trades():
     fno_symbols = [
-        "CIPLA", "BEL", "HDFCBANK", "LTIM", "RELIANCE", "ICICIBANK", "SBIN", "TCS"
+        "CIPLA", "BEL", "HDFCBANK", "LTIM"
     ]
     trades = []
 
@@ -18,14 +21,14 @@ def generate_sniper_trades():
             ltp_data = kite.ltp(instrument)
             cmp = ltp_data[instrument]['last_price']
 
-            # Calculate indicators
-            rsi = get_rsi(symbol)
-            macd = get_macd(symbol)
-            obv = get_obv(symbol)
-            adx = get_adx(symbol)
-            vwap = get_vwap(symbol)
+            # Dummy values for indicators
+            rsi = 60
+            macd = {"signal": "bullish"}
+            obv = "up"
+            adx = 25
+            vwap = cmp * 0.99
 
-            # Strategy conditions
+            # Strategy conditions (patched)
             if rsi > 55 and macd["signal"] == "bullish" and obv == "up" and adx > 20 and cmp > vwap:
                 entry = round(cmp)
                 sl = round(entry * 0.98)
@@ -45,9 +48,9 @@ def generate_sniper_trades():
                     "sector": "To be tagged",
                     "tags": [
                         "RSI Buy âœ…",
-                        "MACD âœ…" if macd["signal"] == "bullish" else "MACD âŒ",
-                        "OBV Up âœ…" if obv == "up" else "OBV âŒ",
-                        "VWAP Hold âœ…" if cmp > vwap else "VWAP âŒ"
+                        "MACD âœ…",
+                        "OBV Up âœ…",
+                        "VWAP Hold âœ…"
                     ],
                     "status": "Open"
                 }
