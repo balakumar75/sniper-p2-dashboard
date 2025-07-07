@@ -3,7 +3,6 @@ import os
 import pandas as pd
 import datetime
 
-# ✅ Load access token from environment or token.txt
 api_key = os.getenv("KITE_API_KEY")
 access_token = os.getenv("KITE_ACCESS_TOKEN")
 if not access_token:
@@ -13,7 +12,6 @@ if not access_token:
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ Full F&O stock list
 FNO_STOCKS = [
     "ACC", "ADANIENT", "ADANIPORTS", "AMBUJACEM", "APOLLOHOSP", "APOLLOTYRE", "ASHOKLEY", "ASIANPAINT",
     "AUROPHARMA", "AXISBANK", "BAJAJ-AUTO", "BAJAJFINSV", "BAJFINANCE", "BALKRISIND", "BALRAMCHIN", "BANDHANBNK",
@@ -37,138 +35,80 @@ FNO_STOCKS = [
     "VEDL", "VOLTAS", "WIPRO", "ZEEL"
 ]
 
-# ✅ Helper: Fetch historical candles
 def fetch_candles(symbol):
     try:
-        instrument = f"NSE:{symbol}" if symbol != "NIFTY" else "NSE:NIFTY 50"
+        instrument = f"NSE:{symbol}"
+        token = kite.ltp(instrument)[instrument]['instrument_token']
         to_date = datetime.datetime.now()
         from_date = to_date - datetime.timedelta(days=10)
-        token = kite.ltp(instrument)[instrument]['instrument_token']
         candles = kite.historical_data(token, from_date, to_date, interval="day")
         return pd.DataFrame(candles)
     except:
         return pd.DataFrame()
 
-# ✅ Indicators
-def calculate_indicators(df):
-    result = {}
+def compute_indicators(df):
     if df.empty or len(df) < 5:
-        return result
-
+        return None
     df['EMA12'] = df['close'].ewm(span=12).mean()
     df['EMA26'] = df['close'].ewm(span=26).mean()
     df['MACD'] = df['EMA12'] - df['EMA26']
     df['Signal'] = df['MACD'].ewm(span=9).mean()
-    df['RSI'] = compute_rsi(df['close'])
-    df['VWAP'] = (df['volume'] * (df['high'] + df['low'] + df['close']) / 3).cumsum() / df['volume'].cumsum()
-    df['OBV'] = compute_obv(df)
-
-    result['rsi'] = round(df['RSI'].iloc[-1], 2)
-    result['macd_flag'] = "MACD Bullish" if df['MACD'].iloc[-1] > df['Signal'].iloc[-1] else "MACD Bearish"
-    result['vwap_flag'] = "VWAP Support" if df['close'].iloc[-1] > df['VWAP'].iloc[-1] else "VWAP Resistance"
-    result['obv_flag'] = "OBV Rising" if df['OBV'].iloc[-1] > df['OBV'].iloc[-2] else "OBV Falling"
-
-    return result
-
-def compute_rsi(series, period=14):
-    delta = series.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
-    return 100 - (100 / (1 + rs))
+    df['RSI'] = 100 - (100 / (1 + rs))
+    df['VWAP'] = (df['volume'] * (df['high'] + df['low'] + df['close']) / 3).cumsum() / df['volume'].cumsum()
+    df['OBV'] = (df['close'].diff() > 0).astype(int).cumsum()
+    return {
+        "rsi": round(df['RSI'].iloc[-1], 2),
+        "macd_flag": "MACD Bullish" if df['MACD'].iloc[-1] > df['Signal'].iloc[-1] else "MACD Bearish",
+        "vwap_flag": "VWAP Support" if df['close'].iloc[-1] > df['VWAP'].iloc[-1] else "VWAP Resistance",
+        "obv_flag": "OBV Rising" if df['OBV'].iloc[-1] > df['OBV'].iloc[-2] else "OBV Falling"
+    }
 
-def compute_obv(df):
-    obv = [0]
-    for i in range(1, len(df)):
-        if df['close'].iloc[i] > df['close'].iloc[i - 1]:
-            obv.append(obv[-1] + df['volume'].iloc[i])
-        elif df['close'].iloc[i] < df['close'].iloc[i - 1]:
-            obv.append(obv[-1] - df['volume'].iloc[i])
-        else:
-            obv.append(obv[-1])
-    return pd.Series(obv, index=df.index)
+def evaluate_trade_status(entry, cmp, sl, target):
+    if cmp >= target:
+        return "Target Hit"
+    elif cmp <= sl:
+        return "SL Hit"
+    return "Open"
 
-# ✅ Option chain short strangle logic
-def generate_strangle(stock):
-    try:
-        spot = kite.ltp(f"NSE:{stock}")[f"NSE:{stock}"]["last_price"]
-        option_chain = kite.option_chain("NSE", stock)
-        ce_list = [o for o in option_chain if o['instrument_type'] == 'CE']
-        pe_list = [o for o in option_chain if o['instrument_type'] == 'PE']
+def is_expiry_valid(expiry_date):
+    today = datetime.datetime.today().date()
+    expiry = expiry_date.date() if isinstance(expiry_date, datetime.datetime) else expiry_date
+    days_to_expiry = (expiry - today).days
+    return 2 <= days_to_expiry <= 7
 
-        ce_list = sorted(ce_list, key=lambda x: abs(x['strike'] - spot))
-        pe_list = sorted(pe_list, key=lambda x: abs(x['strike'] - spot))
-
-        ce = next((x for x in ce_list if x['strike'] > spot), None)
-        pe = next((x for x in pe_list if x['strike'] < spot), None)
-
-        if not ce or not pe:
-            return None
-
-        total_premium = ce['last_price'] + pe['last_price']
-
-        return {
-            "symbol": f"{stock} Short Strangle ({ce['strike']} CE + {pe['strike']} PE)",
-            "type": "Options",
-            "entry": round(total_premium, 2),
-            "cmp": round(total_premium * 0.95, 2),
-            "target": round(total_premium * 0.6, 2),
-            "sl": round(total_premium * 1.2, 2),
-            "pop": "88%",
-            "action": "Sell",
-            "sector": "Options ✅",
-            "tags": ["Short Strangle", "IV Check", "OI Confirmed"],
-            "trap_zone": "No Trap",
-            "expiry": ce['expiry'],
-            "status": "Open",
-            "buy_date": datetime.datetime.today().strftime("%Y-%m-%d"),
-            "exit_date": "",
-            "holding_days": 0,
-            "pnl_abs": 0,
-            "pnl_pct": 0,
-            "vwap_flag": "",
-            "obv_flag": "",
-            "macd_flag": "",
-            "rsi": "",
-            "adx": "",
-            "structure": "Short Strangle",
-            "ict_flag": "",
-            "option_greeks": {},
-            "strike_zone": "1.5 SD",
-            "news_flag": "Clean Technical Only"
-        }
-    except:
-        return None
-
-# ✅ Main trade generator
 def generate_sniper_trades():
     trades = []
     for stock in FNO_STOCKS:
         try:
-            instrument = f"NSE:{stock}" if stock != "NIFTY" else "NSE:NIFTY 50"
-            cmp = kite.ltp(instrument)[instrument]["last_price"]
+            cmp = kite.ltp(f"NSE:{stock}")[f"NSE:{stock}"]["last_price"]
             df = fetch_candles(stock)
-            indicators = calculate_indicators(df)
-
+            indicators = compute_indicators(df)
             if not indicators or indicators['rsi'] < 55 or indicators['macd_flag'] != "MACD Bullish":
                 continue
-
+            entry = round(cmp * 0.995, 2)
+            target = round(cmp * 1.02, 2)
+            sl = round(cmp * 0.98, 2)
+            status = evaluate_trade_status(entry, cmp, sl, target)
             trade = {
-                "symbol": f"{stock} JUL FUT" if stock != "NIFTY" else "NIFTY JUL FUT",
+                "symbol": f"{stock} JUL FUT",
                 "type": "Futures",
-                "entry": round(cmp * 0.995, 2),
+                "entry": entry,
                 "cmp": cmp,
-                "target": round(cmp * 1.02, 2),
-                "sl": round(cmp * 0.98, 2),
+                "target": target,
+                "sl": sl,
                 "pop": "85%",
                 "action": "Buy",
-                "sector": "IT ✅" if stock == "LTIM" else "Banking ✅" if stock in ["HDFCBANK", "ICICIBANK", "AXISBANK", "SBIN"] else "Other ✅",
+                "sector": "F&O ✅",
                 "tags": [f"RSI={indicators['rsi']}", indicators['macd_flag'], indicators['vwap_flag'], indicators['obv_flag']],
                 "trap_zone": "Clean Breakout",
                 "expiry": "July Monthly",
-                "status": "Open",
+                "status": status,
                 "buy_date": datetime.datetime.today().strftime("%Y-%m-%d"),
-                "exit_date": "",
+                "exit_date": "" if status == "Open" else datetime.datetime.today().strftime("%Y-%m-%d"),
                 "holding_days": 0,
                 "pnl_abs": 0,
                 "pnl_pct": 0,
@@ -184,13 +124,7 @@ def generate_sniper_trades():
                 "news_flag": "Clean Technical Only"
             }
             trades.append(trade)
-
-            # ✅ Add short strangle if eligible
-            strangle = generate_strangle(stock)
-            if strangle:
-                trades.append(strangle)
-
         except Exception as e:
-            print(f"❌ Error for {stock}: {e}")
+            print(f"❌ Error processing {stock}: {e}")
             continue
     return trades
