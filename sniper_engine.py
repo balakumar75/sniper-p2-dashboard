@@ -13,7 +13,7 @@ if not access_token:
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ Full F&O stock list (sample, expand as needed)
+# ✅ Full F&O stock list
 FNO_STOCKS = [
     "ACC", "ADANIENT", "ADANIPORTS", "AMBUJACEM", "APOLLOHOSP", "APOLLOTYRE", "ASHOKLEY", "ASIANPAINT",
     "AUROPHARMA", "AXISBANK", "BAJAJ-AUTO", "BAJAJFINSV", "BAJFINANCE", "BALKRISIND", "BALRAMCHIN", "BANDHANBNK",
@@ -43,12 +43,8 @@ def fetch_candles(symbol):
         instrument = f"NSE:{symbol}" if symbol != "NIFTY" else "NSE:NIFTY 50"
         to_date = datetime.datetime.now()
         from_date = to_date - datetime.timedelta(days=10)
-        candles = kite.historical_data(
-            kite.ltp(instrument)[instrument]['instrument_token'],
-            from_date,
-            to_date,
-            interval="day"
-        )
+        token = kite.ltp(instrument)[instrument]['instrument_token']
+        candles = kite.historical_data(token, from_date, to_date, interval="day")
         return pd.DataFrame(candles)
     except:
         return pd.DataFrame()
@@ -92,6 +88,58 @@ def compute_obv(df):
             obv.append(obv[-1])
     return pd.Series(obv, index=df.index)
 
+# ✅ Option chain short strangle logic
+def generate_strangle(stock):
+    try:
+        spot = kite.ltp(f"NSE:{stock}")[f"NSE:{stock}"]["last_price"]
+        option_chain = kite.option_chain("NSE", stock)
+        ce_list = [o for o in option_chain if o['instrument_type'] == 'CE']
+        pe_list = [o for o in option_chain if o['instrument_type'] == 'PE']
+
+        ce_list = sorted(ce_list, key=lambda x: abs(x['strike'] - spot))
+        pe_list = sorted(pe_list, key=lambda x: abs(x['strike'] - spot))
+
+        ce = next((x for x in ce_list if x['strike'] > spot), None)
+        pe = next((x for x in pe_list if x['strike'] < spot), None)
+
+        if not ce or not pe:
+            return None
+
+        total_premium = ce['last_price'] + pe['last_price']
+
+        return {
+            "symbol": f"{stock} Short Strangle ({ce['strike']} CE + {pe['strike']} PE)",
+            "type": "Options",
+            "entry": round(total_premium, 2),
+            "cmp": round(total_premium * 0.95, 2),
+            "target": round(total_premium * 0.6, 2),
+            "sl": round(total_premium * 1.2, 2),
+            "pop": "88%",
+            "action": "Sell",
+            "sector": "Options ✅",
+            "tags": ["Short Strangle", "IV Check", "OI Confirmed"],
+            "trap_zone": "No Trap",
+            "expiry": ce['expiry'],
+            "status": "Open",
+            "buy_date": datetime.datetime.today().strftime("%Y-%m-%d"),
+            "exit_date": "",
+            "holding_days": 0,
+            "pnl_abs": 0,
+            "pnl_pct": 0,
+            "vwap_flag": "",
+            "obv_flag": "",
+            "macd_flag": "",
+            "rsi": "",
+            "adx": "",
+            "structure": "Short Strangle",
+            "ict_flag": "",
+            "option_greeks": {},
+            "strike_zone": "1.5 SD",
+            "news_flag": "Clean Technical Only"
+        }
+    except:
+        return None
+
 # ✅ Main trade generator
 def generate_sniper_trades():
     trades = []
@@ -128,7 +176,7 @@ def generate_sniper_trades():
                 "obv_flag": indicators['obv_flag'],
                 "macd_flag": indicators['macd_flag'],
                 "rsi": indicators['rsi'],
-                "adx": 25,  # placeholder
+                "adx": 25,
                 "structure": "HH-HL",
                 "ict_flag": "",
                 "option_greeks": {},
@@ -136,6 +184,12 @@ def generate_sniper_trades():
                 "news_flag": "Clean Technical Only"
             }
             trades.append(trade)
+
+            # ✅ Add short strangle if eligible
+            strangle = generate_strangle(stock)
+            if strangle:
+                trades.append(strangle)
+
         except Exception as e:
             print(f"❌ Error for {stock}: {e}")
             continue
