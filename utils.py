@@ -1,36 +1,51 @@
-import requests
 import json
-import os
-import random
+import datetime
+from kiteconnect import KiteConnect
 
-# ✅ Load access token from token.txt or environment variable
-def load_access_token():
-    if os.path.exists("token.txt"):
-        with open("token.txt", "r") as f:
-            return f.read().strip()
-    return os.environ.get("ZERODHA_ACCESS_TOKEN", "")
+# ✅ Initialize Kite client using access token from token.txt
+def get_kite_client():
+    with open("token.txt", "r") as f:
+        access_token = f.read().strip()
 
-# ✅ Fetch CMP from Zerodha Kite API
-def fetch_cmp(symbol):
-    access_token = load_access_token()
-    api_key = os.environ.get("ZERODHA_API_KEY", "")
-    headers = {
-        "Authorization": f"token {api_key}:{access_token}"
-    }
+    api_key = "v5h2it4guguvb2pc"  # Your actual Kite API Key
+    kite = KiteConnect(api_key=api_key)
+    kite.set_access_token(access_token)
+    return kite
 
-    symbol_map = {
-        "NSE": "NSE:",
-        "BSE": "BSE:",
-        "NFO": "NFO:"
-    }
-
-    if symbol.endswith("FUT"):
-        exchange = "NFO"
-    else:
-        exchange = "NSE"
-
+# ✅ Fetch Current Market Price
+def fetch_cmp(kite, symbol):
     try:
-        full_symbol = f"{exchange}:{symbol}"
-        url = f"https://api.kite.trade/quote?i={full_symbol}"
-        response = requests.get(url, headers=headers)
-        data = response.json
+        if symbol.endswith("FUT"):
+            instrument = f"NFO:{symbol}"
+        else:
+            instrument = f"NSE:{symbol}"
+
+        response = kite.ltp(instrument)
+        data = response.get(instrument, {})
+        return data.get("last_price", None)
+
+    except Exception as e:
+        print(f"❌ Error fetching CMP for {symbol}: {str(e)}")
+        return None
+
+# ✅ Generate basic trade signal (placeholder logic — replace with sniper rules)
+def generate_trade_signal(symbol, cmp):
+    if cmp is None:
+        return None
+
+    trade = {
+        "symbol": symbol,
+        "entry": round(cmp, 2),
+        "cmp": round(cmp, 2),
+        "target": round(cmp * 1.03, 2),
+        "sl": round(cmp * 0.97, 2),
+        "pop": "85%",
+        "action": "Buy",
+        "type": "Futures",
+        "sector": "Auto ✅",
+        "tags": ["RSI > 55", "ADX > 20"],
+        "expiry": "Monthly",
+        "status": "Open",
+        "date": str(datetime.date.today())
+    }
+    return trade
