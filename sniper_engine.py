@@ -1,35 +1,46 @@
+import os
+import json
 import time
+from kiteconnect import KiteConnect
 from utils import fetch_cmp, generate_trade_signal
 
-# List of NSE 100 stocks (shortened example; use your full list)
-nse_100_stocks = [
-    "RELIANCE", "HDFCBANK", "INFY", "ICICIBANK", "TCS", "LTIM", "SBIN", "AXISBANK",
-    "ITC", "KOTAKBANK", "BAJFINANCE", "BHARTIARTL", "HCLTECH", "ASIANPAINT", "MARUTI",
-    "SUNPHARMA", "NESTLEIND", "TITAN", "ULTRACEMCO", "WIPRO", "TECHM", "ADANIENT",
-    "TATASTEEL", "HINDUNILVR", "POWERGRID", "COALINDIA", "NTPC", "ONGC", "BRITANNIA",
-    "DIVISLAB", "GRASIM", "JSWSTEEL", "BAJAJFINSV", "CIPLA", "HDFCLIFE", "HINDALCO",
-    "BPCL", "EICHERMOT", "SBILIFE", "ICICIPRULI", "DRREDDY", "BAJAJ-AUTO", "HEROMOTOCO",
-    "ADANIPORTS", "INDUSINDBK", "TATAMOTORS", "APOLLOHOSP", "PIDILITIND", "DABUR",
-    "GAIL", "HAVELLS", "M&M", "SIEMENS", "AMBUJACEM", "SHREECEM", "TORNTPHARM", "DLF",
-    "BIOCON", "TVSMOTOR", "VEDL", "LT", "MANAPPURAM", "MUTHOOTFIN", "BANKBARODA",
-    "CANBK", "TRENT", "ZEEL", "IOC", "HINDPETRO", "IGL", "RECLTD", "SAIL", "CHOLAFIN",
-    "JINDALSTEL", "SRF", "AUROPHARMA", "LTI", "BOSCHLTD", "UNIONBANK"
+kite = KiteConnect(api_key=os.getenv("KITE_API_KEY"))
+kite.set_access_token(os.getenv("KITE_ACCESS_TOKEN"))
+
+NSE_100_STOCKS = [
+    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK",
+    "SBIN", "AXISBANK", "ITC", "BHARTIARTL", "BAJFINANCE", "ASIANPAINT", "HINDUNILVR",
+    "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO", "HCLTECH", "WIPRO", "POWERGRID",
+    "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M", "NESTLEIND", "SBILIFE", "TECHM", "UPL",
+    "DIVISLAB", "HINDALCO", "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA",
+    "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI", "PIDILITIND", "PEL", "SHREECEM", "SIEMENS",
+    "TORNTPHARM", "LTI", "LTIM", "HAVELLS", "TVSMOTOR", "SRF", "ABB", "APOLLOHOSP",
+    "BOSCHLTD", "AUROPHARMA", "BANKBARODA", "BIOCON", "CANBK", "CHOLAFIN", "HINDPETRO",
+    "IGL", "IOC", "JINDALSTEL", "MANAPPURAM", "MUTHOOTFIN", "RECLTD", "SAIL", "TATAPOWER",
+    "TRENT", "UNIONBANK", "ZEEL"
 ]
 
 def generate_sniper_trades():
     trades = []
-    for symbol in nse_100_stocks:
+    for symbol in NSE_100_STOCKS:
+        print(f"🔍 Processing {symbol}...")
         try:
-            print(f"🔍 Processing {symbol}...")
-            cmp = fetch_cmp(symbol)
-            if cmp is None:
-                print(f"❌ Skipping {symbol} due to CMP fetch error.")
-                continue
-            trade = generate_trade_signal(symbol, cmp)
-            if trade:
-                trades.append(trade)
+            cmp = fetch_cmp(kite, symbol)
+            signal = generate_trade_signal(kite, symbol, cmp)
+            if signal:
+                trades.append(signal)
+                print(f"✅ Trade generated: {symbol}")
+            else:
+                print(f"⏭️ No trade signal for {symbol}")
         except Exception as e:
             print(f"❌ Error processing {symbol}: {e}")
-        time.sleep(0.4)  # ⏳ Sleep added to avoid rate limits
-
+        time.sleep(0.5)  # Sleep between API calls to avoid rate limiting
     return trades
+
+def save_trades_to_json(trades, filename="trades.json"):
+    try:
+        with open(filename, "w") as f:
+            json.dump(trades, f, indent=4)
+        print(f"✅ Trades saved to {filename}")
+    except Exception as e:
+        print(f"❌ Error saving trades: {e}")
