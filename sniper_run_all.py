@@ -1,23 +1,16 @@
-from sniper_engine import generate_sniper_trades
-import json
-from datetime import datetime
-import os
+from sniper_engine import generate_sniper_trades, save_trades_to_json
 
-try:
-    # Generate trades
-    trades = generate_sniper_trades()
-    formatted = []
+def main():
+    try:
+        print("✅ Starting sniper_run_all.py")
+        trades = generate_sniper_trades()
 
-    for trade in trades:
-        trade["date"] = datetime.today().strftime("%Y-%m-%d")
-        formatted.append(trade)
+        if trades and isinstance(trades, list):
+            save_trades_to_json(trades)
+        else:
+            print("⚠️ No trades generated or unexpected result format.")
+    except Exception as e:
+        print(f"❌ ERROR in sniper_run_all.py: {e}")
 
-    # Save to trades.json
-    output_path = os.path.join(os.path.dirname(__file__), "trades.json")
-    with open(output_path, "w") as f:
-        json.dump(formatted, f, indent=2)
-
-    print(f"✅ {len(formatted)} trades written to trades.json")
-
-except Exception as e:
-    print("❌ ERROR in sniper_run_all.py:", e)
+if __name__ == "__main__":
+    main()
