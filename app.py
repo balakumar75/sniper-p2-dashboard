@@ -1,21 +1,23 @@
-from flask import Flask, send_file
-import subprocess
+from flask import Flask, render_template
+import json
 import os
 
 app = Flask(__name__)
 
 @app.route('/')
-def serve_dashboard():
-    try:
-        subprocess.run(["python", "sniper_run_all.py"], check=True)
-    except Exception as e:
-        return f"Error running sniper_run_all.py: {e}"
+def index():
+    # Load trades
+    trades_file = 'trades.json'
+    trades = []
 
-    path = os.path.join("dashboard", "index.html")
-    if os.path.exists(path):
-        return send_file(path)
-    else:
-        return "Dashboard file not found. Please run sniper_run_all.py manually."
+    if os.path.exists(trades_file):
+        with open(trades_file, 'r') as f:
+            try:
+                trades = json.load(f)
+            except json.JSONDecodeError:
+                trades = []
+
+    return render_template('index.html', trades=trades)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
