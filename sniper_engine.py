@@ -27,7 +27,7 @@ def generate_sniper_trades():
             if trade:
                 trades.append(trade)
         except Exception as e:
-            print(f"❌ Error processing {symbol}: {str(e)}")
+            print(f"❌ Error processing {symbol}: {e}")
 
     return trades
 
