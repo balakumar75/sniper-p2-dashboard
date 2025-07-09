@@ -1,61 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Sniper Trades</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            background-color: #f6f8fa;
+            margin: 20px;
         }
         h1 {
-            color: #0066cc;
+            text-align: center;
+            color: #333;
         }
         table {
+            width: 95%;
+            margin: 20px auto;
             border-collapse: collapse;
-            width: 100%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: #fff;
         }
         th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
+            padding: 10px 12px;
             text-align: center;
+            border: 1px solid #ccc;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #007BFF;
+            color: white;
         }
-        tr:hover {
+        tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+        .buy {
+            color: green;
+            font-weight: bold;
+        }
+        .sell {
+            color: red;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Sniper Trades</h1>
-    {% if trades %}
-    <table>
-        <tr>
-            <th>Symbol</th>
-            <th>Type</th>
-            <th>Entry</th>
-            <th>Target</th>
-            <th>SL</th>
-            <th>PoP</th>
-            <th>Sector</th>
-            <th>Action</th>
-        </tr>
-        {% for trade in trades %}
-        <tr>
-            <td>{{ trade.symbol }}</td>
-            <td>{{ trade.type }}</td>
-            <td>{{ trade.entry }}</td>
-            <td>{{ trade.target }}</td>
-            <td>{{ trade.sl }}</td>
-            <td>{{ trade.pop }}</td>
-            <td>{{ trade.sector }}</td>
-            <td>{{ trade.action }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No trades found.</p>
-    {% endif %}
+
+<h1>Sniper Trades</h1>
+
+{% if trades %}
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Symbol</th>
+        <th>Type</th>
+        <th>Entry</th>
+        <th>Target</th>
+        <th>SL</th>
+        <th>PoP</th>
+        <th>Sector</th>
+        <th>Action</th>
+    </tr>
+    {% for trade in trades %}
+    <tr>
+        <td>{{ trade.get('date', '') }}</td>
+        <td>{{ trade.symbol }}</td>
+        <td>{{ trade.type }}</td>
+        <td>{{ trade.entry }}</td>
+        <td>{{ trade.target }}</td>
+        <td>{{ trade.sl }}</td>
+        <td>{{ trade['pop'] }}</td>
+        <td>{{ trade.get('sector', 'N/A') }}</td>
+        <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p style="text-align:center; color:red;">⚠️ No trades found.</p>
+{% endif %}
+
 </body>
 </html>
