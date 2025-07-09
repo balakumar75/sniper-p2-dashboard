@@ -4,3 +4,10 @@ services:
     schedule: "15 4 * * *"
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python sniper_run_all.py"
+
+  - type: web
+    name: sniper-dashboard
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    plan: free
