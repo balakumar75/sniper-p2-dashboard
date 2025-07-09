@@ -1,26 +1,71 @@
-<table border="1">
-  <tr>
-    <th>Symbol</th>
-    <th>Type</th>
-    <th>Entry</th>
-    <th>Target</th>
-    <th>SL</th>
-    <th>PoP</th>
-    <th>Trap Zone</th>
-    <th>PoP Tag</th>
-    <th>Action</th>
-  </tr>
-  {% for trade in trades %}
-  <tr>
-    <td>{{ trade.symbol }}</td>
-    <td>{{ trade.type }}</td>
-    <td>{{ trade.entry }}</td>
-    <td>{{ trade.target }}</td>
-    <td>{{ trade.sl }}</td>
-    <td>{{ trade.pop }}</td>
-    <td>{{ trade.trap_zone }}</td>
-    <td>{{ trade.pop_tag }}</td>
-    <td>{{ trade.action }}</td>
-  </tr>
-  {% endfor %}
-</table>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sniper Trades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #f0f0f0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #00ffcc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            background-color: #1f1f1f;
+            color: #00ffcc;
+        }
+        tr:nth-child(even) {
+            background-color: #1a1a1a;
+        }
+        tr:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sniper Trades</h1>
+    {% if trades %}
+    <table>
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Entry</th>
+                <th>Target</th>
+                <th>SL</th>
+                <th>PoP</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trade in trades %}
+            <tr>
+                <td>{{ trade.symbol }}</td>
+                <td>{{ trade.type }}</td>
+                <td>{{ trade.entry }}</td>
+                <td>{{ trade.target }}</td>
+                <td>{{ trade.sl }}</td>
+                <td>{{ trade.pop }}</td>
+                <td>{{ trade.action }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No trades found.</p>
+    {% endif %}
+</body>
+</html>
