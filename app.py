@@ -6,8 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    # Load trades
-    trades_file = 'data/trades.json'
+    trades_file = os.path.join('data', 'trades.json')
     trades = []
 
     if os.path.exists(trades_file):
