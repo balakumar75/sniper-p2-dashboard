@@ -1,71 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sniper Trades</title>
+    <title>Sniper Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #f0f0f0;
             padding: 20px;
+            background: #f7f9fc;
         }
         h1 {
-            text-align: center;
-            color: #00ffcc;
+            color: #333;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 20px;
         }
         th, td {
-            padding: 12px;
+            border: 1px solid #ccc;
+            padding: 10px;
             text-align: center;
-            border-bottom: 1px solid #444;
+            font-size: 14px;
         }
         th {
-            background-color: #1f1f1f;
-            color: #00ffcc;
-        }
-        tr:nth-child(even) {
-            background-color: #1a1a1a;
+            background-color: #4CAF50;
+            color: white;
         }
         tr:hover {
-            background-color: #333;
+            background-color: #f1f1f1;
+        }
+        .tag {
+            display: inline-block;
+            background: #e0e0e0;
+            border-radius: 5px;
+            padding: 3px 6px;
+            margin: 2px;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
-    <h1>Sniper Trades</h1>
+    <h1>🔫 Sniper Trades</h1>
+
     {% if trades %}
     <table>
         <thead>
             <tr>
+                <th>Date</th>
                 <th>Symbol</th>
                 <th>Type</th>
                 <th>Entry</th>
                 <th>Target</th>
                 <th>SL</th>
                 <th>PoP</th>
+                <th>Sector</th>
+                <th>Tags</th>
+                <th>Expiry</th>
+                <th>Status</th>
+                <th>P&L</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for trade in trades %}
             <tr>
+                <td>{{ trade.date }}</td>
                 <td>{{ trade.symbol }}</td>
                 <td>{{ trade.type }}</td>
                 <td>{{ trade.entry }}</td>
                 <td>{{ trade.target }}</td>
                 <td>{{ trade.sl }}</td>
                 <td>{{ trade.pop }}</td>
+                <td>{{ trade.sector }}</td>
+                <td>
+                    {% for tag in trade.tags %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </td>
+                <td>{{ trade.expiry }}</td>
+                <td>{{ trade.status }}</td>
+                <td>{{ trade.pnl if trade.pnl else '–' }}</td>
                 <td>{{ trade.action }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <p>No trades found.</p>
+        <p>No trades found.</p>
     {% endif %}
 </body>
 </html>
