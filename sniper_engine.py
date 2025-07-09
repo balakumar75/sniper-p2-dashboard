@@ -2,18 +2,18 @@ import json
 import time
 from utils import fetch_cmp, generate_trade_signal
 
-# Expanded stock universe (NSE 100 - 96 stocks here)
+# ✅ Full NSE 100 Stocks List
 NSE_100 = [
     "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK", "SBIN", "AXISBANK", "ITC",
-    "BHARTIARTL", "BAJFINANCE", "ASIANPAINT", "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO",
-    "HCLTECH", "WIPRO", "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M", "NESTLEIND", "SBILIFE",
-    "TECHM", "UPL", "DIVISLAB", "HINDALCO", "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA",
-    "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI", "PIDILITIND", "BANKBARODA", "ADANIENT", "ADANIPORTS",
-    "INDIGO", "DMART", "PNB", "COALINDIA", "CANBK", "SHREECEM", "TRENT", "INDHOTEL", "TVSMOTOR", "CIPLA",
-    "ONGC", "BPCL", "NAUKRI", "PAYTM", "BIOCON", "BOSCHLTD", "IRCTC", "MCX", "HINDPETRO", "GUJGASLTD",
-    "ZEEL", "IEX", "COLPAL", "CUMMINSIND", "LTI", "LTTS", "TORNTPHARM", "BHEL", "ABFRL", "POLYCAB", "BEL",
-    "ESCORTS", "SRF", "CHOLAFIN", "HAL", "INDIAMART", "IDFCFIRSTB", "MUTHOOTFIN", "BANDHANBNK",
-    "DEEPAKNTR", "RECLTD", "POWERINDIA", "SJVN", "MAZDOCK", "IRFC", "NHPC", "NBCC", "HUDCO", "RVNL"
+    "BHARTIARTL", "BAJFINANCE", "ASIANPAINT", "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO", "HCLTECH", "WIPRO",
+    "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M", "NESTLEIND", "SBILIFE", "TECHM", "UPL", "DIVISLAB",
+    "HINDALCO", "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA", "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI",
+    "PIDILITIND", "SHREECEM", "SIEMENS", "LTIM", "HAVELLS", "TVSMOTOR", "SRF", "ABB", "APOLLOHOSP", "BOSCHLTD",
+    "AUROPHARMA", "BANKBARODA", "BIOCON", "CANBK", "CHOLAFIN", "HINDPETRO", "IGL", "IOC", "JINDALSTEL", "MANAPPURAM",
+    "MUTHOOTFIN", "RECLTD", "SAIL", "TATAPOWER", "TRENT", "UNIONBANK", "ZEEL", "CIPLA", "EICHERMOT", "ADANIENT",
+    "GRASIM", "BAJAJ-AUTO", "HEROMOTOCO", "DRREDDY", "COALINDIA", "ADANIPORTS", "DLF", "INDIGO", "BAJAJFINSV", "ICICIGI",
+    "NAUKRI", "MPHASIS", "LUPIN", "PEL", "MCDOWELL-N", "COLPAL", "IEX", "GUJGASLTD", "MCX", "IRCTC",
+    "IDFCFIRSTB", "INDIAMART", "BANDHANBNK", "ESCORTS", "BEL", "TATACHEM", "ABCAPITAL", "VOLTAS", "HAL", "CUMMINSIND"
 ]
 
 def generate_sniper_trades():
@@ -21,7 +21,7 @@ def generate_sniper_trades():
     for symbol in NSE_100:
         print(f"🔍 Processing {symbol}...")
         cmp = fetch_cmp(symbol)
-        time.sleep(0.8)  # Reduced delay for efficiency (within rate limits)
+        time.sleep(0.75)  # ⏱️ Rate limit control for API
         signal = generate_trade_signal(symbol, cmp)
         if signal:
             trades.append(signal)
