@@ -1,44 +1,40 @@
 import os
-from kiteconnect import KiteConnect
 import random
+from kiteconnect import KiteConnect
 
-# Load API Key and Access Token from environment variables
+# Load credentials from environment variables
 api_key = os.getenv("KITE_API_KEY")
 access_token = os.getenv("KITE_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-def fetch_cmp(symbol):
+def fetch_cmp_batch(symbols):
     try:
-        instrument = f"NSE:{symbol}"
-        quote = kite.ltp(instrument)
-        return quote[instrument]['last_price']
+        instrument_list = [f"NSE:{symbol}" for symbol in symbols]
+        ltp_data = kite.ltp(instrument_list)
+        cmp_map = {s.split(":")[1]: ltp_data[s]['last_price'] for s in ltp_data}
+        return cmp_map
     except Exception as e:
-        print(f"❌ Error fetching CMP for {symbol}: {e}")
-        return None
+        print(f"❌ Error fetching batch CMPs: {e}")
+        return {}
 
 def generate_trade_signal(symbol, cmp):
     if cmp is None:
         return None
 
-    # Define entry, target, stop loss (±2%, ±4%)
     entry = round(cmp, 2)
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
+    pop_score = random.choice([80, 82, 85, 87, 88, 90])
+    pop = f"{pop_score}%"
 
-    # Dummy PoP logic – later can be replaced by indicators
-    pop_score = random.choice([80, 82, 85, 88, 90])
-    pop_percent = f"{pop_score}%"
-
-    trade = {
+    return {
         'symbol': f"{symbol} JUL FUT",
         'type': 'Futures',
         'entry': entry,
         'target': target,
         'sl': sl,
-        'pop': pop_percent,
+        'pop': pop,
         'action': 'Buy'
     }
-
-    return trade
