@@ -17,7 +17,7 @@ def generate_sniper_trades():
     for symbol in NSE_100:
         print(f"🔍 Processing {symbol}...")
         cmp = fetch_cmp(symbol)
-        time.sleep(1)  # rate limiting
+        time.sleep(1)  # Add delay to avoid rate-limit
         signal = generate_trade_signal(symbol, cmp)
         if signal:
             trades.append(signal)
