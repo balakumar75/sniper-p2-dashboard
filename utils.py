@@ -40,8 +40,16 @@ SECTOR_MAP = {
     "COLPAL": "FMCG",
     "BEL": "Defense",
     "HAL": "Defense",
-    "DLF": "Realty"
-    # 🔄 Add more symbols as needed...
+    "DLF": "Realty",
+    "MUTHOOTFIN": "NBFC",
+    "IDFCFIRSTB": "Banking",
+    "ZEEL": "Media",
+    "HINDPETRO": "Energy",
+    "GUJGASLTD": "Energy",
+    "IEX": "Power",
+    "MCX": "Financial",
+    "IRCTC": "Travel"
+    # 🔄 Add more as needed
 }
 
 def fetch_cmp(symbol):
@@ -61,7 +69,19 @@ def generate_trade_signal(symbol, cmp):
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
     pop_score = random.choice([83, 85, 87, 90, 92])  # Simulated PoP
+    pop = f"{pop_score}%"
     sector = SECTOR_MAP.get(symbol, "Unknown")
+
+    # 🔖 Dummy tag logic (replace with real logic in future)
+    tags = []
+    if pop_score >= 87:
+        tags.append("RSI > 55")
+        tags.append("VWAP Support")
+        tags.append("OBV Confirmed")
+    else:
+        tags.append("RSI Neutral")
+
+    tag_str = " ".join(tags)
 
     trade = {
         'symbol': f"{symbol} JUL FUT",
@@ -69,8 +89,9 @@ def generate_trade_signal(symbol, cmp):
         'entry': entry,
         'target': target,
         'sl': sl,
-        'pop': f"{pop_score}%",
+        'pop': pop,
         'sector': sector,
+        'tags': tag_str,
         'action': 'Buy'
     }
 
