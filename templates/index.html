@@ -26,7 +26,7 @@
             <td>{{ trade.entry }}</td>
             <td>{{ trade.target }}</td>
             <td>{{ trade.sl }}</td>
-            <td>{{ trade.pop }}</td>
+            <td>{{ trade['pop'] }}</td>
             <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
         </tr>
         {% endfor %}
