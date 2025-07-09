@@ -2,22 +2,25 @@ import json
 import time
 from utils import fetch_cmp, generate_trade_signal
 
-NSE_100 = [
+# ✅ Updated list with 50 sniper-grade F&O stocks
+NSE_50 = [
     "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK",
     "SBIN", "AXISBANK", "ITC", "BHARTIARTL", "BAJFINANCE", "ASIANPAINT",
     "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO", "HCLTECH",
     "WIPRO", "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M",
     "NESTLEIND", "SBILIFE", "TECHM", "UPL", "DIVISLAB", "HINDALCO",
     "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA", "DLF",
-    "GAIL", "AMBUJACEM", "ICICIPRULI"
+    "GAIL", "AMBUJACEM", "ICICIPRULI", "CIPLA", "APOLLOHOSP", "ADANIENT",
+    "GRASIM", "BAJAJFINSV", "EICHERMOT", "COALINDIA", "HEROMOTOCO",
+    "BPCL", "SBICARD", "BANKBARODA"
 ]
 
 def generate_sniper_trades():
     trades = []
-    for symbol in NSE_100:
+    for symbol in NSE_50:
         print(f"🔍 Processing {symbol}...")
         cmp = fetch_cmp(symbol)
-        time.sleep(1)  # Add delay to avoid rate-limit
+        time.sleep(1)  # ✅ Prevent rate-limiting from API
         signal = generate_trade_signal(symbol, cmp)
         if signal:
             trades.append(signal)
