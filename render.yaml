@@ -6,7 +6,7 @@ services:
     startCommand: "python sniper_run_all.py"
 
   - type: web
-    name: sniper-dashboard
+    name: sniper-p2-dashboard
     env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python app.py"
