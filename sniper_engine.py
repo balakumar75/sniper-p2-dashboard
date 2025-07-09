@@ -1,28 +1,28 @@
 import json
-from utils import fetch_cmp_batch, generate_trade_signal
+import time
+from utils import fetch_cmp, generate_trade_signal
 
+# ✅ Full NSE F&O Top 100 Stocks
 NSE_100 = [
-    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK",
-    "SBIN", "AXISBANK", "ITC", "BHARTIARTL", "BAJFINANCE", "ASIANPAINT",
-    "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO", "HCLTECH",
-    "WIPRO", "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M",
-    "NESTLEIND", "SBILIFE", "TECHM", "UPL", "DIVISLAB", "HINDALCO",
-    "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA", "DLF",
-    "GAIL", "AMBUJACEM", "ICICIPRULI", "PIDILITIND", "ADANIENT", "CIPLA",
-    "EICHERMOT", "GRASIM", "BPCL", "HEROMOTOCO", "BAJAJFINSV", "HDFCLIFE"
+    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK", "SBIN", "AXISBANK", "ITC",
+    "BHARTIARTL", "BAJFINANCE", "ASIANPAINT", "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO",
+    "HCLTECH", "WIPRO", "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M", "NESTLEIND", "SBILIFE",
+    "TECHM", "UPL", "DIVISLAB", "HINDALCO", "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA",
+    "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI", "HDFCLIFE", "ADANIENT", "ADANIPORTS", "COALINDIA", "HEROMOTOCO",
+    "CIPLA", "BAJAJFINSV", "EICHERMOT", "GRASIM", "BPCL", "SHREECEM", "ONGC", "SBICARD", "HAVELLS", "PIDILITIND",
+    "BAJAJ-AUTO", "DMART", "DRREDDY", "INDIGO", "CHOLAFIN", "TVSMOTOR", "ICICIGI", "TORNTPHARM", "BIOCON", "LTI",
+    "LTTS", "NAUKRI", "ZOMATO", "SRF", "BOSCHLTD", "TRENT", "BANKBARODA", "CROMPTON", "CONCOR", "HAL", "CANBK",
+    "FEDERALBNK", "BEL", "PAGEIND", "POLYCAB", "RECLTD", "MFSL", "BANDHANBNK", "PNB", "AMARAJABAT", "AUBANK",
+    "BALRAMCHIN", "ESCORTS", "INDUSTOWER", "INDIAMART", "IDFCFIRSTB", "MUTHOOTFIN", "IRCTC", "MCX", "HINDPETRO",
+    "GUJGASLTD", "ZEEL", "IEX", "COLPAL"
 ]
 
 def generate_sniper_trades():
     trades = []
-    print("🚀 Fetching CMPs for all stocks in batch...")
-    cmp_map = fetch_cmp_batch(NSE_100)
-
     for symbol in NSE_100:
         print(f"🔍 Processing {symbol}...")
-        cmp = cmp_map.get(symbol)
-        if cmp is None:
-            print(f"⚠️ No CMP found for {symbol}, skipping.")
-            continue
+        cmp = fetch_cmp(symbol)
+        time.sleep(1)  # Rate limiting to avoid API burst
         signal = generate_trade_signal(symbol, cmp)
         if signal:
             trades.append(signal)
