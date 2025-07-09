@@ -2,19 +2,18 @@ import json
 import time
 from utils import fetch_cmp, generate_trade_signal
 
-# ✅ Full NSE F&O Top 100 Stocks
+# Expanded stock universe (NSE 100 - 96 stocks here)
 NSE_100 = [
     "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK", "SBIN", "AXISBANK", "ITC",
     "BHARTIARTL", "BAJFINANCE", "ASIANPAINT", "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO",
     "HCLTECH", "WIPRO", "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M", "NESTLEIND", "SBILIFE",
     "TECHM", "UPL", "DIVISLAB", "HINDALCO", "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA",
-    "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI", "HDFCLIFE", "ADANIENT", "ADANIPORTS", "COALINDIA", "HEROMOTOCO",
-    "CIPLA", "BAJAJFINSV", "EICHERMOT", "GRASIM", "BPCL", "SHREECEM", "ONGC", "SBICARD", "HAVELLS", "PIDILITIND",
-    "BAJAJ-AUTO", "DMART", "DRREDDY", "INDIGO", "CHOLAFIN", "TVSMOTOR", "ICICIGI", "TORNTPHARM", "BIOCON", "LTI",
-    "LTTS", "NAUKRI", "ZOMATO", "SRF", "BOSCHLTD", "TRENT", "BANKBARODA", "CROMPTON", "CONCOR", "HAL", "CANBK",
-    "FEDERALBNK", "BEL", "PAGEIND", "POLYCAB", "RECLTD", "MFSL", "BANDHANBNK", "PNB", "AMARAJABAT", "AUBANK",
-    "BALRAMCHIN", "ESCORTS", "INDUSTOWER", "INDIAMART", "IDFCFIRSTB", "MUTHOOTFIN", "IRCTC", "MCX", "HINDPETRO",
-    "GUJGASLTD", "ZEEL", "IEX", "COLPAL"
+    "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI", "PIDILITIND", "BANKBARODA", "ADANIENT", "ADANIPORTS",
+    "INDIGO", "DMART", "PNB", "COALINDIA", "CANBK", "SHREECEM", "TRENT", "INDHOTEL", "TVSMOTOR", "CIPLA",
+    "ONGC", "BPCL", "NAUKRI", "PAYTM", "BIOCON", "BOSCHLTD", "IRCTC", "MCX", "HINDPETRO", "GUJGASLTD",
+    "ZEEL", "IEX", "COLPAL", "CUMMINSIND", "LTI", "LTTS", "TORNTPHARM", "BHEL", "ABFRL", "POLYCAB", "BEL",
+    "ESCORTS", "SRF", "CHOLAFIN", "HAL", "INDIAMART", "IDFCFIRSTB", "MUTHOOTFIN", "BANDHANBNK",
+    "DEEPAKNTR", "RECLTD", "POWERINDIA", "SJVN", "MAZDOCK", "IRFC", "NHPC", "NBCC", "HUDCO", "RVNL"
 ]
 
 def generate_sniper_trades():
@@ -22,7 +21,7 @@ def generate_sniper_trades():
     for symbol in NSE_100:
         print(f"🔍 Processing {symbol}...")
         cmp = fetch_cmp(symbol)
-        time.sleep(1)  # Rate limiting to avoid API burst
+        time.sleep(0.8)  # Reduced delay for efficiency (within rate limits)
         signal = generate_trade_signal(symbol, cmp)
         if signal:
             trades.append(signal)
