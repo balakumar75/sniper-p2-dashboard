@@ -22,12 +22,14 @@ def generate_trade_signal(symbol, cmp):
     if cmp is None:
         return None
 
+    # Define entry, target, stop loss (±2%, ±4%)
     entry = round(cmp, 2)
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
 
+    # Dummy PoP logic – later can be replaced by indicators
     pop_score = random.choice([80, 82, 85, 88, 90])
-    pop = f"{pop_score}%"  # ✅ FIXED: this is a string now, not a method
+    pop_percent = f"{pop_score}%"
 
     trade = {
         'symbol': f"{symbol} JUL FUT",
@@ -35,7 +37,7 @@ def generate_trade_signal(symbol, cmp):
         'entry': entry,
         'target': target,
         'sl': sl,
-        'pop': pop,
+        'pop': pop_percent,
         'action': 'Buy'
     }
 
