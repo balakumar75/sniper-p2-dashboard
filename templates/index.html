@@ -1,39 +1,26 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Sniper Trade Dashboard</title>
-    <style>
-        body { font-family: Arial; background: #111; color: #eee; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #333; padding: 10px; text-align: center; }
-        th { background-color: #222; }
-        tr:nth-child(even) { background-color: #1a1a1a; }
-        .buy { color: #00ff99; }
-        .sell { color: #ff6666; }
-    </style>
-</head>
-<body>
-    <h1>📊 Sniper Trades</h1>
-    {% if trades %}
-    <table>
-        <tr>
-            <th>Symbol</th><th>Type</th><th>Entry</th><th>Target</th><th>SL</th><th>PoP</th><th>Action</th>
-        </tr>
-        {% for trade in trades %}
-        <tr>
-            <td>{{ trade.symbol }}</td>
-            <td>{{ trade.type }}</td>
-            <td>{{ trade.entry }}</td>
-            <td>{{ trade.target }}</td>
-            <td>{{ trade.sl }}</td>
-            <td>{{ trade['pop'] }}</td>
-            <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No trades found.</p>
-    {% endif %}
-</body>
-</html>
-
+<table border="1">
+  <tr>
+    <th>Symbol</th>
+    <th>Type</th>
+    <th>Entry</th>
+    <th>Target</th>
+    <th>SL</th>
+    <th>PoP</th>
+    <th>Trap Zone</th>
+    <th>PoP Tag</th>
+    <th>Action</th>
+  </tr>
+  {% for trade in trades %}
+  <tr>
+    <td>{{ trade.symbol }}</td>
+    <td>{{ trade.type }}</td>
+    <td>{{ trade.entry }}</td>
+    <td>{{ trade.target }}</td>
+    <td>{{ trade.sl }}</td>
+    <td>{{ trade.pop }}</td>
+    <td>{{ trade.trap_zone }}</td>
+    <td>{{ trade.pop_tag }}</td>
+    <td>{{ trade.action }}</td>
+  </tr>
+  {% endfor %}
+</table>
