@@ -1,107 +1,64 @@
-SNIPER_TRADES = [
-    {
-        "symbol": "BEL JUL FUT",
-        "type": "Futures",
-        "entry": 295,
-        "cmp": 302.5,
-        "target": 310,
-        "sl": 288,
-        "pop": "85%",
-        "action": "Buy",
-        "sector": "Defense ✅",
-        "tags": ["RSI>55", "ADX>20", "MACD Confirmed", "VWAP Confluence"],
-        "trap_zone": "Clean Breakout",
-        "expiry": "July Monthly",
-        "status": "Open"
-    },
-    {
-        "symbol": "HDFCBANK Short Strangle",
-        "type": "Options",
-        "entry": 18.5,
-        "cmp": 17.2,
-        "target": 12,
-        "sl": 22,
-        "pop": "88%",
-        "action": "Sell",
-        "sector": "Banking ✅",
-        "tags": ["Short Strangle", "1.5 SD", "High IV", "OI Confirmed"],
-        "trap_zone": "No Trap",
-        "expiry": "July Monthly",
-        "status": "Open"
-    },
-    {
-        "symbol": "CIPLA JUL FUT",
-        "type": "Futures",
-        "entry": 1516,
-        "cmp": 1529,
-        "target": 1548,
-        "sl": 1502,
-        "pop": "82%",
-        "action": "Buy",
-        "sector": "Pharma ✅",
-        "tags": ["MACD Crossover", "RSI>55", "ADX>25", "OBV Support"],
-        "trap_zone": "Clean Breakout",
-        "expiry": "July Monthly",
-        "status": "Open"
-    },
-    {
-        "symbol": "RELIANCE 1540 CE",
-        "type": "Options",
-        "entry": 23.5,
-        "cmp": 25.1,
-        "target": 30,
-        "sl": 18,
-        "pop": "84%",
-        "action": "Buy",
-        "sector": "Energy ✅",
-        "tags": ["Option Long", "MACD Up", "VWAP Hold"],
-        "trap_zone": "No Trap",
-        "expiry": "July Monthly",
-        "status": "Open"
-    },
-    {
-        "symbol": "NIFTY JUL FUT",
-        "type": "Futures",
-        "entry": 23985,
-        "cmp": 24025,
-        "target": 24150,
-        "sl": 23830,
-        "pop": "83%",
-        "action": "Buy",
-        "sector": "Index ✅",
-        "tags": ["RSI>55", "ADX>20", "Volume Spike", "VWAP Confluence"],
-        "trap_zone": "Clean Breakout",
-        "expiry": "July Weekly",
-        "status": "Open"
-    },
-    {
-        "symbol": "LTIM JUL FUT",
-        "type": "Futures",
-        "entry": 4812,
-        "cmp": 4875,
-        "target": 4940,
-        "sl": 4750,
-        "pop": "86%",
-        "action": "Buy",
-        "sector": "IT ✅",
-        "tags": ["MACD Confirmed", "OBV Surge", "Clean HH-HL", "VWAP Touch"],
-        "trap_zone": "Clean Breakout",
-        "expiry": "July Monthly",
-        "status": "Open"
-    },
-    {
-        "symbol": "NIFTY Short Strangle (24200 CE + 24100 PE)",
-        "type": "Options",
-        "entry": 29,
-        "cmp": 26,
-        "target": 18,
-        "sl": 36,
-        "pop": "89%",
-        "action": "Sell",
-        "sector": "Index ✅",
-        "tags": ["Short Strangle", "1.5 SD", "IV High", "Delta Neutral"],
-        "trap_zone": "No Trap",
-        "expiry": "July Weekly",
-        "status": "Open"
-    }
-]
+import json
+from datetime import datetime
+
+TRADES_FILE = "trades.json"
+DATE_FORMAT = "%Y-%m-%d"
+
+def run_trade_updater():
+    try:
+        with open(TRADES_FILE, 'r') as file:
+            trades = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("⚠️ No valid trades.json found.")
+        return
+
+    today = datetime.today()
+
+    for trade in trades:
+        entry_price = trade.get("entry")
+        cmp = trade.get("cmp")
+        target = trade.get("target")
+        sl = trade.get("sl")
+
+        # Skip if CMP is missing
+        if cmp is None:
+            trade["status"] = "Open"
+            continue
+
+        # Determine status
+        if cmp >= target:
+            trade["status"] = "Target Hit"
+            trade["exit_date"] = today.strftime(DATE_FORMAT)
+        elif cmp <= sl:
+            trade["status"] = "SL Hit"
+            trade["exit_date"] = today.strftime(DATE_FORMAT)
+        else:
+            trade["status"] = "Open"
+            trade["exit_date"] = "-"
+
+        # Holding Days
+        entry_date = trade.get("date")
+        if entry_date and entry_date != "-":
+            try:
+                entry_dt = datetime.strptime(entry_date, DATE_FORMAT)
+                exit_dt = today if trade["status"] != "Open" else today
+                trade["holding_days"] = (exit_dt - entry_dt).days
+            except:
+                trade["holding_days"] = "-"
+        else:
+            trade["holding_days"] = "-"
+
+        # P&L calculation
+        if cmp and entry_price:
+            pnl = round(cmp - entry_price, 2)
+            trade["pnl"] = pnl
+            trade["return_pct"] = f"{round((pnl / entry_price) * 100, 2)}%"
+        else:
+            trade["pnl"] = "-"
+            trade["return_pct"] = "-"
+
+    # Save updated trades
+    with open(TRADES_FILE, 'w') as file:
+        json.dump(trades, file, indent=2)
+
+    print(f"✅ Trade status updated for {len(trades)} trades.")
