@@ -1,47 +1,48 @@
 import os
-from kiteconnect import KiteConnect
 import random
 from datetime import datetime
+from kiteconnect import KiteConnect
 
-# Load API credentials
+# Load Kite API credentials from environment variables
 api_key = os.getenv("KITE_API_KEY")
 access_token = os.getenv("KITE_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ NSE Sector Mapping
+# ✅ NSE Sector Mapping (extend as needed)
 SECTOR_MAP = {
-    "CIPLA": "Pharma",
-    "SUNPHARMA": "Pharma",
-    "RELIANCE": "Energy",
-    "HDFCBANK": "Banking",
-    "ICICIBANK": "Banking",
-    "SBIN": "Banking",
-    "INFY": "IT",
-    "TCS": "IT",
-    "WIPRO": "IT",
-    "ITC": "FMCG",
-    "HINDUNILVR": "FMCG",
-    "LT": "Capital Goods",
-    "POWERGRID": "Energy",
-    "NTPC": "Energy",
-    "ASIANPAINT": "Paints",
-    "BAJFINANCE": "NBFC",
-    "AXISBANK": "Banking",
-    "KOTAKBANK": "Banking",
-    "TITAN": "Consumer",
-    "EICHERMOT": "Auto",
-    "TATAMOTORS": "Auto",
-    "TATASTEEL": "Metals",
-    "JSWSTEEL": "Metals",
-    "ADANIENT": "Conglomerate",
-    "ADANIPORTS": "Infrastructure",
-    "DRREDDY": "Pharma",
-    "COLPAL": "FMCG",
-    "BEL": "Defense",
-    "HAL": "Defense",
-    "DLF": "Realty"
+    "CIPLA": "Pharma ✅",
+    "SUNPHARMA": "Pharma ✅",
+    "RELIANCE": "Energy 🔋",
+    "HDFCBANK": "Banking 🏦",
+    "ICICIBANK": "Banking 🏦",
+    "SBIN": "Banking 🏦",
+    "INFY": "IT 💻",
+    "TCS": "IT 💻",
+    "WIPRO": "IT 💻",
+    "ITC": "FMCG 🍫",
+    "HINDUNILVR": "FMCG 🍫",
+    "LT": "Capital Goods 🏗️",
+    "POWERGRID": "Energy 🔋",
+    "NTPC": "Energy 🔋",
+    "ASIANPAINT": "Paints 🎨",
+    "BAJFINANCE": "NBFC 💰",
+    "AXISBANK": "Banking 🏦",
+    "KOTAKBANK": "Banking 🏦",
+    "TITAN": "Consumer 👓",
+    "EICHERMOT": "Auto 🚗",
+    "TATAMOTORS": "Auto 🚗",
+    "TATASTEEL": "Metals ⚙️",
+    "JSWSTEEL": "Metals ⚙️",
+    "ADANIENT": "Conglomerate 🔗",
+    "ADANIPORTS": "Infra 🏗️",
+    "DRREDDY": "Pharma ✅",
+    "COLPAL": "FMCG 🍫",
+    "BEL": "Defense 🛡️",
+    "HAL": "Defense 🛡️",
+    "DLF": "Realty 🏢"
+    # Add more as needed
 }
 
 def fetch_cmp(symbol):
@@ -53,26 +54,6 @@ def fetch_cmp(symbol):
         print(f"❌ Error fetching CMP for {symbol}: {e}")
         return None
 
-def generate_tags(symbol, cmp):
-    tags = []
-    if random.choice([True, False]):
-        tags.append("RSI > 55")
-    if random.choice([True, False]):
-        tags.append("VWAP Support")
-    if random.choice([True, False]):
-        tags.append("OBV Confirmed")
-    if random.choice([True, False]):
-        tags.append("Breakout Structure ✅")
-    if random.choice([True, False]):
-        tags.append("Trap Zone Risk ⚠️")
-    if random.choice([True, False]):
-        tags.append("CupBreakout ✅")
-    if random.choice([True, False]):
-        tags.append("Squeeze On – Waiting")
-    if random.choice([True, False]):
-        tags.append("ICT FVG Zone")
-    return tags
-
 def generate_trade_signal(symbol, cmp):
     if cmp is None:
         return None
@@ -80,10 +61,11 @@ def generate_trade_signal(symbol, cmp):
     entry = round(cmp, 2)
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
-    pop_score = random.choice([85, 87, 89, 90, 92])
-    sector = SECTOR_MAP.get(symbol, "Unknown")
-    tags = generate_tags(symbol, cmp)
-    expiry = "2025-07-25"  # Dummy expiry
+
+    pop_score = random.choice([85, 87, 90, 92])
+    pop = f"{pop_score}%"
+
+    sector = SECTOR_MAP.get(symbol, "Unknown ❓")
 
     trade = {
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -92,11 +74,17 @@ def generate_trade_signal(symbol, cmp):
         "entry": entry,
         "target": target,
         "sl": sl,
-        "pop": f"{pop_score}%",
-        "sector": sector + " ✅" if sector != "Unknown" else "Unknown",
-        "tags": tags,
-        "expiry": expiry,
+        "cmp": round(cmp * 1.008, 2),
+        "cmp_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "pop": pop,
+        "sector": sector,
+        "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"],
+        "expiry": "2025-07-25",
         "status": "Open",
+        "exit_date": "-",
+        "holding": "-",
+        "pnl": "–",
+        "return_pct": "-",
         "action": "Buy"
     }
 
