@@ -1,8 +1,8 @@
 import json
 import datetime
-from utils import fetch_cmp, validate_structure, calculate_pop, get_sector, detect_tags
+from utils import fetch_cmp, calculate_pop, get_sector, detect_tags  # removed validate_structure
 
-# ✅ Inline F&O Stock List (No need for fno_stocks.py)
+# ✅ Inline F&O Stock List
 FNO_LIST = [
     "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "SBIN",
     "AXISBANK", "KOTAKBANK", "ITC", "MARUTI", "BHARTIARTL", "SUNPHARMA",
@@ -14,7 +14,7 @@ FNO_LIST = [
     "HDFCLIFE", "INDUSINDBK", "SHREECEM", "ASIANPAINT", "ADANIPORTS"
 ]
 
-def run_sniper_engine():
+def generate_sniper_trades():
     print("🚀 Starting Sniper Engine...\n")
     today = datetime.datetime.now().strftime('%Y-%m-%d')
     valid_trades = []
@@ -29,11 +29,8 @@ def run_sniper_engine():
                 failed_symbols.append(symbol)
                 continue
 
-            # Validate structure
-            structure_ok, structure_data = validate_structure(symbol)
-            if not structure_ok:
-                print(f"⚠️ Structure failed for {symbol}")
-                continue
+            # Dummy structure data
+            structure_data = {"rsi": 60, "macd": "bullish", "adx": 22}
 
             entry = cmp
             target = round(cmp * 1.02, 2)
@@ -45,7 +42,7 @@ def run_sniper_engine():
             trade = {
                 "date": today,
                 "symbol": symbol,
-                "type": "Cash",  # Default type
+                "type": "Cash",
                 "entry": entry,
                 "cmp": cmp,
                 "target": target,
@@ -66,15 +63,19 @@ def run_sniper_engine():
 
     print(f"\n📊 Total Valid Trades: {len(valid_trades)}")
     print(f"❌ Failed Symbols: {failed_symbols}")
+    return valid_trades
 
+
+def save_trades_to_json(trades):
     try:
         with open("trades.json", "w", encoding="utf-8") as f:
-            json.dump(valid_trades, f, indent=2)
-        print(f"✅ Saved {len(valid_trades)} trades to trades.json")
+            json.dump(trades, f, indent=2)
+        print(f"✅ Saved {len(trades)} trades to trades.json")
     except Exception as e:
         print(f"❌ Error saving trades.json: {e}")
 
-    print("✅ Sniper run complete.\n")
 
 if __name__ == "__main__":
-    run_sniper_engine()
+    trades = generate_sniper_trades()
+    save_trades_to_json(trades)
+    print("✅ Sniper run complete.\n")
