@@ -1,6 +1,7 @@
 import os
-from kiteconnect import KiteConnect
 import random
+from datetime import datetime
+from kiteconnect import KiteConnect
 
 # Load API credentials
 api_key = os.getenv("KITE_API_KEY")
@@ -9,7 +10,7 @@ access_token = os.getenv("KITE_ACCESS_TOKEN")
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ NSE Sector Mapping (sample, extendable)
+# ✅ NSE Sector Mapping (extend as needed)
 SECTOR_MAP = {
     "CIPLA": "Pharma",
     "SUNPHARMA": "Pharma",
@@ -41,15 +42,11 @@ SECTOR_MAP = {
     "BEL": "Defense",
     "HAL": "Defense",
     "DLF": "Realty",
-    "MUTHOOTFIN": "NBFC",
+    "GAIL": "Oil & Gas",
+    "IRCTC": "Railways",
+    "MCX": "Exchange",
     "IDFCFIRSTB": "Banking",
-    "ZEEL": "Media",
-    "HINDPETRO": "Energy",
-    "GUJGASLTD": "Energy",
-    "IEX": "Power",
-    "MCX": "Financial",
-    "IRCTC": "Travel"
-    # 🔄 Add more as needed
+    "ZEEL": "Media"
 }
 
 def fetch_cmp(symbol):
@@ -68,30 +65,21 @@ def generate_trade_signal(symbol, cmp):
     entry = round(cmp, 2)
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
-    pop_score = random.choice([83, 85, 87, 90, 92])  # Simulated PoP
-    pop = f"{pop_score}%"
+    pop_score = random.choice([83, 85, 87, 90, 92])
     sector = SECTOR_MAP.get(symbol, "Unknown")
 
-    # 🔖 Dummy tag logic (replace with real logic in future)
-    tags = []
-    if pop_score >= 87:
-        tags.append("RSI > 55")
-        tags.append("VWAP Support")
-        tags.append("OBV Confirmed")
-    else:
-        tags.append("RSI Neutral")
-
-    tag_str = " ".join(tags)
-
     trade = {
+        'date': datetime.now().strftime("%Y-%m-%d"),
         'symbol': f"{symbol} JUL FUT",
-        'type': 'Futures',
+        'type': 'Futures",
         'entry': entry,
         'target': target,
         'sl': sl,
-        'pop': pop,
-        'sector': sector,
-        'tags': tag_str,
+        'pop': f"{pop_score}%",
+        'sector': f"{sector} ✅",
+        'expiry': "July 2025",
+        'status': "Open",
+        'pnl': "–",
         'action': 'Buy'
     }
 
