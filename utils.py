@@ -1,7 +1,6 @@
 import os
-import random
-from datetime import datetime
 from kiteconnect import KiteConnect
+import random
 
 # Load API credentials
 api_key = os.getenv("KITE_API_KEY")
@@ -41,12 +40,8 @@ SECTOR_MAP = {
     "COLPAL": "FMCG",
     "BEL": "Defense",
     "HAL": "Defense",
-    "DLF": "Realty",
-    "GAIL": "Oil & Gas",
-    "IRCTC": "Railways",
-    "MCX": "Exchange",
-    "IDFCFIRSTB": "Banking",
-    "ZEEL": "Media"
+    "DLF": "Realty"
+    # 🔁 Add more as needed
 }
 
 def fetch_cmp(symbol):
@@ -65,21 +60,17 @@ def generate_trade_signal(symbol, cmp):
     entry = round(cmp, 2)
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
-    pop_score = random.choice([83, 85, 87, 90, 92])
+    pop_score = random.choice([83, 85, 87, 90, 92])  # Simulated PoP
     sector = SECTOR_MAP.get(symbol, "Unknown")
 
     trade = {
-        'date': datetime.now().strftime("%Y-%m-%d"),
         'symbol': f"{symbol} JUL FUT",
-        'type': 'Futures",
+        'type': 'Futures',
         'entry': entry,
         'target': target,
         'sl': sl,
         'pop': f"{pop_score}%",
         'sector': f"{sector} ✅",
-        'expiry': "July 2025",
-        'status': "Open",
-        'pnl': "–",
         'action': 'Buy'
     }
 
