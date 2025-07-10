@@ -15,18 +15,29 @@ def generate_sniper_trades():
     ]
 
     trades = []
+    failed = []
 
     for symbol in symbols:
-        print(f"🔍 Processing {symbol}...")
+        print(f"🔍 Fetching CMP for: {symbol}")
         cmp = fetch_cmp(symbol)
-        trade = generate_trade_signal(symbol, cmp)
-        if trade:
-            trades.append(trade)
+
+        if cmp:
+            print(f"✅ CMP for {symbol}: {cmp}")
+            trade = generate_trade_signal(symbol, cmp)
+            if trade:
+                trades.append(trade)
+        else:
+            print(f"❌ Failed to fetch CMP for: {symbol}")
+            failed.append(symbol)
 
     with open("trades.json", "w") as f:
         json.dump(trades, f, indent=2)
 
-    print(f"✅ {len(trades)} trades generated and saved to trades.json")
+    print(f"\n✅ {len(trades)} sniper trades generated.")
+    if failed:
+        print(f"⚠️ {len(failed)} symbols failed CMP fetch:")
+        for s in failed:
+            print(" -", s)
 
 def save_trades_to_json(trades):
     with open("trades.json", "w") as f:
