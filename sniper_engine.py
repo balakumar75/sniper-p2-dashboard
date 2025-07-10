@@ -1,6 +1,7 @@
 import json
 import datetime
-from utils import fetch_cmp, calculate_pop, get_sector, detect_tags  # removed validate_structure
+import os
+from utils import fetch_cmp, calculate_pop, get_sector, detect_tags
 
 # ✅ Inline F&O Stock List
 FNO_LIST = [
@@ -29,8 +30,8 @@ def generate_sniper_trades():
                 failed_symbols.append(symbol)
                 continue
 
-            # Dummy structure data
-            structure_data = {"rsi": 60, "macd": "bullish", "adx": 22}
+            # Dummy structure logic (to be replaced with validate_structure)
+            structure_data = {"rsi": 60, "macd": "bullish", "adx": 22, "volume": 2000000, "avg_volume": 1000000}
 
             entry = cmp
             target = round(cmp * 1.02, 2)
@@ -63,6 +64,11 @@ def generate_sniper_trades():
 
     print(f"\n📊 Total Valid Trades: {len(valid_trades)}")
     print(f"❌ Failed Symbols: {failed_symbols}")
+
+    # ✅ Step 1 Debug: Print the final list of trades before writing
+    print("📋 Final Trades Snapshot:")
+    print(json.dumps(valid_trades, indent=2))
+
     return valid_trades
 
 
@@ -70,6 +76,8 @@ def save_trades_to_json(trades):
     try:
         with open("trades.json", "w", encoding="utf-8") as f:
             json.dump(trades, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
         print(f"✅ Saved {len(trades)} trades to trades.json")
     except Exception as e:
         print(f"❌ Error saving trades.json: {e}")
