@@ -63,7 +63,7 @@ def generate_trade_signal(symbol, cmp):
     sl = round(cmp * 0.985, 2)
 
     pop_score = random.choice([85, 87, 90, 92])
-    pop = f"{pop_score}%"
+    pop_value = f"{pop_score}%"  # ✅ Avoid conflict with dict.pop()
 
     sector = SECTOR_MAP.get(symbol, "Unknown ❓")
 
@@ -76,7 +76,7 @@ def generate_trade_signal(symbol, cmp):
         "sl": sl,
         "cmp": round(cmp * 1.008, 2),
         "cmp_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "pop": pop,
+        "pop": pop_value,
         "sector": sector,
         "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"],
         "expiry": "2025-07-25",
