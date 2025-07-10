@@ -10,7 +10,7 @@ access_token = os.getenv("KITE_ACCESS_TOKEN")
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ NSE Sector Mapping (extend as needed)
+# ✅ NSE Sector Mapping (extendable)
 SECTOR_MAP = {
     "CIPLA": "Pharma ✅",
     "SUNPHARMA": "Pharma ✅",
@@ -63,7 +63,7 @@ def generate_trade_signal(symbol, cmp):
     sl = round(cmp * 0.985, 2)
 
     pop_score = random.choice([85, 87, 90, 92])
-    pop_value = f"{pop_score}%"  # ✅ Avoid conflict with dict.pop()
+    pop_str = f"{pop_score}%"  # ✅ FIXED — was wrongly referring to dict.pop
 
     sector = SECTOR_MAP.get(symbol, "Unknown ❓")
 
@@ -76,7 +76,7 @@ def generate_trade_signal(symbol, cmp):
         "sl": sl,
         "cmp": round(cmp * 1.008, 2),
         "cmp_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "pop": pop_value,
+        "pop": pop_str,  # ✅ Correct string
         "sector": sector,
         "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"],
         "expiry": "2025-07-25",
