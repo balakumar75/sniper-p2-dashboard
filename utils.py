@@ -1,15 +1,16 @@
 import os
 from kiteconnect import KiteConnect
 import random
+from datetime import datetime
 
-# Load API credentials
+# ✅ Load API credentials
 api_key = os.getenv("KITE_API_KEY")
 access_token = os.getenv("KITE_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ NSE Sector Mapping (extend as needed)
+# ✅ NSE Sector Mapping (extendable)
 SECTOR_MAP = {
     "CIPLA": "Pharma",
     "SUNPHARMA": "Pharma",
@@ -41,9 +42,10 @@ SECTOR_MAP = {
     "BEL": "Defense",
     "HAL": "Defense",
     "DLF": "Realty"
-    # 🔁 Add more as needed
+    # 🔁 Add more mappings as needed
 }
 
+# ✅ Fetch CMP from Zerodha API
 def fetch_cmp(symbol):
     try:
         instrument = f"NSE:{symbol}"
@@ -53,6 +55,7 @@ def fetch_cmp(symbol):
         print(f"❌ Error fetching CMP for {symbol}: {e}")
         return None
 
+# ✅ Generate trade signal
 def generate_trade_signal(symbol, cmp):
     if cmp is None:
         return None
@@ -64,6 +67,7 @@ def generate_trade_signal(symbol, cmp):
     sector = SECTOR_MAP.get(symbol, "Unknown")
 
     trade = {
+        'date': datetime.now().strftime('%Y-%m-%d'),
         'symbol': f"{symbol} JUL FUT",
         'type': 'Futures',
         'entry': entry,
@@ -71,6 +75,9 @@ def generate_trade_signal(symbol, cmp):
         'sl': sl,
         'pop': f"{pop_score}%",
         'sector': f"{sector} ✅",
+        'expiry': "",
+        'status': "",
+        'pnl': "",
         'action': 'Buy'
     }
 
