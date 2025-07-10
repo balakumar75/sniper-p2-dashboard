@@ -10,6 +10,9 @@
     "pop": "87%",
     "action": "Buy",
     "sector": "Pharma ✅",
+    "expiry": "2025-07-25",
+    "status": "Open",
+    "pnl": "–",
     "tags": [
       "RSI > 55",
       "VWAP Support",
