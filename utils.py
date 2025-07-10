@@ -3,14 +3,12 @@ import random
 from datetime import datetime
 from kiteconnect import KiteConnect
 
-# Load Kite API credentials from environment variables
 api_key = os.getenv("KITE_API_KEY")
 access_token = os.getenv("KITE_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=api_key)
 kite.set_access_token(access_token)
 
-# ✅ NSE Sector Mapping (extendable)
 SECTOR_MAP = {
     "CIPLA": "Pharma ✅",
     "SUNPHARMA": "Pharma ✅",
@@ -42,7 +40,6 @@ SECTOR_MAP = {
     "BEL": "Defense 🛡️",
     "HAL": "Defense 🛡️",
     "DLF": "Realty 🏢"
-    # Add more as needed
 }
 
 def fetch_cmp(symbol):
@@ -62,8 +59,9 @@ def generate_trade_signal(symbol, cmp):
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
 
+    # ✅ Fix pop string issue
     pop_score = random.choice([85, 87, 90, 92])
-    pop_str = f"{pop_score}%"  # ✅ FIXED — was wrongly referring to dict.pop
+    pop_str = f"{pop_score}%"
 
     sector = SECTOR_MAP.get(symbol, "Unknown ❓")
 
@@ -76,7 +74,7 @@ def generate_trade_signal(symbol, cmp):
         "sl": sl,
         "cmp": round(cmp * 1.008, 2),
         "cmp_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "pop": pop_str,  # ✅ Correct string
+        "pop": pop_str,
         "sector": sector,
         "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"],
         "expiry": "2025-07-25",
