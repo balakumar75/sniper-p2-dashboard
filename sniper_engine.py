@@ -1,47 +1,35 @@
+# sniper_engine.py
+
 import json
 from utils import fetch_cmp, generate_trade_signal
 
-def generate_sniper_trades():
-    symbols = [
-        "CIPLA", "SUNPHARMA", "RELIANCE", "HDFCBANK", "ICICIBANK", "SBIN", "INFY", "TCS", "WIPRO", "ITC",
-        "HINDUNILVR", "LT", "POWERGRID", "NTPC", "ASIANPAINT", "BAJFINANCE", "AXISBANK", "KOTAKBANK", "TITAN",
-        "EICHERMOT", "TATAMOTORS", "TATASTEEL", "JSWSTEEL", "ADANIENT", "ADANIPORTS", "DRREDDY", "COLPAL", "BEL",
-        "HAL", "DLF", "DIVISLAB", "INDUSINDBK", "TECHM", "HCLTECH", "UPL", "GRASIM", "ULTRACEMCO", "BHARTIARTL",
-        "MARUTI", "BAJAJ_AUTO", "HEROMOTOCO", "BPCL", "IOC", "HINDALCO", "VEDL", "COALINDIA", "M&M", "AMBUJACEM",
-        "SBILIFE", "ICICIGI", "ICICIPRULI", "TATACONSUM", "BRITANNIA", "DABUR", "GODREJCP", "PIDILITIND", "SHREECEM",
-        "NAUKRI", "HAVELLS", "BAJAJFINSV", "CHOLAFIN", "MUTHOOTFIN", "PEL", "SRF", "TORNTPHARM", "APOLLOHOSP",
-        "GLAND", "CROMPTON", "BOSCHLTD", "TRENT", "ZOMATO", "DMART", "IRCTC", "MCX", "IEX", "GUJGASLTD", "ZEEL",
-        "IDFCFIRSTB", "INDIAMART", "BANDHANBNK", "TATAPOWER", "PFC", "ONGC", "JSPL", "CONCOR", "ABB", "PAGEIND"
-    ]
+# ✅ List of symbols to scan (F&O + Nifty 100 — you can expand this)
+SYMBOLS = [
+    "CIPLA", "ICICIBANK", "RELIANCE", "TCS", "INFY", "HDFCBANK", "AXISBANK", "ITC", "SBIN",
+    "BAJFINANCE", "LT", "SUNPHARMA", "TITAN", "WIPRO", "DRREDDY", "ASIANPAINT", "TATASTEEL",
+    "JSWSTEEL", "HINDUNILVR", "BEL", "DLF", "POWERGRID", "NTPC", "EICHERMOT", "KOTAKBANK",
+    "TATAMOTORS", "HCLTECH", "ADANIENT", "ADANIPORTS", "UPL", "INDUSINDBK", "DIVISLAB", "TECHM",
+    "GRASIM", "ULTRACEMCO", "NESTLEIND", "MARUTI", "BAJAJFINSV", "COALINDIA", "BRITANNIA"
+]
 
-    trades = []
-    failed = []
+trades = []
 
-    for symbol in symbols:
-        print(f"🔍 Fetching CMP for: {symbol}")
-        cmp = fetch_cmp(symbol)
+for symbol in SYMBOLS:
+    print(f"🔍 Fetching CMP for: {symbol}")
+    cmp = fetch_cmp(symbol)
 
-        if cmp:
-            print(f"✅ CMP for {symbol}: {cmp}")
-            trade = generate_trade_signal(symbol, cmp)
-            if trade:
-                trades.append(trade)
+    if cmp:
+        trade = generate_trade_signal(symbol, cmp)
+        if trade:
+            trades.append(trade)
+            print(f"✅ Trade generated: {symbol} @ {cmp}")
         else:
-            print(f"❌ Failed to fetch CMP for: {symbol}")
-            failed.append(symbol)
+            print(f"⚠️ No trade signal returned for {symbol}")
+    else:
+        print(f"❌ CMP fetch failed for {symbol}")
 
-    with open("trades.json", "w") as f:
-        json.dump(trades, f, indent=2)
+# ✅ Save all valid trades
+with open("trades.json", "w") as f:
+    json.dump(trades, f, indent=2)
 
-    print(f"\n✅ {len(trades)} sniper trades generated.")
-    if failed:
-        print(f"⚠️ {len(failed)} symbols failed CMP fetch:")
-        for s in failed:
-            print(" -", s)
-
-def save_trades_to_json(trades):
-    with open("trades.json", "w") as f:
-        json.dump(trades, f, indent=2)
-
-if __name__ == "__main__":
-    generate_sniper_trades()
+print(f"✅ {len(trades)} sniper trades saved to trades.json.")
