@@ -16,10 +16,10 @@ def get_trades():
                     return jsonify(trades), 200  # ✅ Always return 200
                 else:
                     print("⚠️ Invalid data format in trades.json")
-                    return jsonify([]), 200  # ✅ Safe fallback
+                    return jsonify([]), 200
         else:
             print("⚠️ trades.json file not found.")
-            return jsonify([]), 200  # ✅ Return 200 with empty list
+            return jsonify([]), 200
     except Exception as e:
         print(f"❌ Error loading trades.json: {e}")
         return jsonify([]), 500
