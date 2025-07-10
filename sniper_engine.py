@@ -1,4 +1,3 @@
-
 import json
 from utils import fetch_cmp, generate_trade_signal
 
@@ -36,13 +35,21 @@ def generate_sniper_trades():
     return valid_trades, failed
 
 def save_trades_to_json(trades):
-    with open("trades.json", "w") as f:
-        json.dump(trades, f, indent=2)
+    try:
+        with open("trades.json", "w") as f:
+            json.dump(trades, f, indent=2)
+        print(f"✅ {len(trades)} sniper trades saved to trades.json.")
+    except Exception as e:
+        print(f"❌ Error saving trades.json: {e}")
 
 def run_sniper_engine():
     trades, failed = generate_sniper_trades()
-    save_trades_to_json(trades)
-    print(f"✅ {len(trades)} sniper trades saved to trades.json.")
+    
+    if trades:
+        save_trades_to_json(trades)
+    else:
+        print("⚠️ No valid trades to save.")
+
     if failed:
         print("⚠️ Failed to fetch CMP for:", ", ".join(failed))
 
