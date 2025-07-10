@@ -1,137 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Sniper Trades</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #111; color: #eee; padding: 20px; }
-        h1 { color: #2ecc71; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #444; padding: 10px; text-align: center; }
-        th { background-color: #333; }
-        tr:nth-child(even) { background-color: #1a1a1a; }
-        .buy { color: #2ecc71; font-weight: bold; }
-        .sell { color: #e74c3c; font-weight: bold; }
-        select, label { margin-right: 10px; padding: 5px; background-color: #222; color: #eee; border: 1px solid #555; }
-    </style>
-    <script>
-        function filterTable() {
-            const statusFilter = document.getElementById("statusFilter").value;
-            const actionFilter = document.getElementById("actionFilter").value;
-            const popFilter = document.getElementById("popFilter").value;
-            const sectorFilter = document.getElementById("sectorFilter").value;
-
-            const rows = document.querySelectorAll("table tbody tr");
-            rows.forEach(row => {
-                const status = row.dataset.status;
-                const action = row.dataset.action;
-                const pop = parseInt(row.dataset.pop || "0");
-                const sector = row.dataset.sector;
-
-                const statusMatch = statusFilter === "All" || status === statusFilter;
-                const actionMatch = actionFilter === "All" || action === actionFilter;
-                const popMatch = pop >= parseInt(popFilter);
-                const sectorMatch = sectorFilter === "All" || sector === sectorFilter;
-
-                if (statusMatch && actionMatch && popMatch && sectorMatch) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            });
-        }
-    </script>
+  <meta charset="UTF-8">
+  <title>Sniper Trades</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #111; color: #eee; padding: 20px; }
+    h1 { color: #2ecc71; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #444; padding: 10px; text-align: center; }
+    th { background-color: #333; }
+    tr:nth-child(even) { background-color: #1a1a1a; }
+    .buy { color: #2ecc71; font-weight: bold; }
+    .sell { color: #e74c3c; font-weight: bold; }
+    select, label { margin-right: 10px; padding: 5px; background-color: #222; color: #eee; border: 1px solid #555; }
+  </style>
 </head>
 <body>
-    <h1>Sniper Trades</h1>
+  <h1>Sniper Trades</h1>
 
-    <div>
-        <label>Status:
-            <select id="statusFilter" onchange="filterTable()">
-                <option>All</option>
-                <option>Open</option>
-                <option>Target Hit</option>
-                <option>SL Hit</option>
-            </select>
-        </label>
+  <div>
+    <label>Status:
+      <select id="statusFilter" onchange="filterTable()">
+        <option>All</option>
+        <option>Open</option>
+        <option>Target Hit</option>
+        <option>SL Hit</option>
+      </select>
+    </label>
 
-        <label>Action:
-            <select id="actionFilter" onchange="filterTable()">
-                <option>All</option>
-                <option>Buy</option>
-                <option>Sell</option>
-            </select>
-        </label>
+    <label>Action:
+      <select id="actionFilter" onchange="filterTable()">
+        <option>All</option>
+        <option>Buy</option>
+        <option>Sell</option>
+      </select>
+    </label>
 
-        <label>PoP > 
-            <select id="popFilter" onchange="filterTable()">
-                <option value="0">0%</option>
-                <option value="85">85%</option>
-                <option value="90">90%</option>
-            </select>
-        </label>
+    <label>PoP > 
+      <select id="popFilter" onchange="filterTable()">
+        <option value="0">0%</option>
+        <option value="85">85%</option>
+        <option value="90">90%</option>
+      </select>
+    </label>
 
-        <label>Sector:
-            <select id="sectorFilter" onchange="filterTable()">
-                <option>All</option>
-                {% for trade in trades %}
-                    <option>{{ trade.sector }}</option>
-                {% endfor %}
-            </select>
-        </label>
-    </div>
+    <label>Sector:
+      <select id="sectorFilter" onchange="filterTable()">
+        <option>All</option>
+      </select>
+    </label>
+  </div>
 
-    {% if trades %}
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Symbol</th>
-                <th>Type</th>
-                <th>Entry</th>
-                <th>Target</th>
-                <th>SL</th>
-                <th>CMP</th>
-                <th>CMP Updated</th>
-                <th>PoP</th>
-                <th>Sector</th>
-                <th>Tags</th>
-                <th>Expiry</th>
-                <th>Status</th>
-                <th>Exit Date</th>
-                <th>Holding</th>
-                <th>P&L (₹)</th>
-                <th>Return %</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for trade in trades %}
-            <tr data-status="{{ trade.status }}" data-action="{{ trade.action }}" data-pop="{{ trade.pop | replace('%', '') }}" data-sector="{{ trade.sector }}">
-                <td>{{ trade.date }}</td>
-                <td>{{ trade.symbol }}</td>
-                <td>{{ trade.type }}</td>
-                <td>{{ trade.entry }}</td>
-                <td>{{ trade.target }}</td>
-                <td>{{ trade.sl }}</td>
-                <td>{{ trade.cmp }}</td>
-                <td>{{ trade.cmp_updated }}</td>
-                <td>{{ trade.pop }}</td>
-                <td>{{ trade.sector }}</td>
-                <td>{{ trade.tags | join(', ') }}</td>
-                <td>{{ trade.expiry }}</td>
-                <td>{{ trade.status }}</td>
-                <td>{{ trade.exit_date }}</td>
-                <td>{{ trade.holding }}</td>
-                <td>{{ trade.pnl }}</td>
-                <td>{{ trade.return_pct }}</td>
-                <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>No trades found.</p>
-    {% endif %}
+  <table id="tradesTable" style="display: none;">
+    <thead>
+      <tr>
+        <th>Date</th><th>Symbol</th><th>Type</th><th>Entry</th><th>Target</th><th>SL</th><th>CMP</th><th>PoP</th>
+        <th>Sector</th><th>Tags</th><th>Status</th><th>Exit Date</th><th>Holding</th><th>P&L (₹)</th><th>Return %</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="tradesBody"></tbody>
+  </table>
+
+  <p id="noTrades">No trades found.</p>
+
+  <script>
+    let allTrades = [];
+
+    function filterTable() {
+      const statusFilter = document.getElementById("statusFilter").value;
+      const actionFilter = document.getElementById("actionFilter").value;
+      const popFilter = parseInt(document.getElementById("popFilter").value);
+      const sectorFilter = document.getElementById("sectorFilter").value;
+
+      const tbody = document.getElementById("tradesBody");
+      tbody.innerHTML = "";
+
+      const filtered = allTrades.filter(trade => {
+        const statusMatch = statusFilter === "All" || trade.status === statusFilter;
+        const actionMatch = actionFilter === "All" || trade.action === actionFilter;
+        const popValue = parseInt(trade.pop?.replace("%", "") || "0");
+        const popMatch = popValue >= popFilter;
+        const sectorMatch = sectorFilter === "All" || trade.sector === sectorFilter;
+        return statusMatch && actionMatch && popMatch && sectorMatch;
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById("tradesTable").style.display = "none";
+        document.getElementById("noTrades").style.display = "block";
+      } else {
+        document.getElementById("tradesTable").style.display = "";
+        document.getElementById("noTrades").style.display = "none";
+      }
+
+      const uniqueSectors = new Set();
+      filtered.forEach(trade => {
+        uniqueSectors.add(trade.sector);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${trade.date}</td>
+          <td>${trade.symbol}</td>
+          <td>${trade.type}</td>
+          <td>${trade.entry}</td>
+          <td>${trade.target}</td>
+          <td>${trade.sl}</td>
+          <td>${trade.cmp}</td>
+          <td>${trade.pop}</td>
+          <td>${trade.sector}</td>
+          <td>${(trade.tags || []).join(", ")}</td>
+          <td>${trade.status}</td>
+          <td>${trade.exit_date}</td>
+          <td>${trade.holding_days}</td>
+          <td>${trade.pnl}</td>
+          <td>${trade.return_pct}</td>
+          <td class="${trade.action === 'Buy' ? 'buy' : 'sell'}">${trade.action}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // Update sector filter options
+      const sectorSelect = document.getElementById("sectorFilter");
+      const selected = sectorSelect.value;
+      sectorSelect.innerHTML = '<option>All</option>';
+      [...new Set(allTrades.map(t => t.sector))].forEach(sec => {
+        const opt = document.createElement("option");
+        opt.value = sec;
+        opt.textContent = sec;
+        if (sec === selected) opt.selected = true;
+        sectorSelect.appendChild(opt);
+      });
+    }
+
+    // Initial load
+    fetch("/api/trades")
+      .then(res => res.json())
+      .then(data => {
+        allTrades = data;
+        filterTable();
+      })
+      .catch(err => {
+        document.getElementById("noTrades").textContent = "❌ Failed to load trades.";
+        console.error(err);
+      });
+  </script>
 </body>
 </html>
