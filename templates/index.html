@@ -4,61 +4,75 @@
     <meta charset="UTF-8">
     <title>Sniper Trades</title>
     <style>
-        body { font-family: Arial; background-color: #111; color: #eee; margin: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #111; color: #eee; padding: 20px; }
         h1 { color: #2ecc71; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #444; padding: 10px; text-align: center; }
-        th { background-color: #333; }
+        th { background-color: #222; }
         tr:nth-child(even) { background-color: #1e1e1e; }
         .buy { color: #2ecc71; font-weight: bold; }
         .sell { color: #e74c3c; font-weight: bold; }
+        .footer { margin-top: 20px; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
     <h1>Sniper Trades</h1>
+    
     {% if trades %}
     <table>
-        <tr>
-            <th>Date</th>
-            <th>Symbol</th>
-            <th>Type</th>
-            <th>Entry</th>
-            <th>Target</th>
-            <th>SL</th>
-            <th>PoP</th>
-            <th>Sector</th>
-            <th>Tags</th>
-            <th>Expiry</th>
-            <th>Status</th>
-            <th>Exit Date</th>
-            <th>Holding</th>
-            <th>P&L (₹)</th>
-            <th>Return %</th>
-            <th>Action</th>
-        </tr>
-        {% for trade in trades %}
-        <tr>
-            <td>{{ trade["date"] }}</td>
-            <td>{{ trade["symbol"] }}</td>
-            <td>{{ trade["type"] }}</td>
-            <td>{{ trade["entry"] }}</td>
-            <td>{{ trade["target"] }}</td>
-            <td>{{ trade["sl"] }}</td>
-            <td>{{ trade["pop"] }}</td>
-            <td>{{ trade["sector"] }}</td>
-            <td>{{ trade["tags"] | join(', ') }}</td>
-            <td>{{ trade["expiry"] }}</td>
-            <td>{{ trade["status"] }}</td>
-            <td>{{ trade["exit_date"] }}</td>
-            <td>{{ trade["holding"] }}</td>
-            <td>{{ trade["pnl"] }}</td>
-            <td>{{ trade["return"] }}</td>
-            <td class="{{ 'buy' if trade['action'] == 'Buy' else 'sell' }}">{{ trade["action"] }}</td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Entry</th>
+                <th>Target</th>
+                <th>SL</th>
+                <th>CMP</th>
+                <th>CMP Updated</th>
+                <th>PoP</th>
+                <th>Sector</th>
+                <th>Tags</th>
+                <th>Expiry</th>
+                <th>Status</th>
+                <th>Exit Date</th>
+                <th>Holding</th>
+                <th>P&L (₹)</th>
+                <th>Return %</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trade in trades %}
+            <tr>
+                <td>{{ trade.get('date', '-') }}</td>
+                <td>{{ trade.symbol }}</td>
+                <td>{{ trade.type }}</td>
+                <td>{{ trade.entry }}</td>
+                <td>{{ trade.target }}</td>
+                <td>{{ trade.sl }}</td>
+                <td>{{ trade.get('cmp', '-') }}</td>
+                <td>{{ trade.get('cmp_updated', '-') }}</td>
+                <td>{{ trade.pop }}</td>
+                <td>{{ trade.sector }}</td>
+                <td>{{ trade.tags | join(', ') }}</td>
+                <td>{{ trade.get('expiry', '-') }}</td>
+                <td>{{ trade.status }}</td>
+                <td>{{ trade.get('exit_date', '-') }}</td>
+                <td>{{ trade.get('holding', '-') }}</td>
+                <td>{{ trade.get('pnl', '-') }}</td>
+                <td>{{ trade.get('return_pct', '-') }}</td>
+                <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
     {% else %}
         <p>No trades found.</p>
     {% endif %}
+
+    <div class="footer">
+        Updated via Sniper Dashboard | Render + Zerodha Integration
+    </div>
 </body>
 </html>
