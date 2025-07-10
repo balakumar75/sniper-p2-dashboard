@@ -1,9 +1,9 @@
 name: Run Sniper Engine Daily
 
 on:
-  workflow_dispatch:  # Manual run
+  workflow_dispatch:  # Manual run button
   schedule:
-    - cron: '45 4 * * 1-5'  # Every weekday at 10:15 AM IST (4:45 AM UTC)
+    - cron: '45 4 * * 1-5'  # 10:15 AM IST weekdays
 
 jobs:
   sniper-job:
@@ -13,21 +13,32 @@ jobs:
       - name: ✅ Checkout Repository
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python
+      - name: 🐍 Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      - name: 📦 Install Dependencies
-        run: pip install -r requirements.txt
+      - name: 📦 Install requirements.txt
+        run: |
+          echo "🔍 Installing requirements..."
+          pip install -r requirements.txt
 
       - name: 🚀 Run Sniper Engine
-        run: python sniper_run_all.py
+        run: |
+          echo "✅ Running sniper_run_all.py..."
+          ls -la
+          python sniper_run_all.py
+          echo "✅ sniper_run_all.py completed"
+
+      - name: 🧪 Show trades.json contents
+        run: |
+          echo "📁 trades.json preview:"
+          cat trades.json || echo "⚠️ trades.json not found"
 
       - name: 💾 Commit Updated trades.json
         run: |
           git config --global user.name "sniper-bot"
           git config --global user.email "sniper@bot.com"
           git add trades.json
-          git commit -m "🔄 Auto update: trades.json after sniper engine" || echo "No changes to commit"
-          git push
+          git diff --cached --quiet || git commit -m "🔄 Updated trades.json from sniper engine"
+          git push || echo "No new changes to push"
