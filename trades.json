@@ -4,17 +4,17 @@
     "symbol": "HDFCLIFE",
     "type": "Cash",
     "entry": 771.25,
-    "cmp": 771.25,
+    "cmp": 775.60,  // ✅ Updated CMP
     "target": 786.68,
     "sl": 751.97,
     "pop": "80%",
     "action": "Buy",
-    "sector": "Neutral",
-    "tags": ["RSI✅", "MACD✅", "ADX✅"],
+    "sector": "Insurance ✅",
+    "tags": ["RSI✅", "MACD✅", "ADX✅", "High Volume✅"],
     "status": "Open",
     "exit_date": "-",
     "holding_days": 0,
-    "pnl": 0.0,
-    "return_pct": "0%"
+    "pnl": 4.35,  // ✅ Updated P&L
+    "return_pct": "0.56%" // ✅ Updated %
   }
 ]
