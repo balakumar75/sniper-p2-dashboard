@@ -41,10 +41,7 @@ SECTOR_MAP = {
     "COLPAL": "FMCG",
     "BEL": "Defense",
     "HAL": "Defense",
-    "DLF": "Realty",
-    "DIVISLAB": "Pharma",
-    "HINDALCO": "Metals",
-    "TATACONSUM": "FMCG"
+    "DLF": "Realty"
 }
 
 def fetch_cmp(symbol):
@@ -56,6 +53,26 @@ def fetch_cmp(symbol):
         print(f"❌ Error fetching CMP for {symbol}: {e}")
         return None
 
+def generate_tags(symbol, cmp):
+    tags = []
+    if random.choice([True, False]):
+        tags.append("RSI > 55")
+    if random.choice([True, False]):
+        tags.append("VWAP Support")
+    if random.choice([True, False]):
+        tags.append("OBV Confirmed")
+    if random.choice([True, False]):
+        tags.append("Breakout Structure ✅")
+    if random.choice([True, False]):
+        tags.append("Trap Zone Risk ⚠️")
+    if random.choice([True, False]):
+        tags.append("CupBreakout ✅")
+    if random.choice([True, False]):
+        tags.append("Squeeze On – Waiting")
+    if random.choice([True, False]):
+        tags.append("ICT FVG Zone")
+    return tags
+
 def generate_trade_signal(symbol, cmp):
     if cmp is None:
         return None
@@ -63,9 +80,10 @@ def generate_trade_signal(symbol, cmp):
     entry = round(cmp, 2)
     target = round(cmp * 1.018, 2)
     sl = round(cmp * 0.985, 2)
-    pop_score = random.choice([83, 85, 87, 90, 92])
+    pop_score = random.choice([85, 87, 89, 90, 92])
     sector = SECTOR_MAP.get(symbol, "Unknown")
-    expiry = "2025-07-25"
+    tags = generate_tags(symbol, cmp)
+    expiry = "2025-07-25"  # Dummy expiry
 
     trade = {
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -75,14 +93,10 @@ def generate_trade_signal(symbol, cmp):
         "target": target,
         "sl": sl,
         "pop": f"{pop_score}%",
-        "sector": f"{sector} ✅" if sector != "Unknown" else "Unknown",
-        "tags": ["RSI > 55", "VWAP Support", "OBV Confirmed"],
+        "sector": sector + " ✅" if sector != "Unknown" else "Unknown",
+        "tags": tags,
         "expiry": expiry,
         "status": "Open",
-        "exit_date": "-",
-        "holding": "-",
-        "pnl": "–",
-        "return": "-",
         "action": "Buy"
     }
 
