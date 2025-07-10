@@ -1,70 +1,40 @@
 import json
-from datetime import datetime, date
+from datetime import datetime
 
 def update_trade_status(trades, latest_prices):
-    updated_trades = []
+    updated = []
 
     for trade in trades:
-        symbol = trade["symbol"].split()[0]
+        symbol = trade["symbol"].split()[0]  # 'CIPLA JUL FUT' → 'CIPLA'
         entry = trade["entry"]
         target = trade["target"]
         sl = trade["sl"]
-        action = trade.get("action", "Buy")
-
-        # Date and Holding
-        trade_date = datetime.strptime(trade.get("date", str(date.today())), "%Y-%m-%d").date()
-        today = date.today()
-        holding_days = (today - trade_date).days
-
         cmp = latest_prices.get(symbol)
 
-        if cmp is None:
-            status = "Open"
-            pnl = "-"
-            return_pct = "-"
-        else:
-            if action == "Buy":
-                if cmp >= target:
-                    status = "Target Hit"
-                    pnl = cmp - entry
-                    return_pct = f"{round(((cmp - entry) / entry) * 100, 2)}%"
-                elif cmp <= sl:
-                    status = "SL Hit"
-                    pnl = cmp - entry
-                    return_pct = f"{round(((cmp - entry) / entry) * 100, 2)}%"
-                else:
-                    status = "Open"
-                    pnl = cmp - entry
-                    return_pct = f"{round(((cmp - entry) / entry) * 100, 2)}%"
-            else:
-                # For short trades (Sell)
-                if cmp <= target:
-                    status = "Target Hit"
-                    pnl = entry - cmp
-                    return_pct = f"{round(((entry - cmp) / entry) * 100, 2)}%"
-                elif cmp >= sl:
-                    status = "SL Hit"
-                    pnl = entry - cmp
-                    return_pct = f"{round(((entry - cmp) / entry) * 100, 2)}%"
-                else:
-                    status = "Open"
-                    pnl = entry - cmp
-                    return_pct = f"{round(((entry - cmp) / entry) * 100, 2)}%"
+        trade["status"] = "Open"
+        trade["exit_date"] = "-"
+        trade["holding"] = "-"
+        trade["pnl"] = "-"
+        trade["return_pct"] = "-"
 
-        # Finalize trade
-        trade.update({
-            "status": status,
-            "cmp": cmp if cmp is not None else "-",
-            "pnl": f"{round(pnl, 2)}" if isinstance(pnl, (int, float)) else pnl,
-            "return_pct": return_pct,
-            "holding": holding_days,
-            "exit_date": today.strftime("%Y-%m-%d") if status != "Open" else "-"
-        })
+        if cmp:
+            pnl = cmp - entry
+            return_pct = round((pnl / entry) * 100, 2)
+            trade["return_pct"] = f"{return_pct}%"
+            trade["pnl"] = f"{round(pnl, 2)}"
 
-        updated_trades.append(trade)
+            if cmp >= target:
+                trade["status"] = "Target Hit"
+                trade["exit_date"] = datetime.now().strftime("%Y-%m-%d")
+                trade["holding"] = (datetime.now() - datetime.strptime(trade["date"], "%Y-%m-%d")).days
+            elif cmp <= sl:
+                trade["status"] = "SL Hit"
+                trade["exit_date"] = datetime.now().strftime("%Y-%m-%d")
+                trade["holding"] = (datetime.now() - datetime.strptime(trade["date"], "%Y-%m-%d")).days
 
-    return updated_trades
+        updated.append(trade)
 
+    return updated
 
 def run_trade_updater():
     try:
@@ -74,17 +44,17 @@ def run_trade_updater():
         print("❌ trades.json not found.")
         return
 
-    # Simulated CMP (replace this with real API if needed)
+    # 🔄 Replace this simulated CMP logic with Kite API or real feed soon
     latest_prices = {
-        trade["symbol"].split()[0]: trade["entry"] * 1.008 for trade in trades
+        trade["symbol"].split()[0]: trade["entry"] * 1.01 for trade in trades
     }
 
-    updated_trades = update_trade_status(trades, latest_prices)
+    updated = update_trade_status(trades, latest_prices)
 
     with open("trades.json", "w") as f:
-        json.dump(updated_trades, f, indent=2)
+        json.dump(updated, f, indent=2)
 
-    print(f"✅ Updated {len(updated_trades)} trades with CMP, P&L, status, and holding days.")
+    print(f"✅ {len(updated)} trades updated with status and P&L")
 
 if __name__ == "__main__":
     run_trade_updater()
