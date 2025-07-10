@@ -1,35 +1,36 @@
 import json
-import time
 from utils import fetch_cmp, generate_trade_signal
 
-# ✅ Full NSE 100 Stocks List
-NSE_100 = [
-    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "KOTAKBANK", "SBIN", "AXISBANK", "ITC",
-    "BHARTIARTL", "BAJFINANCE", "ASIANPAINT", "HINDUNILVR", "MARUTI", "SUNPHARMA", "TITAN", "ULTRACEMCO", "HCLTECH", "WIPRO",
-    "POWERGRID", "NTPC", "INDUSINDBK", "JSWSTEEL", "M&M", "NESTLEIND", "SBILIFE", "TECHM", "UPL", "DIVISLAB",
-    "HINDALCO", "TATACONSUM", "TATASTEEL", "TATAMOTORS", "VEDL", "BRITANNIA", "DLF", "GAIL", "AMBUJACEM", "ICICIPRULI",
-    "PIDILITIND", "SHREECEM", "SIEMENS", "LTIM", "HAVELLS", "TVSMOTOR", "SRF", "ABB", "APOLLOHOSP", "BOSCHLTD",
-    "AUROPHARMA", "BANKBARODA", "BIOCON", "CANBK", "CHOLAFIN", "HINDPETRO", "IGL", "IOC", "JINDALSTEL", "MANAPPURAM",
-    "MUTHOOTFIN", "RECLTD", "SAIL", "TATAPOWER", "TRENT", "UNIONBANK", "ZEEL", "CIPLA", "EICHERMOT", "ADANIENT",
-    "GRASIM", "BAJAJ-AUTO", "HEROMOTOCO", "DRREDDY", "COALINDIA", "ADANIPORTS", "DLF", "INDIGO", "BAJAJFINSV", "ICICIGI",
-    "NAUKRI", "MPHASIS", "LUPIN", "PEL", "MCDOWELL-N", "COLPAL", "IEX", "GUJGASLTD", "MCX", "IRCTC",
-    "IDFCFIRSTB", "INDIAMART", "BANDHANBNK", "ESCORTS", "BEL", "TATACHEM", "ABCAPITAL", "VOLTAS", "HAL", "CUMMINSIND"
-]
-
 def generate_sniper_trades():
+    symbols = [
+        "CIPLA", "SUNPHARMA", "RELIANCE", "HDFCBANK", "ICICIBANK", "SBIN", "INFY", "TCS", "WIPRO", "ITC",
+        "HINDUNILVR", "LT", "POWERGRID", "NTPC", "ASIANPAINT", "BAJFINANCE", "AXISBANK", "KOTAKBANK", "TITAN",
+        "EICHERMOT", "TATAMOTORS", "TATASTEEL", "JSWSTEEL", "ADANIENT", "ADANIPORTS", "DRREDDY", "COLPAL", "BEL",
+        "HAL", "DLF", "DIVISLAB", "INDUSINDBK", "TECHM", "HCLTECH", "UPL", "GRASIM", "ULTRACEMCO", "BHARTIARTL",
+        "MARUTI", "BAJAJ_AUTO", "HEROMOTOCO", "BPCL", "IOC", "HINDALCO", "VEDL", "COALINDIA", "M&M", "AMBUJACEM",
+        "SBILIFE", "ICICIGI", "ICICIPRULI", "TATACONSUM", "BRITANNIA", "DABUR", "GODREJCP", "PIDILITIND", "SHREECEM",
+        "NAUKRI", "HAVELLS", "BAJAJFINSV", "CHOLAFIN", "MUTHOOTFIN", "PEL", "SRF", "TORNTPHARM", "APOLLOHOSP",
+        "GLAND", "CROMPTON", "BOSCHLTD", "TRENT", "ZOMATO", "DMART", "IRCTC", "MCX", "IEX", "GUJGASLTD", "ZEEL",
+        "IDFCFIRSTB", "INDIAMART", "BANDHANBNK", "TATAPOWER", "PFC", "ONGC", "JSPL", "CONCOR", "ABB", "PAGEIND"
+    ]
+
     trades = []
-    for symbol in NSE_100:
+
+    for symbol in symbols:
         print(f"🔍 Processing {symbol}...")
         cmp = fetch_cmp(symbol)
-        time.sleep(0.75)  # ⏱️ Rate limit control for API
-        signal = generate_trade_signal(symbol, cmp)
-        if signal:
-            trades.append(signal)
-        else:
-            print(f"⚠️ No trade signal for {symbol}")
-    return trades
+        trade = generate_trade_signal(symbol, cmp)
+        if trade:
+            trades.append(trade)
 
-def save_trades_to_json(trades, filename='trades.json'):
-    with open(filename, 'w') as f:
+    with open("trades.json", "w") as f:
         json.dump(trades, f, indent=2)
-    print(f"✅ {len(trades)} trades saved to {filename}")
+
+    print(f"✅ {len(trades)} trades generated and saved to trades.json")
+
+def save_trades_to_json(trades):
+    with open("trades.json", "w") as f:
+        json.dump(trades, f, indent=2)
+
+if __name__ == "__main__":
+    generate_sniper_trades()
