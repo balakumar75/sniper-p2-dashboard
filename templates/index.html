@@ -8,16 +8,79 @@
         h1 { color: #2ecc71; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #444; padding: 10px; text-align: center; }
-        th { background-color: #222; }
-        tr:nth-child(even) { background-color: #1e1e1e; }
+        th { background-color: #333; }
+        tr:nth-child(even) { background-color: #1a1a1a; }
         .buy { color: #2ecc71; font-weight: bold; }
         .sell { color: #e74c3c; font-weight: bold; }
-        .footer { margin-top: 20px; font-size: 12px; color: #888; }
+        select, label { margin-right: 10px; padding: 5px; background-color: #222; color: #eee; border: 1px solid #555; }
     </style>
+    <script>
+        function filterTable() {
+            const statusFilter = document.getElementById("statusFilter").value;
+            const actionFilter = document.getElementById("actionFilter").value;
+            const popFilter = document.getElementById("popFilter").value;
+            const sectorFilter = document.getElementById("sectorFilter").value;
+
+            const rows = document.querySelectorAll("table tbody tr");
+            rows.forEach(row => {
+                const status = row.dataset.status;
+                const action = row.dataset.action;
+                const pop = parseInt(row.dataset.pop || "0");
+                const sector = row.dataset.sector;
+
+                const statusMatch = statusFilter === "All" || status === statusFilter;
+                const actionMatch = actionFilter === "All" || action === actionFilter;
+                const popMatch = pop >= parseInt(popFilter);
+                const sectorMatch = sectorFilter === "All" || sector === sectorFilter;
+
+                if (statusMatch && actionMatch && popMatch && sectorMatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+    </script>
 </head>
 <body>
     <h1>Sniper Trades</h1>
-    
+
+    <div>
+        <label>Status:
+            <select id="statusFilter" onchange="filterTable()">
+                <option>All</option>
+                <option>Open</option>
+                <option>Target Hit</option>
+                <option>SL Hit</option>
+            </select>
+        </label>
+
+        <label>Action:
+            <select id="actionFilter" onchange="filterTable()">
+                <option>All</option>
+                <option>Buy</option>
+                <option>Sell</option>
+            </select>
+        </label>
+
+        <label>PoP > 
+            <select id="popFilter" onchange="filterTable()">
+                <option value="0">0%</option>
+                <option value="85">85%</option>
+                <option value="90">90%</option>
+            </select>
+        </label>
+
+        <label>Sector:
+            <select id="sectorFilter" onchange="filterTable()">
+                <option>All</option>
+                {% for trade in trades %}
+                    <option>{{ trade.sector }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+
     {% if trades %}
     <table>
         <thead>
@@ -44,24 +107,24 @@
         </thead>
         <tbody>
             {% for trade in trades %}
-            <tr>
-                <td>{{ trade.get('date', '-') }}</td>
+            <tr data-status="{{ trade.status }}" data-action="{{ trade.action }}" data-pop="{{ trade.pop | replace('%', '') }}" data-sector="{{ trade.sector }}">
+                <td>{{ trade.date }}</td>
                 <td>{{ trade.symbol }}</td>
                 <td>{{ trade.type }}</td>
                 <td>{{ trade.entry }}</td>
                 <td>{{ trade.target }}</td>
                 <td>{{ trade.sl }}</td>
-                <td>{{ trade.get('cmp', '-') }}</td>
-                <td>{{ trade.get('cmp_updated', '-') }}</td>
+                <td>{{ trade.cmp }}</td>
+                <td>{{ trade.cmp_updated }}</td>
                 <td>{{ trade.pop }}</td>
                 <td>{{ trade.sector }}</td>
                 <td>{{ trade.tags | join(', ') }}</td>
-                <td>{{ trade.get('expiry', '-') }}</td>
+                <td>{{ trade.expiry }}</td>
                 <td>{{ trade.status }}</td>
-                <td>{{ trade.get('exit_date', '-') }}</td>
-                <td>{{ trade.get('holding', '-') }}</td>
-                <td>{{ trade.get('pnl', '-') }}</td>
-                <td>{{ trade.get('return_pct', '-') }}</td>
+                <td>{{ trade.exit_date }}</td>
+                <td>{{ trade.holding }}</td>
+                <td>{{ trade.pnl }}</td>
+                <td>{{ trade.return_pct }}</td>
                 <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
             </tr>
             {% endfor %}
@@ -70,9 +133,5 @@
     {% else %}
         <p>No trades found.</p>
     {% endif %}
-
-    <div class="footer">
-        Updated via Sniper Dashboard | Render + Zerodha Integration
-    </div>
 </body>
 </html>
