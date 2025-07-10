@@ -1,89 +1,39 @@
 import json
-import datetime
-import os
-from utils import fetch_cmp, calculate_pop, get_sector, detect_tags
+from datetime import datetime
+from fno_stocks import get_fno_stocks
+from utils import fetch_cmp, validate_structure, calculate_pop, get_sector, detect_tags
 
-# ✅ Inline F&O Stock List
-FNO_LIST = [
-    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "SBIN",
-    "AXISBANK", "KOTAKBANK", "ITC", "MARUTI", "BHARTIARTL", "SUNPHARMA",
-    "TITAN", "TATASTEEL", "HINDUNILVR", "WIPRO", "NTPC", "ONGC", "BAJAJFINSV",
-    "BAJFINANCE", "POWERGRID", "ULTRACEMCO", "ADANIENT", "COALINDIA",
-    "TECHM", "BPCL", "HCLTECH", "JSWSTEEL", "CIPLA", "DIVISLAB", "NESTLEIND",
-    "DRREDDY", "TATACONSUM", "BRITANNIA", "GRASIM", "HINDALCO", "HEROMOTOCO",
-    "EICHERMOT", "M&M", "BAJAJ-AUTO", "APOLLOHOSP", "SBILIFE", "ICICIPRULI",
-    "HDFCLIFE", "INDUSINDBK", "SHREECEM", "ASIANPAINT", "ADANIPORTS"
-]
+TRADES_FILE = "trades.json"
 
 def generate_sniper_trades():
-    print("🚀 Starting Sniper Engine...\n")
-    today = datetime.datetime.now().strftime('%Y-%m-%d')
-    valid_trades = []
-    failed_symbols = []
+    print("🚀 Sniper Engine Starting...")
 
-    for symbol in FNO_LIST:
-        print(f"🔍 Processing: {symbol}")
+    try:
+        symbols = get_fno_stocks()
+        print(f"📈 Loaded {len(symbols)} F&O stocks")
+    except Exception as e:
+        print(f"❌ Error loading F&O stocks: {e}")
+        return []
+
+    valid_trades = []
+
+    for symbol in symbols:
         try:
+            print(f"🔍 Processing {symbol}...")
+
             cmp = fetch_cmp(symbol)
             if cmp is None:
-                print(f"❌ Could not fetch CMP for {symbol}")
-                failed_symbols.append(symbol)
+                print(f"⚠️ Skipping {symbol} — CMP not found")
                 continue
 
-            # Dummy structure logic (to be replaced with validate_structure)
-            structure_data = {"rsi": 60, "macd": "bullish", "adx": 22, "volume": 2000000, "avg_volume": 1000000}
+            structure_ok = validate_structure(symbol)
+            if not structure_ok:
+                print(f"⚠️ Skipping {symbol} — Structure not valid")
+                continue
 
-            entry = cmp
-            target = round(cmp * 1.02, 2)
-            sl = round(cmp * 0.975, 2)
-            pop = calculate_pop(symbol, entry, target, sl)
+            pop = calculate_pop(symbol)
             sector = get_sector(symbol)
-            tags = detect_tags(symbol, structure_data)
+            tags = detect_tags(symbol)
 
-            trade = {
-                "date": today,
-                "symbol": symbol,
-                "type": "Cash",
-                "entry": entry,
-                "cmp": cmp,
-                "target": target,
-                "sl": sl,
-                "pop": f"{pop}%",
-                "action": "Buy",
-                "sector": sector,
-                "tags": tags,
-                "status": "Open"
-            }
-
-            valid_trades.append(trade)
-            print(f"✅ Trade generated: {symbol} @ {cmp}")
-
-        except Exception as e:
-            print(f"❌ Error processing {symbol}: {e}")
-            failed_symbols.append(symbol)
-
-    print(f"\n📊 Total Valid Trades: {len(valid_trades)}")
-    print(f"❌ Failed Symbols: {failed_symbols}")
-
-    # ✅ Step 1 Debug: Print the final list of trades before writing
-    print("📋 Final Trades Snapshot:")
-    print(json.dumps(valid_trades, indent=2))
-
-    return valid_trades
-
-
-def save_trades_to_json(trades):
-    try:
-        with open("trades.json", "w", encoding="utf-8") as f:
-            json.dump(trades, f, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
-        print(f"✅ Saved {len(trades)} trades to trades.json")
-    except Exception as e:
-        print(f"❌ Error saving trades.json: {e}")
-
-
-if __name__ == "__main__":
-    trades = generate_sniper_trades()
-    save_trades_to_json(trades)
-    print("✅ Sniper run complete.\n")
+            entry = round(cmp, 2)
+            target = round(entry * 1.02, 2)   # Exampl*
