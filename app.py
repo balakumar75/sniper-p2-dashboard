@@ -2,11 +2,17 @@ from flask import Flask, render_template
 import json
 import os
 
+# Import the trade updater logic
+from trade_updater import run_trade_updater
+
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    trades_file = os.path.join('data', 'trades.json')
+    # Update the trades before rendering
+    run_trade_updater()
+
+    trades_file = 'trades.json'
     trades = []
 
     if os.path.exists(trades_file):
