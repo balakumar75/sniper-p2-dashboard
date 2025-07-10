@@ -1,7 +1,18 @@
 import json
 import datetime
 from utils import fetch_cmp, validate_structure, calculate_pop, get_sector, detect_tags
-from fno_stocks import FNO_LIST  # List of NSE F&O stocks
+
+# ✅ Inline F&O Stock List (No need for fno_stocks.py)
+FNO_LIST = [
+    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "LT", "SBIN",
+    "AXISBANK", "KOTAKBANK", "ITC", "MARUTI", "BHARTIARTL", "SUNPHARMA",
+    "TITAN", "TATASTEEL", "HINDUNILVR", "WIPRO", "NTPC", "ONGC", "BAJAJFINSV",
+    "BAJFINANCE", "POWERGRID", "ULTRACEMCO", "ADANIENT", "COALINDIA",
+    "TECHM", "BPCL", "HCLTECH", "JSWSTEEL", "CIPLA", "DIVISLAB", "NESTLEIND",
+    "DRREDDY", "TATACONSUM", "BRITANNIA", "GRASIM", "HINDALCO", "HEROMOTOCO",
+    "EICHERMOT", "M&M", "BAJAJ-AUTO", "APOLLOHOSP", "SBILIFE", "ICICIPRULI",
+    "HDFCLIFE", "INDUSINDBK", "SHREECEM", "ASIANPAINT", "ADANIPORTS"
+]
 
 def run_sniper_engine():
     print("🚀 Starting Sniper Engine...\n")
@@ -18,13 +29,12 @@ def run_sniper_engine():
                 failed_symbols.append(symbol)
                 continue
 
-            # Validate technical structure (RSI, MACD, Volume, ADX, etc.)
+            # Validate structure
             structure_ok, structure_data = validate_structure(symbol)
             if not structure_ok:
                 print(f"⚠️ Structure failed for {symbol}")
                 continue
 
-            # Calculate target, SL, PoP%
             entry = cmp
             target = round(cmp * 1.02, 2)
             sl = round(cmp * 0.975, 2)
@@ -35,7 +45,7 @@ def run_sniper_engine():
             trade = {
                 "date": today,
                 "symbol": symbol,
-                "type": "Cash",  # default, override if Futures/Options
+                "type": "Cash",  # Default type
                 "entry": entry,
                 "cmp": cmp,
                 "target": target,
