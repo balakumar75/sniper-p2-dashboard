@@ -12,7 +12,8 @@ def index():
     # Update the trades before rendering
     run_trade_updater()
 
-    trades_file = 'trades.json'
+    # ✅ Corrected path to data/trades.json
+    trades_file = os.path.join("data", "trades.json")
     trades = []
 
     if os.path.exists(trades_file):
