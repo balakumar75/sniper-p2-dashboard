@@ -1,0 +1,38 @@
+name: Run Sniper Engine Daily
+
+on:
+  schedule:
+    - cron: '15 4 * * 1-5'  # 10:15 AM IST Mon–Fri
+  workflow_dispatch:       # Manual trigger button
+
+jobs:
+  sniper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Sniper Engine
+        run: python sniper_run_all.py
+
+      - name: Update Trade Stats
+        run: python trade_updater.py
+
+      - name: Commit updated trades.json
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add trades.json
+          git commit -m "🔁 Auto-update trades.json [cron]"
+          git push
