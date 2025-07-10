@@ -35,17 +35,17 @@
         {% for trade in trades %}
         <tr>
             <td>{{ trade.get('date', '-') }}</td>
-            <td>{{ trade.symbol }}</td>
-            <td>{{ trade.type }}</td>
-            <td>{{ trade.entry }}</td>
-            <td>{{ trade.target }}</td>
-            <td>{{ trade.sl }}</td>
-            <td>{{ trade.pop }}</td>
-            <td>{{ trade.sector }}</td>
-            <td>{{ trade.expiry }}</td>
-            <td>{{ trade.status }}</td>
-            <td>{{ trade.pnl }}</td>
-            <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
+            <td>{{ trade["symbol"] }}</td>
+            <td>{{ trade["type"] }}</td>
+            <td>{{ trade["entry"] }}</td>
+            <td>{{ trade["target"] }}</td>
+            <td>{{ trade["sl"] }}</td>
+            <td>{{ trade["pop"] }}</td>
+            <td>{{ trade.get("sector", "-") }}</td>
+            <td>{{ trade.get("expiry", "-") }}</td>
+            <td>{{ trade.get("status", "-") }}</td>
+            <td>{{ trade.get("pnl", "-") }}</td>
+            <td class="{{ 'buy' if trade['action'] == 'Buy' else 'sell' }}">{{ trade["action"] }}</td>
         </tr>
         {% endfor %}
     </table>
