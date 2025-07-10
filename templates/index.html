@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <title>Sniper Trades</title>
     <style>
-        body { font-family: Arial; background-color: #111; color: #eee; margin: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #111; color: #eee; margin: 20px; }
         h1 { color: #2ecc71; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #444; padding: 10px; text-align: center; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: center; }
         th { background-color: #333; }
         tr:nth-child(even) { background-color: #1e1e1e; }
         .buy { color: #2ecc71; font-weight: bold; }
         .sell { color: #e74c3c; font-weight: bold; }
+        .status-open { color: #f1c40f; font-weight: bold; }
+        .status-hit { color: #2ecc71; font-weight: bold; }
+        .status-sl { color: #e74c3c; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -29,23 +32,31 @@
             <th>Sector</th>
             <th>Expiry</th>
             <th>Status</th>
-            <th>P&L</th>
+            <th>Exit Date</th>
+            <th>Holding</th>
+            <th>P&L (₹)</th>
+            <th>Return %</th>
             <th>Action</th>
         </tr>
         {% for trade in trades %}
         <tr>
             <td>{{ trade.get('date', '-') }}</td>
-            <td>{{ trade["symbol"] }}</td>
-            <td>{{ trade["type"] }}</td>
-            <td>{{ trade["entry"] }}</td>
-            <td>{{ trade["target"] }}</td>
-            <td>{{ trade["sl"] }}</td>
-            <td>{{ trade["pop"] }}</td>
-            <td>{{ trade.get("sector", "-") }}</td>
-            <td>{{ trade.get("expiry", "-") }}</td>
-            <td>{{ trade.get("status", "-") }}</td>
-            <td>{{ trade.get("pnl", "-") }}</td>
-            <td class="{{ 'buy' if trade['action'] == 'Buy' else 'sell' }}">{{ trade["action"] }}</td>
+            <td>{{ trade.get('symbol', '-') }}</td>
+            <td>{{ trade.get('type', '-') }}</td>
+            <td>{{ trade.get('entry', '-') }}</td>
+            <td>{{ trade.get('target', '-') }}</td>
+            <td>{{ trade.get('sl', '-') }}</td>
+            <td>{{ trade.get('pop', '-') }}</td>
+            <td>{{ trade.get('sector', '-') }}</td>
+            <td>{{ trade.get('expiry', '-') }}</td>
+            <td class="{% if trade.get('status') == 'Target Hit' %}status-hit{% elif trade.get('status') == 'SL Hit' %}status-sl{% else %}status-open{% endif %}">
+                {{ trade.get('status', '-') }}
+            </td>
+            <td>{{ trade.get('exit_date', '-') }}</td>
+            <td>{{ trade.get('holding_days', '-') }}</td>
+            <td>{{ trade.get('pnl', '-') }}</td>
+            <td>{{ trade.get('return_pct', '-') }}</td>
+            <td class="{{ 'buy' if trade.get('action') == 'Buy' else 'sell' }}">{{ trade.get('action', '-') }}</td>
         </tr>
         {% endfor %}
     </table>
