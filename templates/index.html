@@ -6,7 +6,6 @@
     <style>
         body { font-family: Arial; background-color: #111; color: #eee; margin: 20px; }
         h1 { color: #2ecc71; }
-        select, label { margin: 10px; padding: 5px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #444; padding: 10px; text-align: center; }
         th { background-color: #333; }
@@ -17,105 +16,49 @@
 </head>
 <body>
     <h1>Sniper Trades</h1>
-
-    <label>Status:
-        <select id="statusFilter">
-            <option value="All">All</option>
-            <option value="Open">Open</option>
-            <option value="Closed">Closed</option>
-        </select>
-    </label>
-
-    <label>Action:
-        <select id="actionFilter">
-            <option value="All">All</option>
-            <option value="Buy">Buy</option>
-            <option value="Sell">Sell</option>
-        </select>
-    </label>
-
-    <label>PoP > 85%:
-        <input type="checkbox" id="popFilter">
-    </label>
-
-    <label>Sector:
-        <select id="sectorFilter">
-            <option value="All">All</option>
-            {% for trade in trades %}
-                {% if trade.sector %}
-                    <option value="{{ trade.sector }}">{{ trade.sector }}</option>
-                {% endif %}
-            {% endfor %}
-        </select>
-    </label>
-
     {% if trades %}
-    <table id="tradesTable">
-        <thead>
+    <table>
         <tr>
-            <th>Date</th><th>Symbol</th><th>Type</th><th>Entry</th><th>Target</th><th>SL</th>
-            <th>PoP</th><th>Sector</th><th>Tags</th><th>Expiry</th><th>Status</th>
-            <th>Exit Date</th><th>Holding</th><th>P&L (₹)</th><th>Return %</th><th>Action</th>
+            <th>Date</th>
+            <th>Symbol</th>
+            <th>Type</th>
+            <th>Entry</th>
+            <th>Target</th>
+            <th>SL</th>
+            <th>PoP</th>
+            <th>Sector</th>
+            <th>Tags</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Exit Date</th>
+            <th>Holding</th>
+            <th>P&L (₹)</th>
+            <th>Return %</th>
+            <th>Action</th>
         </tr>
-        </thead>
-        <tbody>
         {% for trade in trades %}
         <tr>
-            <td>{{ trade.date }}</td>
-            <td>{{ trade.symbol }}</td>
-            <td>{{ trade.type }}</td>
-            <td>{{ trade.entry }}</td>
-            <td>{{ trade.target }}</td>
-            <td>{{ trade.sl }}</td>
-            <td>{{ trade.pop }}</td>
-            <td>{{ trade.sector }}</td>
-            <td>{{ trade.tags | join(', ') }}</td>
-            <td>{{ trade.expiry or '-' }}</td>
-            <td>{{ trade.status or '-' }}</td>
-            <td>{{ trade.exit_date or '-' }}</td>
-            <td>{{ trade.holding or '-' }}</td>
-            <td>{{ trade.pnl or '-' }}</td>
-            <td>{{ trade.return_pct or '-' }}</td>
-            <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
+            <td>{{ trade["date"] }}</td>
+            <td>{{ trade["symbol"] }}</td>
+            <td>{{ trade["type"] }}</td>
+            <td>{{ trade["entry"] }}</td>
+            <td>{{ trade["target"] }}</td>
+            <td>{{ trade["sl"] }}</td>
+            <td>{{ trade["pop"] }}</td>
+            <td>{{ trade["sector"] }}</td>
+            <td>{{ trade["tags"] | join(', ') }}</td>
+            <td>{{ trade["expiry"] }}</td>
+            <td>{{ trade["status"] }}</td>
+            <td>{{ trade["exit_date"] }}</td>
+            <td>{{ trade["holding"] }}</td>
+            <td>{{ trade["pnl"] }}</td>
+            <td>{{ trade["return"] }}</td>
+            <td class="{{ 'buy' if trade['action'] == 'Buy' else 'sell' }}">{{ trade["action"] }}</td>
         </tr>
         {% endfor %}
-        </tbody>
     </table>
     {% else %}
         <p>No trades found.</p>
     {% endif %}
-
-    <script>
-        const rows = document.querySelectorAll("#tradesTable tbody tr");
-
-        document.getElementById("statusFilter").addEventListener("change", filterRows);
-        document.getElementById("actionFilter").addEventListener("change", filterRows);
-        document.getElementById("sectorFilter").addEventListener("change", filterRows);
-        document.getElementById("popFilter").addEventListener("change", filterRows);
-
-        function filterRows() {
-            const status = document.getElementById("statusFilter").value;
-            const action = document.getElementById("actionFilter").value;
-            const sector = document.getElementById("sectorFilter").value;
-            const popCheck = document.getElementById("popFilter").checked;
-
-            rows.forEach(row => {
-                const cells = row.getElementsByTagName("td");
-                const rowStatus = cells[10].innerText;
-                const rowAction = cells[15].innerText;
-                const rowSector = cells[7].innerText;
-                const rowPoP = parseInt(cells[6].innerText);
-
-                let show = true;
-
-                if (status !== "All" && rowStatus !== status) show = false;
-                if (action !== "All" && rowAction !== action) show = false;
-                if (sector !== "All" && rowSector !== sector) show = false;
-                if (popCheck && (isNaN(rowPoP) || rowPoP <= 85)) show = false;
-
-                row.style.display = show ? "" : "none";
-            });
-        }
-    </script>
 </body>
 </html>
