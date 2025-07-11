@@ -15,8 +15,8 @@ def get_trades():
                 if isinstance(trades, list):
                     return jsonify(trades), 200  # ✅ Always return 200
                 else:
-                    print("⚠️ Invalid data format in trades.json")
-                    return jsonify([]), 200
+    print("⚠️ trades.json found but contains no trades.")
+    return jsonify([]), 200
         else:
             print("⚠️ trades.json file not found.")
             return jsonify([]), 200
