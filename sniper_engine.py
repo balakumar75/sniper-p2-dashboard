@@ -28,7 +28,7 @@ def generate_sniper_trades():
                 "cmp": cmp,
                 "target": target,
                 "sl": sl,
-                "pop": "85%",
+                "pop_pct": "85%",
                 "action": "Buy",
                 "sector": "Neutral",
                 "tags": ["RSI✅", "MACD✅"],
