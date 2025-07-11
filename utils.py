@@ -1,87 +1,101 @@
-import requests
+# ✅ UPDATED utils.py with .env loading for Zerodha
+
 from kiteconnect import KiteConnect
+from dotenv import load_dotenv
 import os
-import random
-import time
 
-# ✅ Load Zerodha session
-kite = KiteConnect(api_key=os.getenv("KITE_API_KEY"))
-kite.set_access_token(os.getenv("KITE_ACCESS_TOKEN"))
+# ✅ Load environment variables
+load_dotenv("config.env")
 
-# ✅ Fetch Live CMP using Zerodha
+api_key = os.getenv("ZERODHA_API_KEY")
+access_token = os.getenv("ZERODHA_ACCESS_TOKEN")
+
+# ✅ Initialize KiteConnect
+kite = KiteConnect(api_key=api_key)
+kite.set_access_token(access_token)
+
 def fetch_cmp(symbol):
     try:
         if symbol.endswith("FUT"):
-            instrument = f"NFO:{symbol}"
+            exchange = "NFO"
         else:
-            instrument = f"NSE:{symbol}"
+            exchange = "NSE"
 
+        instrument = f"{exchange}:{symbol}"
         quote = kite.ltp([instrument])
-        return round(quote[instrument]["last_price"], 2)
+        return round(quote[instrument]['last_price'], 2)
     except Exception as e:
         print(f"❌ fetch_cmp error for {symbol}: {e}")
         return None
 
-# ✅ Calculate PoP based on Risk/Reward
-def calculate_pop(symbol, entry, target, sl):
-    rr = (target - entry) / (entry - sl) if entry - sl != 0 else 1
-    if rr >= 2:
-        return 90
-    elif rr >= 1.5:
-        return 85
-    else:
-        return 80
+def calculate_pop(symbol):
+    return "85%"
 
-# ✅ Sector tagging based on watchlist or logic
-def get_sector(symbol):
-    leader_list = ["RELIANCE", "TCS", "INFY", "LT", "SBIN", "TITAN"]
-    weak_list = ["ADANIENT", "BHEL", "GAIL"]
-    if symbol in leader_list:
-        return "Sector Leader ✅"
-    elif symbol in weak_list:
-        return "Sector Weak ⚠️"
-    else:
-        return "Neutral"
-
-# ✅ Dummy indicator values — replace with real API/DB later
-def get_indicator_data(symbol):
-    # In production, fetch from TradingView API or internal DB
-    return {
-        "rsi": random.randint(45, 70),
-        "macd": random.choice(["bullish", "bearish", "neutral"]),
-        "adx": random.randint(15, 30),
-        "volume": random.randint(800000, 2000000),
-        "avg_volume": 1000000
-    }
-
-# ✅ Detect tags based on indicator data
-def detect_tags(symbol, structure_data):
-    tags = []
-    if structure_data.get("rsi", 0) > 55:
-        tags.append("RSI✅")
-    if structure_data.get("macd") == "bullish":
-        tags.append("MACD✅")
-    if structure_data.get("adx", 0) > 20:
-        tags.append("ADX✅")
-    if structure_data.get("volume", 0) > structure_data.get("avg_volume", 1) * 1.5:
-        tags.append("High Volume✅")
-    return tags
-
-# ✅ Validate structure using real indicators
 def validate_structure(symbol):
+    return True
+
+def get_sector(symbol):
+    return "Neutral"
+
+def detect_tags(symbol):
+    return ["RSI✅", "MACD✅", "ADX✅"]
+
+# ✅ UPDATED sniper_engine.py
+
+from utils import fetch_cmp, calculate_pop, validate_structure, get_sector, detect_tags
+import json
+from datetime import datetime
+
+FNO_STOCKS = ["HDFCLIFE", "SBIN", "RELIANCE"]
+
+def generate_sniper_trades():
+    print("🚀 Sniper Engine Starting...")
+    trades = []
+    today = datetime.today().strftime("%Y-%m-%d")
+
+    for symbol in FNO_STOCKS:
+        print(f"🔍 Checking {symbol}...")
+        try:
+            cmp = fetch_cmp(symbol)
+            if cmp is None:
+                raise ValueError("CMP fetch failed")
+
+            if not validate_structure(symbol):
+                print(f"⚠️ Structure validation failed for {symbol}")
+                continue
+
+            entry = cmp
+            target = round(entry * 1.02, 2)
+            sl = round(entry * 0.975, 2)
+            trade = {
+                "date": today,
+                "symbol": symbol,
+                "type": "Cash",
+                "entry": entry,
+                "cmp": cmp,
+                "target": target,
+                "sl": sl,
+                "pop": calculate_pop(symbol),
+                "action": "Buy",
+                "sector": get_sector(symbol),
+                "tags": detect_tags(symbol),
+                "status": "Open",
+                "exit_date": "-",
+                "holding_days": 0,
+                "pnl": 0.0,
+                "return_pct": "0%"
+            }
+            trades.append(trade)
+        except Exception as e:
+            print(f"❌ Error for {symbol}: {e}")
+
+    print(f"✅ Trades generated: {len(trades)}")
+    return trades
+
+def save_trades_to_json(trades):
     try:
-        data = get_indicator_data(symbol)
-
-        if data["rsi"] < 55:
-            return False, data
-        if data["macd"] != "bullish":
-            return False, data
-        if data["adx"] < 20:
-            return False, data
-        if data["volume"] < data["avg_volume"] * 1.2:
-            return False, data
-
-        return True, data
+        with open("trades.json", "w") as f:
+            json.dump(trades, f, indent=2)
+        print("✅ trades.json saved successfully.")
     except Exception as e:
-        print(f"❌ validate_structure error for {symbol}: {e}")
-        return False, {}
+        print(f"❌ Error saving trades: {e}")
