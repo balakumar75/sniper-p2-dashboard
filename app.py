@@ -1,14 +1,29 @@
 from flask import Flask, render_template
-from trades import trades_api  # ✅ Import the API blueprint
-from trade_updater import run_trade_updater  # ✅ Optional updater logic
+import json
+import os
+
+# Import the trade updater logic
+from trade_updater import run_trade_updater
 
 app = Flask(__name__)
-app.register_blueprint(trades_api)  # ✅ Register API route
 
-@app.route("/")
+@app.route('/')
 def index():
-    run_trade_updater()  # ✅ Update trades if needed
-    return render_template("index.html")  # No need to pass trades manually
+    # Update the trades before rendering
+    run_trade_updater()
 
-if __name__ == "__main__":
+    # ✅ Load from root directory (not data/)
+    trades_file = "trades.json"
+    trades = []
+
+    if os.path.exists(trades_file):
+        with open(trades_file, 'r', encoding='utf-8') as f:
+            try:
+                trades = json.load(f)
+            except json.JSONDecodeError:
+                trades = []
+
+    return render_template('index.html', trades=trades)
+
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
