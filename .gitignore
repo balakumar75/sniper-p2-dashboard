@@ -1,2 +1,35 @@
+# ── Runtime data (generated each run) ─────────────────────────────
 data/trades.json
 trades.json
+*.csv
+logs/
+*.log
+
+# ── Secrets & environment files ───────────────────────────────────
+config.env          # Zerodha keys / tokens
+.env                # alt env-file name some setups use
+token.txt           # manual access-token dump
+
+# ── Python build / cache artefacts ────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environments ─────────────────────────────────────────
+.venv/
+.env/
+
+# ── IDE / editor folders ─────────────────────────────────────────
+.idea/
+.vscode/
+
+# ── OS junk files ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
