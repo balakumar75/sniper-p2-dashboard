@@ -1,31 +1,43 @@
 """
-config.py  – central place for:
-  • secrets coming from your existing config.env/.env
-  • Sniper threshold constants & stock universe
+Central config – Zerodha keys are read from env vars.
+Includes complete NSE-100 universe (as of Jul-20-2025).
 """
 
 import os
 from dotenv import load_dotenv
 
-# Load your existing env file (Render & local both supported)
-load_dotenv("config.env", override=False)   # or just ".env" if that’s the name
+load_dotenv("config.env", override=False)
 
-# ── Zerodha credentials (already in config.env) ───────────────────────────
-API_KEY       = os.getenv("KITE_API_KEY", "")
-API_SECRET    = os.getenv("KITE_API_SECRET", "")
-ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN", "")    # cron-refreshed daily
+# ── Zerodha credentials ───────────────────────────────────────────
+API_KEY       = os.getenv("KITE_API_KEY") or os.getenv("ZERODHA_API_KEY", "")
+API_SECRET    = os.getenv("KITE_API_SECRET") or os.getenv("ZERODHA_API_SECRET", "")
+ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN") or os.getenv("ZERODHA_ACCESS_TOKEN", "")
 
-# ── F&O universe (static snapshot for now) ────────────────────────────────
-FNO_SYMBOLS = [
-    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS",
-    "LTIM", "SBIN", "AXISBANK", "MARUTI", "BEL",
-    # …add the rest or load dynamically later…
+# ── NSE-100 universe  ─────────────────────────────────────────────
+NSE100 = [
+    # Nifty 50 + Nifty Next 50 tickers (cash symbols)
+    "RELIANCE","TCS","HDFCBANK","INFY","ICICIBANK","ITC","KOTAKBANK","LT",
+    "SBIN","AXISBANK","BHARTIARTL","BAJFINANCE","ASIANPAINT","MARUTI",
+    "SUNPHARMA","NTPC","POWERGRID","M&M","ONGC","TITAN","HCLTECH","ULTRACEMCO",
+    "TECHM","DIVISLAB","JSWSTEEL","WIPRO","HINDUNILVR","BAJAJ-AUTO","CIPLA",
+    "NESTLEIND","GRASIM","BRITANNIA","COALINDIA","UPL","BAJAJFINSV","ADANIPORTS",
+    "TATASTEEL","HEROMOTOCO","BPCL","EICHERMOT","HDFCLIFE","DRREDDY","HINDALCO",
+    "SHREECEM","SBILIFE","APOLLOHOSP","BAJAJHLDNG","DABUR","DMART","ICICIPRULI",
+    "INDUSINDBK","IOC","GODREJCP","LTI","NAUKRI","PIDILITIND","PGHH","SIEMENS",
+    "SRF","VEDL","ADANIENT","AMBUJACEM","AUBANK","BAJAJCON","BANDHANBNK",
+    "BERGEPAINT","BIOCON","BOSCHLTD","CANBK","CHOLAFIN","COLPAL","COROMANDEL",
+    "CROMPTON","DELTACORP","GAIL","GLENMARK","HINDPETRO","ICICIGI","IDEA",
+    "IGL","IRCTC","LUPIN","MUTHOOTFIN","PETRONET","PNB","RBLBANK","SAIL",
+    "TRENT","TVSMOTOR","UBL","UJJIVANSFB","VOLTAS","ZEEL"
 ]
 
-# ── Sniper-Prompt v3.1 thresholds ────────────────────────────────────────
+# For now the engine scans *all* NSE-100 stocks
+FNO_SYMBOLS = sorted(set(NSE100))
+
+# ── Sniper thresholds ────────────────────────────────────────────
 RSI_MIN          = 55
 ADX_MIN          = 20
-VOL_MULTIPLIER   = 1.5      # volume > 1.5× 20-day average
-CMP_TOLERANCE    = 0.02     # ±2 %
-OPTION_SPOT_BAND = 0.15     # ±15 %
+VOL_MULTIPLIER   = 1.5
+CMP_TOLERANCE    = 0.02
+OPTION_SPOT_BAND = 0.15
 DEFAULT_POP      = "85%"
