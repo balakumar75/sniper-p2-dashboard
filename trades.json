@@ -1,1 +1,65 @@
-[]
+[
+  {
+    "date": "2025-07-20",
+    "symbol": "HDFCLIFE",
+    "type": "Cash",
+    "entry": 738.45,
+    "cmp": 738.45,
+    "target": 753.22,
+    "sl": 719.99,
+    "pop_pct": "85%",
+    "action": "Buy",
+    "sector": "Neutral",
+    "tags": [
+      "RSI\u2705",
+      "MACD\u2705"
+    ],
+    "status": "Open",
+    "exit_date": "-",
+    "holding_days": 0,
+    "pnl": 0.0,
+    "return_pct": "0%"
+  },
+  {
+    "date": "2025-07-20",
+    "symbol": "SBIN",
+    "type": "Cash",
+    "entry": 823.35,
+    "cmp": 823.35,
+    "target": 839.82,
+    "sl": 802.77,
+    "pop_pct": "85%",
+    "action": "Buy",
+    "sector": "Neutral",
+    "tags": [
+      "RSI\u2705",
+      "MACD\u2705"
+    ],
+    "status": "Open",
+    "exit_date": "-",
+    "holding_days": 0,
+    "pnl": 0.0,
+    "return_pct": "0%"
+  },
+  {
+    "date": "2025-07-20",
+    "symbol": "RELIANCE",
+    "type": "Cash",
+    "entry": 1476,
+    "cmp": 1476,
+    "target": 1505.52,
+    "sl": 1439.1,
+    "pop_pct": "85%",
+    "action": "Buy",
+    "sector": "Neutral",
+    "tags": [
+      "RSI\u2705",
+      "MACD\u2705"
+    ],
+    "status": "Open",
+    "exit_date": "-",
+    "holding_days": 0,
+    "pnl": 0.0,
+    "return_pct": "0%"
+  }
+]
