@@ -1,27 +1,28 @@
 """
-utils.py – Zerodha helpers
+utils.py  –  Zerodha helpers
 • fetch_cmp
-• fetch_* indicators
-• NEW  fetch_option_chain  → returns CE, PE strike lists + LTP map + expiry info
+• fetch_ohlc
+• fetch_option_chain   (CE/PE lists, ltp_map, days_to_exp)
+• NEW  donchian_high_low()  → 20-day highest high / lowest low
 """
 
-import os, math, statistics, datetime
+import os, math
 from datetime import datetime as dt, timedelta
-from dotenv import load_dotenv
 import pandas as pd
+from dotenv import load_dotenv
 from kiteconnect import KiteConnect
 
-# ── env & Kite init ───────────────────────────────────────────────────────
+# ─── Env & Kite ────────────────────────────────────────────────────────────
 load_dotenv("config.env", override=False)
 
-API_KEY       = os.getenv("KITE_API_KEY")  or os.getenv("ZERODHA_API_KEY")
-ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN") or os.getenv("ZERODHA_ACCESS_TOKEN")
+API_KEY      = os.getenv("KITE_API_KEY")  or os.getenv("ZERODHA_API_KEY")
+ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN") or os.getenv("ZERODHA_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=API_KEY)
 kite.set_access_token(ACCESS_TOKEN)
 
-# ── CMP (unchanged) ───────────────────────────────────────────────────────
-def fetch_cmp(symbol):
+# ─── CMP ───────────────────────────────────────────────────────────────────
+def fetch_cmp(symbol: str):
     try:
         quote = kite.ltp(f"NSE:{symbol}")
         return quote[f"NSE:{symbol}"]["last_price"]
@@ -29,49 +30,59 @@ def fetch_cmp(symbol):
         print(f"❌ CMP error {symbol}: {e}")
         return None
 
-# ── OHLC for indicators ───────────────────────────────────────────────────
-def fetch_ohlc(symbol, days=60):
+# ─── OHLC helper ───────────────────────────────────────────────────────────
+def fetch_ohlc(symbol: str, days: int = 60):
     try:
-        end = dt.today()
-        start = end - timedelta(days=days*2)
-        inst = next(i["instrument_token"] for i in kite.instruments("NSE")
-                    if i["tradingsymbol"] == symbol)
-        data = kite.historical_data(inst, start, end, "day")
+        end, start = dt.today(), dt.today() - timedelta(days=days*2)
+        tok = next(i["instrument_token"] for i in kite.instruments("NSE")
+                   if i["tradingsymbol"] == symbol)
+        data = kite.historical_data(tok, start, end, "day")
         return pd.DataFrame(data)
     except Exception as e:
         print(f"❌ OHLC error {symbol}: {e}")
         return None
 
-# (RSI, ADX, MACD, Volume helpers as you already have)
+# ─── NEW: 20-day Donchian Channel ─────────────────────────────────────────
+def donchian_high_low(symbol: str, window: int = 20):
+    """
+    Return (highest_high, lowest_low) over <window> sessions.
+    None if OHLC unavailable.
+    """
+    df = fetch_ohlc(symbol, window + 3)
+    if df is None or df.empty: return None, None
+    hh = df["high"].iloc[-window:].max()
+    ll = df["low"].iloc[-window:].min()
+    return hh, ll
 
-# ── NEW: Option-chain fetcher ─────────────────────────────────────────────
-def fetch_option_chain(symbol):
-    """
-    Returns dict:
-    {
-      'expiry': 'Weekly' | 'Monthly',
-      'days_to_exp': int,
-      'CE': [strike1,…],
-      'PE': [strike1,…],
-      'ltp_map': {strike: ltp, …}
-    }
-    """
+# ─── Option-chain fetcher (unchanged except ltp_map & days_to_exp) ────────
+def fetch_option_chain(symbol: str):
     try:
-        # 1) find nearest monthly expiry (simplified)
         today = dt.today().date()
-        all_instruments = kite.instruments("NFO")
-        fut = next(i for i in all_instruments
+        nfo = kite.instruments("NFO")
+
+        fut = next(i for i in nfo
                    if i["segment"] == "NFO-FUT" and i["tradingsymbol"].startswith(symbol))
-        expiry_date = fut["expiry"].date()
-        days_to_exp = (expiry_date - today).days
+        exp_date = fut["expiry"].date()
+        days_to_exp = (exp_date - today).days
         expiry_type = "Weekly" if days_to_exp <= 10 else "Monthly"
 
-        # 2) pull all opt instruments for this expiry
-        chain = [i for i in all_instruments
-                 if i["name"] == symbol and i["expiry"].date() == expiry_date]
-
-        ce_list, pe_list, ltp_map = [], [], {}
+        chain = [i for i in nfo if i["name"] == symbol and i["expiry"].date() == exp_date]
         ltp_resp = kite.ltp([f"NFO:{i['tradingsymbol']}" for i in chain])
+
+        ce, pe, ltp_map = [], [], {}
         for ins in chain:
             strike = float(ins["strike"])
-            ins_key = f"NFO:{ins['tradingsymbol']}"
+            key = f"NFO:{ins['tradingsymbol']}"
+            ltp_map[strike] = ltp_resp.get(key, {}).get("last_price", 0)
+            (ce if ins["instrument_type"] == "CE" else pe).append(strike)
+
+        return {
+            "expiry": expiry_type,
+            "days_to_exp": days_to_exp,
+            "CE": sorted(set(ce)),
+            "PE": sorted(set(pe)),
+            "ltp_map": ltp_map
+        }
+    except Exception as e:
+        print(f"❌ Option chain error {symbol}: {e}")
+        return None
