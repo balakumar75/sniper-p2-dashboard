@@ -10,8 +10,8 @@
     th,td{ border:1px solid #333; padding:6px 8px; text-align:center; }
     th   { background:#222; }
     tr:nth-child(even){ background:#1a1a1a; }
-    .buy { color:#2ecc71; font-weight:bold; }
-    .sell{ color:#e74c3c;  font-weight:bold; }
+    .buy  { color:#2ecc71; font-weight:bold; }
+    .sell { color:#e74c3c;  font-weight:bold; }
     .sector-good { color:#2ecc71; }
     .sector-weak { color:#e0a300; }
   </style>
@@ -35,6 +35,7 @@
         <th>Sector</th>
         <th>Tags</th>
         <th>Status</th>
+        <th>Exit Date</th>
         <th>P&L (₹)</th>
         <th>Action</th>
       </tr>
@@ -42,17 +43,10 @@
     <tbody>
       {% for trade in trades %}
       <tr>
-        <!-- Date & symbol -->
         <td>{{ trade.date }}</td>
         <td>{{ trade.symbol }}</td>
-
-        <!-- Asset type (Cash / Futures / Option / Strangle) -->
         <td>{{ trade.type }}</td>
-
-        <!-- Expiry (show “—” for Cash) -->
         <td>{{ trade.options.expiry if trade.options is defined else "—" }}</td>
-
-        <!-- Strike info or CMP -->
         <td>
           {% if trade.options is defined %}
             CE {{ trade.options.call }} / PE {{ trade.options.put }}
@@ -60,28 +54,17 @@
             {{ trade.cmp }}
           {% endif %}
         </td>
-
-        <!-- Entry/Target/SL -->
         <td>{{ trade.entry }}</td>
         <td>{{ trade.target }}</td>
         <td>{{ trade.sl }}</td>
-
-        <!-- PoP -->
         <td>{{ trade.pop_pct }}</td>
-
-        <!-- Sector rotation tag -->
         <td class="{% if 'Leader' in trade.sector %}sector-good{% elif 'Weak' in trade.sector %}sector-weak{% endif %}">
           {{ trade.sector }}
         </td>
-
-        <!-- Tags list -->
         <td>{{ trade.tags | join(", ") }}</td>
-
-        <!-- Status & PnL -->
         <td>{{ trade.status }}</td>
+        <td>{{ trade.exit_date }}</td>
         <td>{{ trade.pnl }}</td>
-
-        <!-- Action -->
         <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
       </tr>
       {% endfor %}
