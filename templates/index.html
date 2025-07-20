@@ -5,23 +5,18 @@
   <title>Sniper Trades</title>
   <style>
     body { font-family: Arial; background: #111; color: #eee; padding: 20px; }
-    h1 { color: #2ecc71; }
+    h1   { color: #2ecc71; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #444; padding: 8px; text-align: center; }
     th { background: #333; }
     tr:nth-child(even) { background: #1a1a1a; }
-    .buy { color: #2ecc71; font-weight: bold; }
-    .sell { color: #e74c3c; font-weight: bold; }
-    pre { background-color: #222; padding: 10px; overflow: auto; max-height: 300px; margin-bottom: 20px; }
+    .buy  { color: #2ecc71; font-weight: bold; }
+    .sell { color: #e74c3c;  font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Sniper Trades</h1>
+  <h1>📈 Sniper Trades</h1>
 
-  <!-- 🔍 Raw Trade Data Preview -->
-  <pre>{{ trades | tojson(indent=2) }}</pre>
-
-  <!-- 🔻 Trade Table -->
   {% if trades %}
   <table>
     <thead>
@@ -41,7 +36,7 @@
         <td>{{ trade.cmp }}</td>
         <td>{{ trade.target }}</td>
         <td>{{ trade.sl }}</td>
-        <td>${trade.pop_pct}</td>
+        <td>{{ trade.pop_pct }}</td>   <!-- fixed -->
         <td>{{ trade.status }}</td>
         <td>{{ trade.pnl }}</td>
         <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
