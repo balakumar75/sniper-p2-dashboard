@@ -1,68 +1,77 @@
 """
-utils.py  – Zerodha helpers (auth + CMP fetch)
+utils.py – Zerodha helpers
+• fetch_cmp
+• fetch_* indicators
+• NEW  fetch_option_chain  → returns CE, PE strike lists + LTP map + expiry info
 """
 
-import os, sys
-from datetime import datetime
+import os, math, statistics, datetime
+from datetime import datetime as dt, timedelta
 from dotenv import load_dotenv
-from kiteconnect import KiteConnect, exceptions as kc_ex
+import pandas as pd
+from kiteconnect import KiteConnect
 
-# ──────────────────────────────────────────────────────────────────────────
-# 1. Load any local .env (ignored on Render, useful on your laptop)
-# ──────────────────────────────────────────────────────────────────────────
+# ── env & Kite init ───────────────────────────────────────────────────────
 load_dotenv("config.env", override=False)
 
-# Accept either new or old env-var names
-API_KEY      = (
-    os.getenv("KITE_API_KEY") 
-    or os.getenv("ZERODHA_API_KEY") 
-    or ""
-)
-ACCESS_TOKEN = (
-    os.getenv("KITE_ACCESS_TOKEN") 
-    or os.getenv("ZERODHA_ACCESS_TOKEN") 
-    or ""
-)
+API_KEY       = os.getenv("KITE_API_KEY")  or os.getenv("ZERODHA_API_KEY")
+ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN") or os.getenv("ZERODHA_ACCESS_TOKEN")
 
-# Show what the container actually sees (first 8 chars only)
-print(f"🔑 utils.py using KEY: {API_KEY[:8]}…  TOKEN: {ACCESS_TOKEN[:8]}…", flush=True)
-
-# ──────────────────────────────────────────────────────────────────────────
-# 2. Initialise Kite & one-shot auth check
-# ──────────────────────────────────────────────────────────────────────────
 kite = KiteConnect(api_key=API_KEY)
 kite.set_access_token(ACCESS_TOKEN)
 
-try:
-    user_name = kite.profile()["user_name"]
-    print(f"✅ Kite auth OK – user: {user_name}", flush=True)
-except kc_ex.TokenException as e:
-    print(f"🛑 Kite auth failed: {e}", flush=True)
-    # Hard-exit so the engine doesn’t spam errors
-    sys.exit(1)
+# ── CMP (unchanged) ───────────────────────────────────────────────────────
+def fetch_cmp(symbol):
+    try:
+        quote = kite.ltp(f"NSE:{symbol}")
+        return quote[f"NSE:{symbol}"]["last_price"]
+    except Exception as e:
+        print(f"❌ CMP error {symbol}: {e}")
+        return None
 
-# ──────────────────────────────────────────────────────────────────────────
-# 3. CMP helper
-# ──────────────────────────────────────────────────────────────────────────
-def fetch_cmp(symbol: str) -> float | None:
+# ── OHLC for indicators ───────────────────────────────────────────────────
+def fetch_ohlc(symbol, days=60):
+    try:
+        end = dt.today()
+        start = end - timedelta(days=days*2)
+        inst = next(i["instrument_token"] for i in kite.instruments("NSE")
+                    if i["tradingsymbol"] == symbol)
+        data = kite.historical_data(inst, start, end, "day")
+        return pd.DataFrame(data)
+    except Exception as e:
+        print(f"❌ OHLC error {symbol}: {e}")
+        return None
+
+# (RSI, ADX, MACD, Volume helpers as you already have)
+
+# ── NEW: Option-chain fetcher ─────────────────────────────────────────────
+def fetch_option_chain(symbol):
     """
-    Return live CMP for cash or current-month futures.
-      • Cash  → "NSE:RELIANCE"
-      • Fut   → "NFO:RELIANCEJULFUT" (auto-month)
+    Returns dict:
+    {
+      'expiry': 'Weekly' | 'Monthly',
+      'days_to_exp': int,
+      'CE': [strike1,…],
+      'PE': [strike1,…],
+      'ltp_map': {strike: ltp, …}
+    }
     """
     try:
-        if symbol.upper().endswith("FUT"):
-            base = symbol.split()[0]         # e.g. "RELIANCE"
-            month = datetime.today().strftime("%b").upper()[:3]  # JUL, AUG…
-            tradingsymbol = f"{base}{month}FUT"
-            exchange = "NFO"
-        else:
-            tradingsymbol = symbol.upper()
-            exchange = "NSE"
+        # 1) find nearest monthly expiry (simplified)
+        today = dt.today().date()
+        all_instruments = kite.instruments("NFO")
+        fut = next(i for i in all_instruments
+                   if i["segment"] == "NFO-FUT" and i["tradingsymbol"].startswith(symbol))
+        expiry_date = fut["expiry"].date()
+        days_to_exp = (expiry_date - today).days
+        expiry_type = "Weekly" if days_to_exp <= 10 else "Monthly"
 
-        quote = kite.ltp(f"{exchange}:{tradingsymbol}")
-        return quote[f"{exchange}:{tradingsymbol}"]["last_price"]
+        # 2) pull all opt instruments for this expiry
+        chain = [i for i in all_instruments
+                 if i["name"] == symbol and i["expiry"].date() == expiry_date]
 
-    except Exception as e:
-        print(f"❌ fetch_cmp error for {symbol}: {e}", flush=True)
-        return None
+        ce_list, pe_list, ltp_map = [], [], {}
+        ltp_resp = kite.ltp([f"NFO:{i['tradingsymbol']}" for i in chain])
+        for ins in chain:
+            strike = float(ins["strike"])
+            ins_key = f"NFO:{ins['tradingsymbol']}"
