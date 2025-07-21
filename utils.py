@@ -202,3 +202,33 @@ def iv_rank(symbol: str, window: int = 252) -> float:
     CACHE_FILE.write_text(json.dumps(_iv_hist, indent=2))
 
     return sum(iv < iv_today for iv in hist) / len(hist)
+
+# ╭────────────────────────────────────────────────────────────────────────╮
+# │ 6.  SECTOR-STRENGTH TAG                                               │
+# ╰────────────────────────────────────────────────────────────────────────╯
+_sector_map = {
+    "FINANCIAL SERVICES": "Leader",
+    "BANKS":              "Leader",
+    "IT":                 "Leader",
+    "AUTO":               "Neutral",
+    "FMCG":               "Neutral",
+    "MEDIA & ENTERTAIN":  "Weak",
+    # add / adjust as you like
+}
+
+def fetch_sector_strength(symbol: str) -> str:
+    """
+    Simple static map → 'Leader' / 'Weak' / 'Neutral'.
+    If symbol not found, returns 'Neutral'.
+    """
+    try:
+        inst = next(i for i in kite.instruments("NSE")
+                    if i["tradingsymbol"] == symbol)
+        sector = inst.get("industry", "Neutral").upper()
+        for key, strength in _sector_map.items():
+            if key in sector:
+                return strength
+    except Exception:
+        pass
+    return "Neutral"
+
