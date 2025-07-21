@@ -15,6 +15,7 @@
     .sell { color:#e74c3c;  font-weight:bold; }
     .sector-good { color:#2ecc71; }
     .sector-weak { color:#e0a300; }
+    a.chart-link { color:#1e90ff; text-decoration:none; }
   </style>
 </head>
 <body>
@@ -53,7 +54,7 @@
         <th>Date</th><th>Symbol</th><th>Type</th><th>Expiry</th><th>Strike / CMP</th>
         <th>Entry</th><th>Target</th><th>SL</th><th>PoP&nbsp;%</th><th>Sector</th>
         <th>Tags</th><th>Action</th><th>Status</th><th>Exit&nbsp;Date</th>
-        <th>Hold&nbsp;Days</th><th>P&L&nbsp;(₹)</th>
+        <th>Hold&nbsp;Days</th><th>P&L&nbsp;(₹)</th><th>Chart</th>
       </tr>
     </thead>
     <tbody>
@@ -83,6 +84,13 @@
         <td>{{ t.exit_date }}</td>
         <td>{{ t.holding_days }}</td>
         <td>{{ t.pnl }}</td>
+        <td>
+          <a class="chart-link"
+             href="https://www.tradingview.com/chart/?symbol=NSE:{{ t.symbol }}"
+             target="_blank">
+             📊
+          </a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -100,13 +108,13 @@
     function applyFilters(){
       rows.forEach(r=>{
         const show =
-          (fType.value  === 'all' || r.dataset.type   === fType.value)  &&
-          (fAct.value   === 'all' || r.dataset.action === fAct.value)   &&
-          (fStat.value  === 'all' || r.dataset.status === fStat.value);
+          (fType.value === 'all'  || r.dataset.type   === fType.value) &&
+          (fAct.value  === 'all'  || r.dataset.action === fAct.value) &&
+          (fStat.value === 'all'  || r.dataset.status === fStat.value);
         r.style.display = show ? '' : 'none';
       });
     }
-    [fType, fAct, fStat].forEach(sel=>sel.onchange = applyFilters);
+    [fType, fAct, fStat].forEach(sel => sel.onchange = applyFilters);
   </script>
 </body>
 </html>
