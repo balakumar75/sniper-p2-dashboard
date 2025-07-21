@@ -1,9 +1,4 @@
-"""
-sniper_engine.py
-Cash Long/Short + 1 σ OTM SHORT Strangle
-Filters  : RSI · ADX · IV-Rank ≥ 33 % (or IV fetch failed) · MACD · Volume
-Breakouts: 20-bar Donchian + 5-bar squeeze (up / down)
-"""
+""" sniper_engine.py – Cash + Short-Strangle """
 
 import json, math, datetime as dt
 from config import FNO_SYMBOLS, DEFAULT_POP, RSI_MIN, ADX_MIN
@@ -13,51 +8,44 @@ from utils import (
     donchian_high_low, in_squeeze_breakout, iv_rank,
 )
 
-# parameters
 N_SIGMA = 1.0
 SIGMA_FALLBACKS = [1.25, 1.5]
 
-
-# ── helpers ───────────────────────────────────────────────────────────────
+# ── filters ────────────────────────────────────────────────────────────
 def _validate(sym: str, cmp_: float) -> bool:
-    """Return True if stock passes all pre-trade filters."""
     if cmp_ is None:
         return False
     if fetch_rsi(sym) < RSI_MIN or fetch_adx(sym) < ADX_MIN:
         return False
-
-    ivr = iv_rank(sym)  # 0.0 means IV fetch failed
-    if ivr and ivr < 0.33:  # IV fetched OK but below threshold
+    ivr = iv_rank(sym)          # 0.0 if IV fetch failed
+    if ivr and ivr < 0.33:
         return False
-
     if not fetch_macd(sym):
         return False
     if fetch_volume(sym) <= 1.5:
         return False
     return True
 
-
 def _breakout_dir(sym: str, cmp_: float) -> str | None:
-    """Detect bullish (‘up’) or bearish (‘down’) breakout."""
-    high, low = donchian_high_low(sym, 20)
-    if high and cmp_ >= high and in_squeeze_breakout(sym, direction="up"):
+    hi, lo = donchian_high_low(sym, 20)
+    if hi and cmp_ >= hi and in_squeeze_breakout(sym, direction="up"):
         return "up"
-    if low and cmp_ <= low and in_squeeze_breakout(sym, direction="down"):
+    if lo and cmp_ <= lo and in_squeeze_breakout(sym, direction="down"):
         return "down"
     return None
 
-
+# ── builders ────────────────────────────────────────────────────────────
 def _cash_trade(sym: str, cmp_: float, direction: str) -> dict:
     long = direction == "up"
-    target = round(cmp_ * (1.02 if long else 0.98), 2)
-    sl = round(cmp_ * (0.975 if long else 1.025), 2)
+    tgt  = round(cmp_ * (1.02 if long else 0.98), 2)
+    sl   = round(cmp_ * (0.975 if long else 1.025), 2)
     return {
         "date": dt.datetime.today().strftime("%Y-%m-%d"),
         "symbol": sym,
         "type": "Cash",
         "entry": cmp_,
         "cmp": cmp_,
-        "target": target,
+        "target": tgt,
         "sl": sl,
         "pop_pct": DEFAULT_POP,
         "action": "Buy" if long else "Sell",
@@ -69,19 +57,17 @@ def _cash_trade(sym: str, cmp_: float, direction: str) -> dict:
         "pnl": 0.0,
     }
 
-
-def _pick_strikes(cmp_: float, oc: dict, sigma: float, days: int):
-    band = sigma * math.sqrt(days / 365)
+def _pick(cmp_: float, oc: dict, sig: float, days: int):
+    band = sig * math.sqrt(days / 365)
     ce = min((s for s in oc["CE"] if s >= cmp_ * (1 + band)), default=None)
     pe = max((s for s in oc["PE"] if s <= cmp_ * (1 - band)), default=None)
     return (ce, pe) if ce and pe else None
 
-
-def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int) -> dict | None:
-    strikes = _pick_strikes(cmp_, oc, sigma, days)
-    if not strikes:
+def _strangle(sym: str, cmp_: float, oc: dict, sig: float, days: int):
+    strike_pair = _pick(cmp_, oc, sig, days)
+    if not strike_pair:
         return None
-    ce, pe = strikes
+    ce, pe = strike_pair
     credit = round((oc["ltp_map"][ce] + oc["ltp_map"][pe]) / 2, 2)
     return {
         "date": dt.datetime.today().strftime("%Y-%m-%d"),
@@ -91,10 +77,10 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int) -> dict 
         "cmp": credit,
         "target": round(credit * 0.70, 2),
         "sl": round(credit * 1.60, 2),
-        "pop_pct": f"{int(sigma * 100)}%",
+        "pop_pct": f"{int(sig * 100)}%",
         "action": "Sell",
         "sector": fetch_sector_strength(sym),
-        "tags": [f"{sigma:.2f}σ", "DC✅", "SQ✅", "IVR✅", oc["expiry"]],
+        "tags": [f"{sig:.2f}σ", "DC✅", "SQ✅", "IVR✅", oc["expiry"]],
         "options": {
             "expiry": oc["expiry"],
             "call": ce,
@@ -108,8 +94,7 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int) -> dict 
         "pnl": 0.0,
     }
 
-
-# ── main engine ──────────────────────────────────────────────────────────
+# ── main engine ─────────────────────────────────────────────────────────
 def generate_sniper_trades() -> list[dict]:
     trades: list[dict] = []
 
@@ -122,10 +107,10 @@ def generate_sniper_trades() -> list[dict]:
         if direction is None:
             continue
 
-        # ── ① cash leg
+        # cash leg
         trades.append(_cash_trade(sym, cmp_, direction))
 
-        # ── ② short strangle (if option chain available)
+        # strangle leg
         oc = fetch_option_chain(sym)
         if oc:
             days = oc.get("days_to_exp", 7)
@@ -141,11 +126,9 @@ def generate_sniper_trades() -> list[dict]:
     print(f"✅ trades: {len(trades)}")
     return trades
 
-
-def save_trades_to_json(trades: list[dict]) -> None:
-    with open("trades.json", "w", encoding="utf-8") as fp:
-        json.dump(trades, fp, indent=2)
-
+def save_trades_to_json(trades):
+    with open("trades.json", "w", encoding="utf-8") as f:
+        json.dump(trades, f, indent=2)
 
 if __name__ == "__main__":
     save_trades_to_json(generate_sniper_trades())
