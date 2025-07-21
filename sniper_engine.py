@@ -1,7 +1,16 @@
 """
-sniper_engine.py  –  Cash Long/Short + 1 σ OTM SHORT Strangle
-Filters : RSI · ADX · IV-Rank ≥ 33 % (or IV missing) · MACD · Volume
-Trigger : 20-bar Donchian channel breakout (no squeeze filter)
+sniper_engine.py
+Cash Long/Short + 1 σ OTM SHORT Strangle
+
+Filters
+  • RSI ≥ 55
+  • ADX ≥ 20
+  • IV-Rank ≥ 33 %  (or IV fetch failed)
+  • MACD bullish
+  • Volume ≥ 1.5 × 20-day avg
+
+Trigger
+  • 50-bar Donchian channel breakout (close ≥ 50-day high for longs, ≤ 50-day low for shorts)
 """
 
 import json, math, datetime as dt
@@ -12,32 +21,35 @@ from utils import (
     donchian_high_low, iv_rank,
 )
 
-# parameters
-N_SIGMA            = 1.0
-SIGMA_FALLBACKS    = [1.25, 1.5]
-DONCHIAN_WINDOW    = 20
+# ── parameters ────────────────────────────────────────────────────────────
+DONCHIAN_WINDOW = 50            # ← widened from 20 to 50
+N_SIGMA         = 1.0
+SIGMA_FALLBACKS = [1.25, 1.5]
 
 
 # ── filter helpers ────────────────────────────────────────────────────────
 def _validate(sym: str, cmp_: float) -> bool:
     if cmp_ is None:
         return False
+
     if fetch_rsi(sym) < RSI_MIN or fetch_adx(sym) < ADX_MIN:
         return False
 
-    ivr = iv_rank(sym)         # 0.0 ⇒ IV fetch failed; allow trade
+    ivr = iv_rank(sym)          # 0.0 means IV fetch failed
     if ivr and ivr < 0.33:
         return False
 
     if not fetch_macd(sym):
         return False
+
     if fetch_volume(sym) <= 1.5:
         return False
+
     return True
 
 
 def _breakout_dir(sym: str, cmp_: float) -> str | None:
-    """Return 'up', 'down', or None using 20-bar Donchian."""
+    """Return 'up' or 'down' if price breaks 50-bar Donchian, else None."""
     high, low = donchian_high_low(sym, DONCHIAN_WINDOW)
     if high and cmp_ >= high:
         return "up"
@@ -46,7 +58,7 @@ def _breakout_dir(sym: str, cmp_: float) -> str | None:
     return None
 
 
-# ── trade builders ───────────────────────────────────────────────────────
+# ── trade builders ────────────────────────────────────────────────────────
 def _cash_trade(sym: str, cmp_: float, direction: str) -> dict:
     long = direction == "up"
     target = round(cmp_ * (1.02 if long else 0.98), 2)
@@ -109,7 +121,7 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
     }
 
 
-# ── main engine ───────────────────────────────────────────────────────────
+# ── engine loop ───────────────────────────────────────────────────────────
 def generate_sniper_trades() -> list[dict]:
     trades: list[dict] = []
 
@@ -122,21 +134,21 @@ def generate_sniper_trades() -> list[dict]:
         if direction is None:
             continue
 
-        # cash leg
+        # cash trade
         trades.append(_cash_trade(sym, cmp_, direction))
 
-        # strangle leg
+        # option strangle
         oc = fetch_option_chain(sym)
         if oc:
             days = oc.get("days_to_exp", 7)
-            trade = _strangle(sym, cmp_, oc, N_SIGMA, days)
-            if not trade:
+            tr = _strangle(sym, cmp_, oc, N_SIGMA, days)
+            if not tr:
                 for sig in SIGMA_FALLBACKS:
-                    trade = _strangle(sym, cmp_, oc, sig, days)
-                    if trade:
+                    tr = _strangle(sym, cmp_, oc, sig, days)
+                    if tr:
                         break
-            if trade:
-                trades.append(trade)
+            if tr:
+                trades.append(tr)
 
     print(f"✅ trades: {len(trades)}")
     return trades
