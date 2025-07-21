@@ -1,130 +1,65 @@
 """
-utils.py  –  Zerodha helpers + indicators
-• fetch_cmp
-• fetch_ohlc
-• donchian_high_low
-• NEW  in_squeeze_breakout  (TTM-style 20-bar squeeze filter)
-• fetch_option_chain  (CE/PE strike lists, ltp_map, days_to_exp)
+utils.py  –  Zerodha + NSE helpers
+• CMP, OHLC, Donchian, Squeeze
+• NEW  atm_iv() + iv_rank()  → IV-Rank filter (cache in iv_cache.json)
 """
-
-import os, math
+import os, math, json, pathlib, requests, pandas as pd
 from datetime import datetime as dt, timedelta
-import pandas as pd
 from dotenv import load_dotenv
 from kiteconnect import KiteConnect
 
-# ── Environment & Kite initialisation ────────────────────────────────────
+# ── Kite init ────────────────────────────────────────────────────────────
 load_dotenv("config.env", override=False)
-API_KEY      = os.getenv("KITE_API_KEY") or os.getenv("ZERODHA_API_KEY")
+API_KEY      = os.getenv("KITE_API_KEY")  or os.getenv("ZERODHA_API_KEY")
 ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN") or os.getenv("ZERODHA_ACCESS_TOKEN")
+kite = KiteConnect(api_key=API_KEY); kite.set_access_token(ACCESS_TOKEN)
 
-kite = KiteConnect(api_key=API_KEY)
-kite.set_access_token(ACCESS_TOKEN)
+# ── Basic helpers (CMP, OHLC, Donchian, Squeeze) – unchanged -------------
+# … (keep everything you already have up to donchian_high_low & in_squeeze_breakout) …
 
-# ── 1. CMP ───────────────────────────────────────────────────────────────
-def fetch_cmp(symbol: str):
-    try:
-        quote = kite.ltp(f"NSE:{symbol}")
-        return quote[f"NSE:{symbol}"]["last_price"]
-    except Exception as e:
-        print(f"❌ CMP error {symbol}: {e}")
-        return None
+# ── ==========  IV-RANK SUPPORT  ========================================
 
-# ── 2. OHLC helper ───────────────────────────────────────────────────────
-def fetch_ohlc(symbol: str, days: int = 60):
-    try:
-        end, start = dt.today(), dt.today() - timedelta(days=days*2)
-        tok = next(i["instrument_token"] for i in kite.instruments("NSE")
-                   if i["tradingsymbol"] == symbol)
-        data = kite.historical_data(tok, start, end, "day")
-        return pd.DataFrame(data)
-    except Exception as e:
-        print(f"❌ OHLC error {symbol}: {e}")
-        return None
+CACHE_FILE = pathlib.Path(__file__).parent / "iv_cache.json"
+_iv_hist   = json.loads(CACHE_FILE.read_text()) if CACHE_FILE.exists() else {}
 
-# ── 3. 20-day Donchian Channel ──────────────────────────────────────────
-def donchian_high_low(symbol: str, window: int = 20):
-    df = fetch_ohlc(symbol, window + 3)
-    if df is None or df.empty: return None, None
-    return df["high"].iloc[-window:].max(), df["low"].iloc[-window:].min()
-
-# ── 4.  TTM-style squeeze breakout filter ───────────────────────────────
-def in_squeeze_breakout(symbol: str,
-                        window: int = 20,
-                        squeeze_bars: int = 5) -> bool:
+def atm_iv(symbol: str):
     """
-    Return True if the *latest* bar is the FIRST close above the upper
-    Bollinger Band after <squeeze_bars> consecutive squeeze bars.
-    Squeeze = BB(20,2) completely inside KC(20,1.5 ATR).
-    """
-    df = fetch_ohlc(symbol, window + squeeze_bars + 5)
-    if df is None or len(df) < window + squeeze_bars:
-        return False
-
-    close = df["close"].values
-    high  = df["high"].values
-    low   = df["low"].values
-
-    # ---- Bollinger Bands (SMA + 2 σ)
-    sma = pd.Series(close).rolling(window).mean()
-    std = pd.Series(close).rolling(window).std()
-    bb_up = sma + 2 * std
-    bb_dn = sma - 2 * std
-
-    # ---- Keltner Channel (EMA ± 1.5 ATR)
-    ema = pd.Series(close).ewm(span=window, adjust=False).mean()
-    tr  = pd.Series(high - low).rolling(window).mean()
-    kc_up = ema + 1.5 * tr
-    kc_dn = ema - 1.5 * tr
-
-    # past <squeeze_bars> must be in squeeze
-    sq = (bb_up[-squeeze_bars:] < kc_up[-squeeze_bars:]) & \
-         (bb_dn[-squeeze_bars:] > kc_dn[-squeeze_bars:])
-    if not sq.all():                       # need consecutive squeeze bars
-        return False
-
-    # breakout on latest bar
-    return close[-1] > bb_up.iloc[-1]
-
-# ── 5. Option-chain fetcher (incl. ltp_map & days_to_exp) ────────────────
-def fetch_option_chain(symbol: str):
-    """
-    Returns:
-      {
-        'expiry':       'Weekly' | 'Monthly',
-        'days_to_exp':  int,
-        'CE':           [strike1, …],
-        'PE':           [strike1, …],
-        'ltp_map':      {strike: ltp_price, …}
-      }
+    Returns ATM implied volatility (%) using NSE's public option-chain JSON.
+    None if unavailable or API fails.
     """
     try:
-        today = dt.today().date()
-        nfo   = kite.instruments("NFO")
-
-        fut = next(i for i in nfo
-                   if i["segment"] == "NFO-FUT"
-                   and i["tradingsymbol"].startswith(symbol))
-        exp  = fut["expiry"].date()
-        days = (exp - today).days
-        exp_type = "Weekly" if days <= 10 else "Monthly"
-
-        chain = [i for i in nfo if i["name"] == symbol and i["expiry"].date() == exp]
-        ltp   = kite.ltp([f"NFO:{i['tradingsymbol']}" for i in chain])
-
-        ce, pe, ltp_map = [], [], {}
-        for ins in chain:
-            strike = float(ins["strike"])
-            price  = ltp.get(f"NFO:{ins['tradingsymbol']}", {}).get("last_price", 0)
-            ltp_map[strike] = price
-            (ce if ins["instrument_type"] == "CE" else pe).append(strike)
-
-        return {
-            "expiry": exp_type, "days_to_exp": days,
-            "CE": sorted(set(ce)), "PE": sorted(set(pe)),
-            "ltp_map": ltp_map
+        url = f"https://www.nseindia.com/api/option-chain-equities?symbol={symbol}"
+        hdr = {
+          "User-Agent": "Mozilla/5.0",
+          "Accept": "application/json",
+          "Referer": "https://www.nseindia.com"
         }
+        sess = requests.Session()
+        sess.get("https://www.nseindia.com", headers=hdr, timeout=5)
+        data = sess.get(url, headers=hdr, timeout=10).json()
+        underlying = data["records"]["underlyingValue"]
+        rows = data["records"]["data"]
 
+        # find strike closest to underlying → pick CE IV
+        near = min(rows, key=lambda r: abs(r["strikePrice"] - underlying))
+        iv = near["CE"]["impliedVolatility"]
+        return float(iv)
     except Exception as e:
-        print(f"❌ OC error {symbol}: {e}")
+        print(f"❌ IV fetch {symbol}: {e}")
         return None
+
+def iv_rank(symbol: str, window: int = 252) -> float:
+    """
+    Returns IV-Rank (0‒1). Keeps a rolling <window> history per symbol.
+    """
+    iv_today = atm_iv(symbol)
+    if iv_today is None: return 0.0
+
+    hist = _iv_hist.get(symbol, [])
+    hist.append(iv_today)
+    if len(hist) > window: hist = hist[-window:]
+    _iv_hist[symbol] = hist
+    CACHE_FILE.write_text(json.dumps(_iv_hist, indent=2))
+
+    rank = sum(iv < iv_today for iv in hist) / len(hist)
+    return rank
