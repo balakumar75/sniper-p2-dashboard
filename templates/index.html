@@ -6,7 +6,8 @@
   <style>
     body { font-family: Arial; background:#111; color:#eee; padding:20px; }
     h1   { color:#2ecc71; }
-    table{ width:100%; border-collapse:collapse; margin-top:20px; font-size:14px;}
+    select { margin-right:12px; padding:4px 6px; }
+    table{ width:100%; border-collapse:collapse; margin-top:14px; font-size:14px;}
     th,td{ border:1px solid #333; padding:6px 8px; text-align:center; }
     th   { background:#222; }
     tr:nth-child(even){ background:#1a1a1a; }
@@ -19,53 +20,69 @@
 <body>
   <h1>📈 Sniper Trades — Live Dashboard</h1>
 
+  <!-- 🔍 Filters -->
+  <div>
+    <label>Type:
+      <select id="fType">
+        <option value="all">All</option>
+        <option value="Cash">Cash</option>
+        <option value="Option Strangle">Option Strangle</option>
+      </select>
+    </label>
+    <label>Action:
+      <select id="fAction">
+        <option value="all">All</option>
+        <option value="Buy">Buy (Long)</option>
+        <option value="Sell">Sell (Short)</option>
+      </select>
+    </label>
+    <label>Status:
+      <select id="fStatus">
+        <option value="all">All</option>
+        <option value="Open">Open</option>
+        <option value="Target">Target</option>
+        <option value="SL">SL</option>
+      </select>
+    </label>
+  </div>
+
   {% if trades %}
-  <table>
+  <table id="tradeTable">
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Symbol</th>
-        <th>Type</th>
-        <th>Expiry</th>
-        <th>Strike / CMP</th>
-        <th>Entry</th>
-        <th>Target</th>
-        <th>SL</th>
-        <th>PoP %</th>
-        <th>Sector</th>
-        <th>Tags</th>
-        <th>Status</th>
-        <th>Exit Date</th>
-        <th>P&L (₹)</th>
-        <th>Action</th>
+        <th>Date</th><th>Symbol</th><th>Type</th><th>Expiry</th><th>Strike / CMP</th>
+        <th>Entry</th><th>Target</th><th>SL</th><th>PoP&nbsp;%</th><th>Sector</th>
+        <th>Tags</th><th>Action</th><th>Status</th><th>Exit&nbsp;Date</th>
+        <th>Hold&nbsp;Days</th><th>P&L&nbsp;(₹)</th>
       </tr>
     </thead>
     <tbody>
-      {% for trade in trades %}
-      <tr>
-        <td>{{ trade.date }}</td>
-        <td>{{ trade.symbol }}</td>
-        <td>{{ trade.type }}</td>
-        <td>{{ trade.options.expiry if trade.options is defined else "—" }}</td>
+      {% for t in trades %}
+      <tr data-type="{{ t.type }}" data-action="{{ t.action }}" data-status="{{ t.status }}">
+        <td>{{ t.date }}</td>
+        <td>{{ t.symbol }}</td>
+        <td>{{ t.type }}</td>
+        <td>{{ t.options.expiry if t.options is defined else "—" }}</td>
         <td>
-          {% if trade.options is defined %}
-            CE {{ trade.options.call }} / PE {{ trade.options.put }}
+          {% if t.options is defined %}
+            CE {{ t.options.call }} / PE {{ t.options.put }}
           {% else %}
-            {{ trade.cmp }}
+            {{ t.cmp }}
           {% endif %}
         </td>
-        <td>{{ trade.entry }}</td>
-        <td>{{ trade.target }}</td>
-        <td>{{ trade.sl }}</td>
-        <td>{{ trade.pop_pct }}</td>
-        <td class="{% if 'Leader' in trade.sector %}sector-good{% elif 'Weak' in trade.sector %}sector-weak{% endif %}">
-          {{ trade.sector }}
+        <td>{{ t.entry }}</td>
+        <td>{{ t.target }}</td>
+        <td>{{ t.sl }}</td>
+        <td>{{ t.pop_pct }}</td>
+        <td class="{% if 'Leader' in t.sector %}sector-good{% elif 'Weak' in t.sector %}sector-weak{% endif %}">
+          {{ t.sector }}
         </td>
-        <td>{{ trade.tags | join(", ") }}</td>
-        <td>{{ trade.status }}</td>
-        <td>{{ trade.exit_date }}</td>
-        <td>{{ trade.pnl }}</td>
-        <td class="{{ 'buy' if trade.action == 'Buy' else 'sell' }}">{{ trade.action }}</td>
+        <td>{{ t.tags | join(", ") }}</td>
+        <td class="{{ 'buy' if t.action == 'Buy' else 'sell' }}">{{ t.action }}</td>
+        <td>{{ t.status }}</td>
+        <td>{{ t.exit_date }}</td>
+        <td>{{ t.holding_days }}</td>
+        <td>{{ t.pnl }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -73,5 +90,23 @@
   {% else %}
     <p>❌ No trades found.</p>
   {% endif %}
+
+  <script>
+    const fType = document.getElementById('fType');
+    const fAct  = document.getElementById('fAction');
+    const fStat = document.getElementById('fStatus');
+    const rows  = [...document.querySelectorAll('#tradeTable tbody tr')];
+
+    function applyFilters(){
+      rows.forEach(r=>{
+        const show =
+          (fType.value  === 'all' || r.dataset.type   === fType.value)  &&
+          (fAct.value   === 'all' || r.dataset.action === fAct.value)   &&
+          (fStat.value  === 'all' || r.dataset.status === fStat.value);
+        r.style.display = show ? '' : 'none';
+      });
+    }
+    [fType, fAct, fStat].forEach(sel=>sel.onchange = applyFilters);
+  </script>
 </body>
 </html>
