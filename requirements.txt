@@ -1,4 +1,5 @@
-flask
-kiteconnect
 pandas
+numpy
 python-dotenv
+kiteconnect
+requests
