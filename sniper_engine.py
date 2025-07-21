@@ -56,7 +56,9 @@ def generate_sniper_trades():
     for sym in FNO_SYMBOLS:
         cmp_=fetch_cmp(sym)
         if not _validate(sym,cmp_): continue
-        dir=_breakout_dir(sym,cmp_);  if dir is None: continue
+             dir = _breakout_dir(sym, cmp_)
+     if dir is None:
+         continue
         trades.append(_cash_trade(sym,cmp_,dir))
         oc=fetch_option_chain(sym);  days=oc.get("days_to_exp",7) if oc else 7
         s=_strangle(sym,cmp_,oc,N_SIGMA,days) if oc else None
