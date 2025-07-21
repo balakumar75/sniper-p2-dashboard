@@ -1,18 +1,19 @@
 """
-config.py – central settings + self-tuning
+config.py – central settings + self-tuning parameters
 """
 
 import os, json, pathlib
 from dotenv import load_dotenv
 
+# ── Load optional local .env (ignored on Render) ──────────────────────────
 load_dotenv("config.env", override=False)
 
-# ── Zerodha credentials (taken from Render env) ───────────────────────────
+# ── Zerodha credentials (read from Render env) ───────────────────────────
 API_KEY       = os.getenv("KITE_API_KEY")       or os.getenv("ZERODHA_API_KEY", "")
 API_SECRET    = os.getenv("KITE_API_SECRET")    or os.getenv("ZERODHA_API_SECRET", "")
 ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN")  or os.getenv("ZERODHA_ACCESS_TOKEN", "")
 
-# ── NSE-100 universe (full list, no ellipsis) ─────────────────────────────
+# ── NSE-100 universe (Nifty 50 + Nifty Next 50) ──────────────────────────
 NSE100 = [
     "RELIANCE","TCS","HDFCBANK","INFY","ICICIBANK","ITC","KOTAKBANK","LT","SBIN",
     "AXISBANK","BHARTIARTL","BAJFINANCE","ASIANPAINT","MARUTI","SUNPHARMA","NTPC",
@@ -29,18 +30,19 @@ NSE100 = [
     "TVSMOTOR","UBL","UJJIVANSFB","VOLTAS","ZEEL"
 ]
 
-FNO_SYMBOLS = sorted(NSE100)   # engine scans this
+# Engine scans this sorted list
+FNO_SYMBOLS = sorted(NSE100)
 
-# ── Default thresholds (can be overridden by sniper_params.json) ──────────
+# ── Default Sniper-Prompt thresholds (overridden by tuner) ───────────────
 RSI_MIN        = 55
 ADX_MIN        = 20
 VOL_MULTIPLIER = 1.5
 DEFAULT_POP    = "85%"
 
-# ── Self-tuning parameter file (kept by the nightly tuner) ────────────────
+# ── Self-tuning parameters file (written by nightly tuner) ───────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
-    _p = json.loads(PARAMS_FILE.read_text())
-    RSI_MIN        = _p.get("RSI_MIN", RSI_MIN)
-    ADX_MIN        = _p.get("ADX_MIN", ADX_MIN)
-    VOL_MULTIPLIER = _p.get("VOL_MULTIPLIER", VOL_MULTIPLIER)
+    params = json.loads(PARAMS_FILE.read_text())
+    RSI_MIN        = params.get("RSI_MIN",        RSI_MIN)
+    ADX_MIN        = params.get("ADX_MIN",        ADX_MIN)
+    VOL_MULTIPLIER = params.get("VOL_MULTIPLIER", VOL_MULTIPLIER)
