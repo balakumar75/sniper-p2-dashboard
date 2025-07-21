@@ -3,14 +3,14 @@ sniper_engine.py
 Cash Long/Short + 1 σ OTM SHORT Strangle
 
 Filters
-  • RSI ≥ 55
+  • RSI ≥ 50  (set in config.py)
   • ADX ≥ 20
   • IV-Rank ≥ 33 %  (or IV fetch failed)
   • MACD bullish
   • Volume ≥ 1.5 × 20-day avg
 
 Trigger
-  • 50-bar Donchian channel breakout (close ≥ 50-day high for longs, ≤ 50-day low for shorts)
+  • 30-bar Donchian breakout (close ≥ 30-day high or ≤ 30-day low)
 """
 
 import json, math, datetime as dt
@@ -21,35 +21,29 @@ from utils import (
     donchian_high_low, iv_rank,
 )
 
-# ── parameters ────────────────────────────────────────────────────────────
-DONCHIAN_WINDOW = 50            # ← widened from 20 to 50
+# ── parameters ───────────────────────────────────────────────────────────
+DONCHIAN_WINDOW = 30             # relaxed from 50 → 30
 N_SIGMA         = 1.0
 SIGMA_FALLBACKS = [1.25, 1.5]
 
-
-# ── filter helpers ────────────────────────────────────────────────────────
+# ── filter helpers ───────────────────────────────────────────────────────
 def _validate(sym: str, cmp_: float) -> bool:
+    """Return True if stock passes all pre-trade filters."""
     if cmp_ is None:
         return False
-
     if fetch_rsi(sym) < RSI_MIN or fetch_adx(sym) < ADX_MIN:
         return False
-
-    ivr = iv_rank(sym)          # 0.0 means IV fetch failed
+    ivr = iv_rank(sym)          # 0.0 ⇒ IV fetch failed → allow
     if ivr and ivr < 0.33:
         return False
-
     if not fetch_macd(sym):
         return False
-
     if fetch_volume(sym) <= 1.5:
         return False
-
     return True
 
-
 def _breakout_dir(sym: str, cmp_: float) -> str | None:
-    """Return 'up' or 'down' if price breaks 50-bar Donchian, else None."""
+    """Return 'up' / 'down' if price breaks 30-bar channel, else None."""
     high, low = donchian_high_low(sym, DONCHIAN_WINDOW)
     if high and cmp_ >= high:
         return "up"
@@ -57,8 +51,7 @@ def _breakout_dir(sym: str, cmp_: float) -> str | None:
         return "down"
     return None
 
-
-# ── trade builders ────────────────────────────────────────────────────────
+# ── trade builders ───────────────────────────────────────────────────────
 def _cash_trade(sym: str, cmp_: float, direction: str) -> dict:
     long = direction == "up"
     target = round(cmp_ * (1.02 if long else 0.98), 2)
@@ -81,13 +74,11 @@ def _cash_trade(sym: str, cmp_: float, direction: str) -> dict:
         "pnl": 0.0,
     }
 
-
 def _pick_strikes(cmp_: float, oc: dict, sigma: float, days: int):
     band = sigma * math.sqrt(days / 365)
     ce = min((s for s in oc["CE"] if s >= cmp_ * (1 + band)), default=None)
     pe = max((s for s in oc["PE"] if s <= cmp_ * (1 - band)), default=None)
     return (ce, pe) if ce and pe else None
-
 
 def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
     strikes = _pick_strikes(cmp_, oc, sigma, days)
@@ -120,24 +111,24 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
         "pnl": 0.0,
     }
 
-
 # ── engine loop ───────────────────────────────────────────────────────────
 def generate_sniper_trades() -> list[dict]:
     trades: list[dict] = []
+    validated = breakout = 0
 
     for sym in FNO_SYMBOLS:
         cmp_ = fetch_cmp(sym)
         if not _validate(sym, cmp_):
             continue
+        validated += 1
 
         direction = _breakout_dir(sym, cmp_)
         if direction is None:
             continue
+        breakout += 1
 
-        # cash trade
         trades.append(_cash_trade(sym, cmp_, direction))
 
-        # option strangle
         oc = fetch_option_chain(sym)
         if oc:
             days = oc.get("days_to_exp", 7)
@@ -150,14 +141,13 @@ def generate_sniper_trades() -> list[dict]:
             if tr:
                 trades.append(tr)
 
+    print(f"stats: {{'validated': {validated}, 'breakout': {breakout}}}")
     print(f"✅ trades: {len(trades)}")
     return trades
 
-
-def save_trades_to_json(trades: list[dict]) -> None:
-    with open("trades.json", "w", encoding="utf-8") as fp:
-        json.dump(trades, fp, indent=2)
-
+def save_trades_to_json(trades: list[dict]):
+    with open("trades.json", "w", encoding="utf-8") as f:
+        json.dump(trades, f, indent=2)
 
 if __name__ == "__main__":
     save_trades_to_json(generate_sniper_trades())
