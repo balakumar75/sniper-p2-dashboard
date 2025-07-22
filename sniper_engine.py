@@ -4,13 +4,12 @@ Cash Long/Short + 1 σ OTM SHORT Strangle
 
 Filters
   • RSI ≥ 50  (set in config.py)
-  • ADX ≥ 20
+  • ADX ≥ ADX_MIN  (config.py, default 18–20)
   • IV-Rank ≥ 33 %  (or IV fetch failed)
   • MACD bullish
-  • Volume ≥ 1.5 × 20-day avg
-
+  • Volume ≥ 1.2 × 20-day avg          ← relaxed
 Trigger
-  • 30-bar Donchian breakout (close ≥ 30-day high or ≤ 30-day low)
+  • 20-bar Donchian breakout (close ≥ 20-day high or ≤ 20-day low)
 """
 
 import json, math, datetime as dt
@@ -22,32 +21,30 @@ from utils import (
 )
 
 # ── parameters ───────────────────────────────────────────────────────────
-DONCHIAN_WINDOW = 20             # relaxed from 50 → 30
+DONCHIAN_WINDOW = 20            # 1-month breakout
 N_SIGMA         = 1.0
 SIGMA_FALLBACKS = [1.25, 1.5]
 
 # ── filter helpers ───────────────────────────────────────────────────────
 def _validate(sym: str, cmp_: float) -> bool:
-    """Return True if stock passes all pre-trade filters."""
     if cmp_ is None:
         return False
     if fetch_rsi(sym) < RSI_MIN or fetch_adx(sym) < ADX_MIN:
         return False
-    ivr = iv_rank(sym)          # 0.0 ⇒ IV fetch failed → allow
+    ivr = iv_rank(sym)            # 0.0 ⇒ IV fetch failed → allow
     if ivr and ivr < 0.33:
         return False
     if not fetch_macd(sym):
         return False
-    if fetch_volume(sym) <= 1.5:
+    if fetch_volume(sym) <= 1.2:   # ← relaxed volume threshold
         return False
     return True
 
 def _breakout_dir(sym: str, cmp_: float) -> str | None:
-    """Return 'up' / 'down' if price breaks 30-bar channel, else None."""
-    high, low = donchian_high_low(sym, DONCHIAN_WINDOW)
-    if high and cmp_ >= high:
+    hi, lo = donchian_high_low(sym, DONCHIAN_WINDOW)
+    if hi and cmp_ >= hi:
         return "up"
-    if low and cmp_ <= low:
+    if lo and cmp_ <= lo:
         return "down"
     return None
 
@@ -113,7 +110,7 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
 
 # ── engine loop ───────────────────────────────────────────────────────────
 def generate_sniper_trades() -> list[dict]:
-    trades: list[dict] = []
+    trades = []
     validated = breakout = 0
 
     for sym in FNO_SYMBOLS:
@@ -145,7 +142,7 @@ def generate_sniper_trades() -> list[dict]:
     print(f"✅ trades: {len(trades)}")
     return trades
 
-def save_trades_to_json(trades: list[dict]):
+def save_trades_to_json(trades):
     with open("trades.json", "w", encoding="utf-8") as f:
         json.dump(trades, f, indent=2)
 
