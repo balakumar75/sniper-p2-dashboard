@@ -14,6 +14,7 @@ jobs:
       KITE_API_SECRET:   ${{ secrets.KITE_API_SECRET }}
       KITE_ACCESS_TOKEN: ${{ secrets.KITE_ACCESS_TOKEN }}
       KITE_USER_ID:      ${{ secrets.KITE_USER_ID }}
+      GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
