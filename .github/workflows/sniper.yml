@@ -1,10 +1,10 @@
-name: Sniper Daily Run
+name: Sniper Engine Daily            # visible label in Actions tab
 
 on:
   schedule:
-    # 04:05 IST = 22:35 UTC   (Mon–Fri)
-    - cron:  '35 22 * * 1-5'
-  workflow_dispatch:        # manual trigger button
+    # 04:05 IST = 22:35 UTC, Monday-Friday
+    - cron: '35 22 * * 1-5'
+  workflow_dispatch:                # enables “Run workflow” button
 
 jobs:
   run-engine:
@@ -14,12 +14,10 @@ jobs:
       KITE_API_SECRET:   ${{ secrets.KITE_API_SECRET }}
       KITE_ACCESS_TOKEN: ${{ secrets.KITE_ACCESS_TOKEN }}
       KITE_USER_ID:      ${{ secrets.KITE_USER_ID }}
-      GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}     # allows Python push
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}   # auto-provided write token
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -34,12 +32,11 @@ jobs:
       - name: 🚀 Run Sniper engine
         run: python sniper_run_all.py
 
-                - name: 💾 Commit trades.json
+      - name: 💾 Commit trades.json
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
           git add trades.json || true
           git diff --cached --quiet || git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
-          git pull --rebase origin main                # new line ①
-          git push --force-with-lease                  # new line ②
-
+          git pull --rebase origin main
+          git push --force-with-lease
