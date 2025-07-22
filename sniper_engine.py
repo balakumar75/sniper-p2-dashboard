@@ -22,7 +22,7 @@ from utils import (
 )
 
 # ── parameters ───────────────────────────────────────────────────────────
-DONCHIAN_WINDOW = 30             # relaxed from 50 → 30
+DONCHIAN_WINDOW = 20             # relaxed from 50 → 30
 N_SIGMA         = 1.0
 SIGMA_FALLBACKS = [1.25, 1.5]
 
