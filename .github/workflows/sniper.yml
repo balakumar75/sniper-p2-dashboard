@@ -34,13 +34,12 @@ jobs:
       - name: 🚀 Run Sniper engine
         run: python sniper_run_all.py
 
-            - name: 💾 Commit trades.json
+                - name: 💾 Commit trades.json
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
           git add trades.json || true
           git diff --cached --quiet || git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
-          # pull latest main so we keep other peoples' commits
-          git pull --rebase origin main
-          # push our change; overwrite only if no one else touched trades.json
-          git push --force-with-lease
+          git pull --rebase origin main                # new line ①
+          git push --force-with-lease                  # new line ②
+
