@@ -29,7 +29,7 @@ NSE100 = [
 FNO_SYMBOLS = sorted(NSE100)
 
 # ── Default thresholds (overridden by tuner) ──────────────────────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 20, 1.5
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
 DEFAULT_POP = "85%"
 
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
