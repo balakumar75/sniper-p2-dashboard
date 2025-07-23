@@ -2,21 +2,21 @@
 Utility functions used by Sniper Engine
 """
 import time, datetime as dt
+import pandas as pd                    # ← NEW
 from kiteconnect import exceptions as kc_ex
-from rate_limiter import gate            # rate-limit helper
+from rate_limiter import gate
 
 # ---------------------------------------------------------------------------
-# Kite instance is injected at runtime to avoid circular imports
+# Kite instance is injected at runtime (sniper_run_all.py calls utils.set_kite)
 # ---------------------------------------------------------------------------
 _kite = None
 
 def set_kite(kite_obj):
-    """Call this once—right after you create the KiteConnect object."""
     global _kite
     _kite = kite_obj
 
 # ---------------------------------------------------------------------------
-# helpers to calculate date ranges
+# Helpers to calculate date ranges
 # ---------------------------------------------------------------------------
 def end_date():
     return dt.date.today()
@@ -25,25 +25,27 @@ def start_date(days: int):
     return end_date() - dt.timedelta(days=days)
 
 def instrument_token(symbol: str) -> int:
-    from instruments import SYMBOL_TO_TOKEN   # your existing mapping
+    from instruments import SYMBOL_TO_TOKEN
     return SYMBOL_TO_TOKEN[symbol]
 
 # ---------------------------------------------------------------------------
 # OHLC fetch with retry + rate-limit guard
 # ---------------------------------------------------------------------------
 def fetch_ohlc(symbol: str, days: int):
-    if _kite is None:                         # safety check
+    """Return a pandas DataFrame or None when retries exhaust."""
+    if _kite is None:
         raise RuntimeError("utils.set_kite(kite) not called")
 
     for attempt in range(5):
         gate()
         try:
-            return _kite.historical_data(
+            raw = _kite.historical_data(
                 instrument_token(symbol),
                 start_date(days),
                 end_date(),
                 interval="day"
             )
+            return pd.DataFrame(raw)   # ← convert list → DataFrame
         except kc_ex.InputException as e:
             if "Too many requests" in str(e):
                 time.sleep(2 ** attempt)
