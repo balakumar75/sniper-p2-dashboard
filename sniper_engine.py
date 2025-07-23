@@ -1,79 +1,74 @@
 """
 sniper_engine.py
-Core scanner that:
-  1) Builds an initial universe   (prefilter_candidates)
-  2) Ranks symbols by RSI         (utils.fetch_rsi)
-  3) Returns a simple trade list  (list[dict])
+Quick-start version that:
 
-You can later replace the stubbed parts (prefilter, trade dict, etc.)
-with your full selection & position-sizing logic.
+1. Loads the F&O universe from instruments.py
+2. Keeps only symbols whose token exists in SYMBOL_TO_TOKEN
+3. Ranks by RSI (utils.fetch_rsi) – skips failures automatically
+4. Returns top N trade dicts
 """
 
 from typing import List, Dict, Tuple
+from instruments import FNO_SYMBOLS, SYMBOL_TO_TOKEN
 from utils import fetch_rsi
 
-# ---------------------------------------------------------------------------
-# CONFIG
-# ---------------------------------------------------------------------------
-TOP_N_MOMENTUM = 10        # keep the highest-RSI N symbols
-DEFAULT_SL_PCT = 2.0       # stop-loss percentage
-DEFAULT_TGT_PCT = 3.0      # target percentage
+TOP_N_MOMENTUM = 10        # number of trades to keep
+DEFAULT_SL_PCT = 2.0
+DEFAULT_TGT_PCT = 3.0
 
-# ---------------------------------------------------------------------------
-# 0. QUICK UNIVERSE STUB  (replace with real filters later)
+
 # ---------------------------------------------------------------------------
 def prefilter_candidates() -> List[Tuple[str]]:
     """
-    Return a list of tuples.  The first element MUST be the symbol string,
-    because generate_sniper_trades() uses t[0] when calling fetch_rsi().
-
-    Right now we simply load a hard-coded F&O universe so the engine runs.
-    Replace this with your real filter pipeline (price, volume, sector, etc.).
+    Basic pre-filter:
+      • symbol in F&O universe
+      • we have a token mapping for it
+    Returns tuples (symbol,) because generate_sniper_trades() indexes [0].
     """
-    # If you already maintain FNO_SYMBOLS elsewhere, import it here.
-    FNO_SYMBOLS = [
-        "RELIANCE", "HDFCBANK", "INFY", "TCS", "LTIM",
-        "ICICIBANK", "SBIN", "TITAN", "ONGC", "CIPLA",
-        # … add more or import from a data file …
+    return [
+        (sym,)
+        for sym in FNO_SYMBOLS
+        if sym in SYMBOL_TO_TOKEN
     ]
-    return [(sym,) for sym in FNO_SYMBOLS]
 
-# ---------------------------------------------------------------------------
-# 1.  MOMENTUM-BASED SNIPER LIST
+
 # ---------------------------------------------------------------------------
 def generate_sniper_trades() -> List[Dict]:
     """
-    Build the final list of trade dictionaries.  Each dict must at least
-    contain 'symbol', 'action', 'sl', 'target', so downstream code works.
+    Generate a list[dict] with minimal fields so downstream code works.
     """
-    # 1️⃣  initial screen
-    validated = prefilter_candidates()
+    universe = prefilter_candidates()
 
-    # 2️⃣  drop symbols where RSI could not be computed (-1 sentinel)
-    valid_with_rsi = [
-        t for t in validated
-        if fetch_rsi(t[0]) != -1
+    # Skip symbols where RSI cannot be calculated (RSI == -1)
+    symbols_with_rsi = [
+        (t, fetch_rsi(t[0]))
+        for t in universe
+    ]
+    symbols_with_rsi = [
+        (sym_tuple, rsi)
+        for sym_tuple, rsi in symbols_with_rsi
+        if rsi != -1
     ]
 
-    # 3️⃣  rank by RSI
+    # Rank by RSI descending
     ranked = sorted(
-        valid_with_rsi,
-        key=lambda x: fetch_rsi(x[0]),
+        symbols_with_rsi,
+        key=lambda x: x[1],            # sort key = rsi value
         reverse=True
     )[:TOP_N_MOMENTUM]
 
-    # 4️⃣  convert to simple trade dicts
+    # Build trade dicts
     trades: List[Dict] = []
-    for sym_tuple in ranked:
+    for (sym_tuple, rsi_val) in ranked:
         symbol = sym_tuple[0]
-        rsi_val = fetch_rsi(symbol)
-        trade = {
-            "symbol": symbol,
-            "action": "Buy" if rsi_val >= 55 else "Hold",
-            "rsi":    rsi_val,
-            "sl_pct": DEFAULT_SL_PCT,
-            "tgt_pct": DEFAULT_TGT_PCT,
-        }
-        trades.append(trade)
+        trades.append(
+            {
+                "symbol":  symbol,
+                "action":  "Buy" if rsi_val >= 55 else "Hold",
+                "rsi":     rsi_val,
+                "sl_pct":  DEFAULT_SL_PCT,
+                "tgt_pct": DEFAULT_TGT_PCT,
+            }
+        )
 
     return trades
