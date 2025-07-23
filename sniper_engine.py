@@ -4,10 +4,11 @@ Cash Long/Short + 1 σ OTM SHORT Strangle
 
 Filters
   • RSI ≥ 50  (set in config.py)
-  • ADX ≥ ADX_MIN  (config.py, default 18–20)
+  • ADX ≥ ADX_MIN  (config.py, default 18-20)
   • IV-Rank ≥ 33 %  (or IV fetch failed)
   • MACD bullish
-  • Volume ≥ 1.2 × 20-day avg          ← relaxed
+  • Volume ≥ 1.0 × 20-day avg            ← relaxed
+
 Trigger
   • 20-bar Donchian breakout (close ≥ 20-day high or ≤ 20-day low)
 """
@@ -21,24 +22,39 @@ from utils import (
 )
 
 # ── parameters ───────────────────────────────────────────────────────────
-DONCHIAN_WINDOW = 20            # 1-month breakout
+DONCHIAN_WINDOW = 20
 N_SIGMA         = 1.0
 SIGMA_FALLBACKS = [1.25, 1.5]
 
 # ── filter helpers ───────────────────────────────────────────────────────
+fail_counts = {"RSI": 0, "ADX": 0, "MACD": 0, "VOL": 0}
+
 def _validate(sym: str, cmp_: float) -> bool:
     if cmp_ is None:
         return False
-    if fetch_rsi(sym) < RSI_MIN or fetch_adx(sym) < ADX_MIN:
+
+    if fetch_rsi(sym) < RSI_MIN:
+        fail_counts["RSI"] += 1
         return False
-    ivr = iv_rank(sym)            # 0.0 ⇒ IV fetch failed → allow
+
+    if fetch_adx(sym) < ADX_MIN:
+        fail_counts["ADX"] += 1
+        return False
+
+    ivr = iv_rank(sym)                # 0.0 ⇒ IV fetch failed → allow
     if ivr and ivr < 0.33:
         return False
+
     if not fetch_macd(sym):
+        fail_counts["MACD"] += 1
         return False
-    if fetch_volume(sym) <= 1.2:   # ← relaxed volume threshold
+
+    if fetch_volume(sym) <= 1.0:      # ← relaxed volume threshold
+        fail_counts["VOL"] += 1
         return False
+
     return True
+
 
 def _breakout_dir(sym: str, cmp_: float) -> str | None:
     hi, lo = donchian_high_low(sym, DONCHIAN_WINDOW)
@@ -138,6 +154,7 @@ def generate_sniper_trades() -> list[dict]:
             if tr:
                 trades.append(tr)
 
+    print("fail breakdown:", fail_counts)
     print(f"stats: {{'validated': {validated}, 'breakout': {breakout}}}")
     print(f"✅ trades: {len(trades)}")
     return trades
