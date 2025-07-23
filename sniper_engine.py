@@ -1,68 +1,107 @@
 """
-Sniper Engine – anti-whipsaw edition
+sniper_engine.py  •  Naked Short-Strangle Ideas (High PoP, Minimal Filters)
 """
 from typing import List, Dict
-from datetime import date
+from datetime import date, timedelta
+import math
+
 from instruments import FNO_SYMBOLS
 import utils
 
-# thresholds
-MIN_TURNOVER_CR   = 50      # ₹Cr
-ATR_MIN, ATR_MAX  = 0.01, 0.04
-ADX_MIN           = 25
-RSI_TRIG          = 55
-POP_MIN           = 0.55
-TOP_N             = 10
-SL_PCT, TGT_PCT   = 2.0, 3.0
+# ── PARAMETERS ──────────────────────────────────────────────────────────────
+MIN_TURNOVER_CR = 50         # ₹Cr (20-day avg)
+STRANGLE_DTE     = 30        # days until expiry
+ATR_WIDTH        = 1.0       # ±1 × ATR strike width
+POPCUT           = 0.70      # require ≥70% combined PoP
+TOP_N            = 10        # max ideas to return
 
-def avg_turnover(df, n=20):
-    return (df["close"] * df["volume"]).rolling(n).mean().iloc[-1] / 1e7  # ₹Cr
+# ── EXPIRY FINDER ───────────────────────────────────────────────────────────
+def next_expiry(days_out=STRANGLE_DTE):
+    today = date.today()
+    e = date(today.year, today.month, 28)
+    while e.weekday() != 3:
+        e -= timedelta(days=1)
+    if (e - today).days < days_out:
+        m = today.month + 1
+        y = today.year + (m // 13)
+        m = m if m <= 12 else 1
+        e = date(y, m, 28)
+        while e.weekday() != 3:
+            e -= timedelta(days=1)
+    return e
 
-def fetch_cmp(sym):
-    utils.gate()
-    try:
-        return round(utils._kite.ltp(f"NSE:{sym}")[f"NSE:{sym}"]["last_price"], 2)
-    except Exception:
-        return None
+# ── Black–Scholes Δ & norm_CDF ──────────────────────────────────────────────
+def norm_cdf(x):
+    return (1 + math.erf(x / math.sqrt(2))) / 2
 
+def bs_delta(spot, strike, dte, call=True, vol=0.25, r=0.05):
+    t = dte / 365
+    d1 = (math.log(spot/strike) + (r + 0.5*vol*vol)*t) / (vol*math.sqrt(t))
+    if call:
+        return math.exp(-r*t) * norm_cdf(d1)
+    else:
+        return -math.exp(-r*t) * norm_cdf(-d1)
+
+# ── ROUND helpers ───────────────────────────────────────────────────────────
+def round_down(x, step): return int(x // step * step)
+def round_up(x,   step): return int(math.ceil(x/step) * step)
+
+# ── MAIN generator ──────────────────────────────────────────────────────────
 def generate_sniper_trades() -> List[Dict]:
-    picks: List[Dict] = []
+    ideas: List[Dict] = []
+    today = date.today().isoformat()
+
     for sym in FNO_SYMBOLS:
-        df = utils.fetch_ohlc(sym, 260)        # ~1 year
-        if df is None: continue
-
-        cmp_ = df["close"].iloc[-1]
-        if cmp_ <= utils.sma(df["close"], 200).iloc[-1]:        # trend filter
+        # 1) liquidity filter
+        df = utils.fetch_ohlc(sym, 60)
+        if not df or df.empty:
             continue
-        if avg_turnover(df) < MIN_TURNOVER_CR:                 # liquidity
-            continue
-        atr_pct = utils.atr(df).iloc[-1] / cmp_
-        if not (ATR_MIN <= atr_pct <= ATR_MAX):                # vol sanity
-            continue
-        if utils.adx(df).iloc[-1] < ADX_MIN:                   # trend strength
+        avg_turn = (df["close"]*df["volume"]).rolling(20).mean().iloc[-1] / 1e7
+        if avg_turn < MIN_TURNOVER_CR:
             continue
 
-        rsi_val = utils.rsi(df).iloc[-1]
-        pop_val = utils.hist_pop(df[-100:], TGT_PCT, SL_PCT)   # 100-day lookback
+        # 2) spot & ATR
+        spot   = df["close"].iloc[-1]
+        atr14  = utils.atr(df, 14).iloc[-1]
+        width  = ATR_WIDTH * atr14
 
-        if rsi_val >= RSI_TRIG and pop_val and pop_val >= POP_MIN:
-            trade = {
-                "date":   date.today().isoformat(),
-                "symbol": sym,
-                "type":   "Cash",
-                "entry":  cmp_,
-                "cmp":    cmp_,
-                "target": round(cmp_ * (1 + TGT_PCT/100), 2),
-                "sl":     round(cmp_ * (1 - SL_PCT/100), 2),
-                "pop":    pop_val,
-                "status": "Open",
-                "pnl":    0.0,
-                "action": "Buy",
-                "rsi":    round(rsi_val, 2),
-                "adx":    round(utils.adx(df).iloc[-1], 2),
-            }
-            picks.append(trade)
+        # 3) strikes
+        put_strike  = round_down(spot - width, 50)
+        call_strike = round_up(spot + width, 50)
 
-    # rank by RSI, keep top N
-    picks = sorted(picks, key=lambda x: x["rsi"], reverse=True)[:TOP_N]
-    return picks
+        # 4) expiry & dte
+        exp = next_expiry()
+        dte = (exp - date.today()).days
+
+        # 5) deltas & PoP
+        delta_p = bs_delta(spot, put_strike,  dte, call=False)
+        delta_c = bs_delta(spot, call_strike, dte, call=True)
+        pop_p   = 1 - abs(delta_p)
+        pop_c   = 1 - abs(delta_c)
+        combo   = round(pop_p * pop_c, 2)
+
+        # 6) keep only juicy combos
+        if combo < POPCUT:
+            continue
+
+        ideas.append({
+            "date":     today,
+            "symbol":   sym,
+            "strategy": "ShortStrangle",
+            "entry":    0,      # premium fill later
+            "cmp":      spot,
+            "target":   0,
+            "sl":       0,
+            "pop":      combo,
+            "action":   "Sell",
+            "notes": {
+                "expiry":     exp.isoformat(),
+                "put_strike": put_strike,
+                "call_strike": call_strike,
+                "delta_p":    round(delta_p,2),
+                "delta_c":    round(delta_c,2)
+            },
+        })
+
+    # return top-N by PoP
+    return sorted(ideas, key=lambda t: t["pop"], reverse=True)[:TOP_N]
