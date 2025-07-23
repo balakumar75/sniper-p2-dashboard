@@ -1,16 +1,8 @@
 """
 sniper_engine.py
-Cash Long/Short + 1 σ OTM SHORT Strangle
-
-Filters
-  • RSI ≥ 50  (set in config.py)
-  • ADX ≥ ADX_MIN  (config.py, default 18-20)
-  • IV-Rank ≥ 33 %  (or IV fetch failed)
-  • MACD bullish
-  • Volume ≥ 1.0 × 20-day avg            ← relaxed
-
-Trigger
-  • 20-bar Donchian breakout (close ≥ 20-day high or ≤ 20-day low)
+Tier-1: 20-bar Donchian breakout  + Cash + 1 σ strangle
+Tier-2 fallback (only if no breakouts):
+        highest-RSI names that pass core filters, 1.25 σ strangle
 """
 
 import json, math, datetime as dt
@@ -22,37 +14,35 @@ from utils import (
 )
 
 # ── parameters ───────────────────────────────────────────────────────────
-DONCHIAN_WINDOW = 20
-N_SIGMA         = 1.0
-SIGMA_FALLBACKS = [1.25, 1.5]
+DONCHIAN_WINDOW   = 20
+N_SIGMA_PRIMARY   = 1.0
+N_SIGMA_FALLBACKS = [1.25, 1.5]          # for breakout leg
+N_SIGMA_MOMENTUM  = 1.25                 # for fallback leg
 
-# ── filter helpers ───────────────────────────────────────────────────────
+VOL_THRESHOLD = 1.0                      # ≥ 1.0 × 20-day avg
+
+# ── diagnostics ──────────────────────────────────────────────────────────
 fail_counts = {"RSI": 0, "ADX": 0, "MACD": 0, "VOL": 0}
 
+# ── filter helpers ───────────────────────────────────────────────────────
 def _validate(sym: str, cmp_: float) -> bool:
     if cmp_ is None:
         return False
-
     if fetch_rsi(sym) < RSI_MIN:
         fail_counts["RSI"] += 1
         return False
-
     if fetch_adx(sym) < ADX_MIN:
         fail_counts["ADX"] += 1
         return False
-
-    ivr = iv_rank(sym)                # 0.0 ⇒ IV fetch failed → allow
+    ivr = iv_rank(sym)               # 0 ⇒ IV fetch failed → allow
     if ivr and ivr < 0.33:
         return False
-
     if not fetch_macd(sym):
         fail_counts["MACD"] += 1
         return False
-
-    if fetch_volume(sym) <= 1.0:      # ← relaxed volume threshold
+    if fetch_volume(sym) <= VOL_THRESHOLD:
         fail_counts["VOL"] += 1
         return False
-
     return True
 
 
@@ -93,7 +83,7 @@ def _pick_strikes(cmp_: float, oc: dict, sigma: float, days: int):
     pe = max((s for s in oc["PE"] if s <= cmp_ * (1 - band)), default=None)
     return (ce, pe) if ce and pe else None
 
-def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
+def _strangle_trade(sym, cmp_, oc, sigma, days, tag_extra=""):
     strikes = _pick_strikes(cmp_, oc, sigma, days)
     if not strikes:
         return None
@@ -110,7 +100,7 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
         "pop_pct": f"{int(sigma * 100)}%",
         "action": "Sell",
         "sector": fetch_sector_strength(sym),
-        "tags": [f"{sigma:.2f}σ", "DC✅", "IVR✅", oc["expiry"]],
+        "tags": [f"{sigma:.2f}σ", "IVR✅", oc["expiry"]] + ( [tag_extra] if tag_extra else [] ),
         "options": {
             "expiry": oc["expiry"],
             "call": ce,
@@ -124,35 +114,51 @@ def _strangle(sym: str, cmp_: float, oc: dict, sigma: float, days: int):
         "pnl": 0.0,
     }
 
-# ── engine loop ───────────────────────────────────────────────────────────
+# ── main engine ──────────────────────────────────────────────────────────
 def generate_sniper_trades() -> list[dict]:
     trades = []
-    validated = breakout = 0
+    validated, breakout = 0, 0
+    validated_syms = []          # store for fallback
 
     for sym in FNO_SYMBOLS:
         cmp_ = fetch_cmp(sym)
         if not _validate(sym, cmp_):
             continue
         validated += 1
+        validated_syms.append((sym, cmp_))
 
         direction = _breakout_dir(sym, cmp_)
         if direction is None:
             continue
         breakout += 1
 
+        # cash leg
         trades.append(_cash_trade(sym, cmp_, direction))
 
+        # 1 σ strangle leg
         oc = fetch_option_chain(sym)
         if oc:
             days = oc.get("days_to_exp", 7)
-            tr = _strangle(sym, cmp_, oc, N_SIGMA, days)
+            tr = _strangle_trade(sym, cmp_, oc, N_SIGMA_PRIMARY, days)
             if not tr:
-                for sig in SIGMA_FALLBACKS:
-                    tr = _strangle(sym, cmp_, oc, sig, days)
+                for sig in N_SIGMA_FALLBACKS:
+                    tr = _strangle_trade(sym, cmp_, oc, sig, days)
                     if tr:
                         break
             if tr:
                 trades.append(tr)
+
+    # ── Fallback: highest-RSI momentum strangle if no breakout trades
+    if not trades:
+        top = sorted(validated_syms, key=lambda x: fetch_rsi(x[0]), reverse=True)[:5]
+        for sym, cmp_ in top:
+            oc = fetch_option_chain(sym)
+            if not oc:
+                continue
+            days = oc.get("days_to_exp", 7)
+            trade = _strangle_trade(sym, cmp_, oc, N_SIGMA_MOMENTUM, days, tag_extra="MOM✅")
+            if trade:
+                trades.append(trade)
 
     print("fail breakdown:", fail_counts)
     print(f"stats: {{'validated': {validated}, 'breakout': {breakout}}}")
