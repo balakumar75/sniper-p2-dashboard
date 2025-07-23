@@ -5,7 +5,7 @@ Outputs: results.csv and backtest_report.md
 
 import itertools, json, pathlib, datetime as dt, pandas as pd
 from tqdm import tqdm
-from config import DEFAULT_POP    # reuse constants
+from config import DEFAULT_POP, NSE100    # reuse constants
 from utils  import (fetch_ohlc, fetch_rsi, fetch_adx, fetch_macd)
 
 START = dt.date.today() - dt.timedelta(days=3*365)
