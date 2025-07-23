@@ -7,6 +7,11 @@ sniper_run_all.py
   4) Self-tune parameters (no extra Render job)
 """
 
+import kite_patch          # ← add this line
+from token_manager import refresh_if_needed
+
+kite = refresh_if_needed()
+
 import os, sys, json, base64, requests, pathlib, datetime
 from kiteconnect import KiteConnect, exceptions as kc_ex
 from sniper_engine import generate_sniper_trades, save_trades_to_json
