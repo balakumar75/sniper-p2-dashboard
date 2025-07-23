@@ -34,6 +34,47 @@ import os, sys, json, base64, requests, pathlib, datetime
 from kiteconnect import exceptions as kc_ex
 from config import PARAMS_FILE                 # path to sniper_params.json
 
+#!/usr/bin/env python
+"""
+sniper_run_all.py
+  1) Authenticate Kite (token_manager)
+  2) Inject Kite into utils   ← breaks circular import
+  3) Run Sniper Engine, write trades.json locally
+  4) Push trades.json to GitHub (optional)
+  5) Self-tune parameters
+"""
+
+# ── 0. Global patches & shared helpers ─────────────────────────────────────
+import kite_patch                              # rate-limit monkey-patch
+from token_manager import refresh_if_needed
+import utils                                   # MUST import before sniper_engine
+
+# ── 1. Kite auth ───────────────────────────────────────────────────────────
+try:
+    kite = refresh_if_needed()
+    utils.set_kite(kite)
+    print(f"✅ Kite auth OK – {kite.profile()['user_name']}")
+except Exception as e:
+    raise SystemExit(f"🛑 Kite authentication failed: {e}")
+
+# ── 2. Sniper Engine import (safe now) ─────────────────────────────────────
+from sniper_engine import generate_sniper_trades     # <— only this one
+# (sniper_engine no longer contains save_trades_to_json)
+
+# ── 3. Std libs & consts ──────────────────────────────────────────────────
+import os, sys, json, base64, requests, pathlib, datetime
+from config import PARAMS_FILE
+
+# ── 4. Generate trades & save JSON ─────────────────────────────────────────
+try:
+    trades = generate_sniper_trades()
+    with open("trades.json", "w") as f:             # new local save
+        json.dump(trades, f, indent=2)
+    print(f"💾 trades.json written with {len(trades)} trades.")
+except Exception as e:
+    raise SystemExit(f"🛑 Sniper Engine failed: {e}")
+
+
 # ── 4. Generate trades ─────────────────────────────────────────────────────
 try:
     trades = generate_sniper_trades()
