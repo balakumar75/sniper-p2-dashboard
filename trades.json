@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "symbol": "ICICIBANK",
+    "action": "Buy",
+    "rsi": 71.85,
+    "sl_pct": 2.0,
+    "tgt_pct": 3.0
+  },
+  {
+    "symbol": "HDFCBANK",
+    "action": "Buy",
+    "rsi": 60.77,
+    "sl_pct": 2.0,
+    "tgt_pct": 3.0
+  },
+  {
+    "symbol": "INFY",
+    "action": "Hold",
+    "rsi": 35.55,
+    "sl_pct": 2.0,
+    "tgt_pct": 3.0
+  },
+  {
+    "symbol": "RELIANCE",
+    "action": "Hold",
+    "rsi": 22.45,
+    "sl_pct": 2.0,
+    "tgt_pct": 3.0
+  },
+  {
+    "symbol": "TCS",
+    "action": "Hold",
+    "rsi": 18.34,
+    "sl_pct": 2.0,
+    "tgt_pct": 3.0
+  }
+]
