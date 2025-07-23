@@ -1,59 +1,87 @@
 name: Strategy Tune
 
 on:
+  # every Sunday 00:00 UTC  → adjust cron if you prefer another time
   schedule:
-    - cron: '0 0 * * 0'       # every Sunday 00:00 UTC
+    - cron: '0 0 * * 0'
+  # allows you to click “Run workflow” in the Actions tab
   workflow_dispatch:
 
 jobs:
   tune:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     steps:
-      - uses: actions/checkout@v4
-        with: {token: ${{ secrets.GITHUB_TOKEN }}}
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - run: |
-          pip install -r requirements.txt tqdm
-          python backtest.py
-      - run: |
-          python - <<'PY'
-          import json, pathlib, re, textwrap
-          best = json.loads(pathlib.Path("best_params.json").read_text())
-          cfg  = pathlib.Path("config.py").read_text().splitlines()
-          mapping = {
-              "RSI_MIN":  best["RSI"],
-              "ADX_MIN":  best["ADX"],
-              "VOL_MULT": best["VOL"],
-              "DONCHIAN_WINDOW": best["DC"],
-              "N_SIGMA_PRIMARY": best["SIGMA"]
-          }
-          new_lines=[]
-          for line in cfg:
-              for k,v in mapping.items():
-                  if re.match(rf"{k}\s*=", line):
-                      line=f"{k} = {v}"
-              new_lines.append(line)
-          pathlib.Path("config.py").write_text("\n".join(new_lines))
-          pathlib.Path("backtest_report.md").write_text(
-              textwrap.dedent(f"""
-              # Weekly Back-test
+      # 1️⃣  Checkout repo (with explicit token)
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-              **Best combo**
+      # 2️⃣  Python setup
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-              ```json
-              {json.dumps(best, indent=2)}
-              ```
-
-              _Auto-generated on ${{ github.event.head_commit.timestamp }}_
-              """)
-          )
-          PY
-      - name: Commit tuned params
+      # 3️⃣  Install dependencies
+      - name: 📦 Install dependencies
         run: |
-          git config user.name "tuner-bot"
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt tqdm
+
+      # 4️⃣  Run your back-test / grid search
+      - name: 🚀 Run back-test
+        run: python backtest.py
+
+      # 5️⃣  Rewrite config.py & generate report
+      - name: 📝 Apply best params and write report
+        run: |
+          python - <<'PY'
+          import json, pathlib, re, textwrap, datetime
+
+          best = json.loads(pathlib.Path("best_params.json").read_text())
+
+          # Map the tuned params to variables in config.py
+          mapping = {
+              "RSI_MIN":           best["RSI"],
+              "ADX_MIN":           best["ADX"],
+              "VOL_MULTIPLIER":    best["VOL"],
+              "DONCHIAN_WINDOW":   best["DC"],
+              "N_SIGMA_PRIMARY":   best["SIGMA"],
+          }
+
+          cfg_path   = pathlib.Path("config.py")
+          new_lines  = []
+          for line in cfg_path.read_text().splitlines():
+              for k, v in mapping.items():
+                  if re.match(rf"{k}\s*=", line):
+                      line = f"{k} = {v}"
+                      break
+              new_lines.append(line)
+          cfg_path.write_text("\n".join(new_lines))
+
+          # Markdown report
+          report = textwrap.dedent(f"""
+          # Weekly Back-test
+          **Best parameter combo**
+
+          ```json
+          {json.dumps(best, indent=2)}
+          ```
+
+          _Auto-generated on {datetime.datetime.utcnow():%Y-%m-%d %H:%M UTC}_
+          """)
+          pathlib.Path("backtest_report.md").write_text(report)
+          PY
+
+      # 6️⃣  Commit updated artefacts (skip commit if no change)
+      - name: 💾 Commit tuned params
+        run: |
+          git config user.name  "tuner-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add config.py backtest_report.md results.csv best_params.json
-          git commit -m "Tune params weekly" || echo "no change"
+          git add config.py backtest_report.md results.csv best_params.json || true
+          git diff --cached --quiet || git commit -m "Tune params weekly"
+          git pull --rebase origin ${{ github.ref_name }}
           git push --force-with-lease
