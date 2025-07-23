@@ -1,37 +1,72 @@
 [
   {
+    "date": "2025-07-23",
     "symbol": "ICICIBANK",
+    "type": "Cash",
+    "entry": 1488.6,
+    "cmp": 1488.6,
+    "target": 1533.26,
+    "sl": 1458.83,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
-    "rsi": 71.85,
-    "sl_pct": 2.0,
-    "tgt_pct": 3.0
+    "rsi": 71.85
   },
   {
+    "date": "2025-07-23",
     "symbol": "HDFCBANK",
+    "type": "Cash",
+    "entry": 2024.3,
+    "cmp": 2024.3,
+    "target": 2085.03,
+    "sl": 1983.81,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
-    "rsi": 60.77,
-    "sl_pct": 2.0,
-    "tgt_pct": 3.0
+    "rsi": 60.77
   },
   {
+    "date": "2025-07-23",
     "symbol": "INFY",
+    "type": "Cash",
+    "entry": 1558.9,
+    "cmp": 1558.9,
+    "target": 1605.67,
+    "sl": 1527.72,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Hold",
-    "rsi": 35.55,
-    "sl_pct": 2.0,
-    "tgt_pct": 3.0
+    "rsi": 35.55
   },
   {
+    "date": "2025-07-23",
     "symbol": "RELIANCE",
+    "type": "Cash",
+    "entry": 1424.6,
+    "cmp": 1424.6,
+    "target": 1467.34,
+    "sl": 1396.11,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Hold",
-    "rsi": 22.45,
-    "sl_pct": 2.0,
-    "tgt_pct": 3.0
+    "rsi": 22.45
   },
   {
+    "date": "2025-07-23",
     "symbol": "TCS",
+    "type": "Cash",
+    "entry": 3179.1,
+    "cmp": 3179.1,
+    "target": 3274.47,
+    "sl": 3115.52,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Hold",
-    "rsi": 18.34,
-    "sl_pct": 2.0,
-    "tgt_pct": 3.0
+    "rsi": 18.34
   }
 ]
