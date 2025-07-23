@@ -1,38 +1,48 @@
 #!/usr/bin/env python
 """
 sniper_run_all.py
-  1) Kite auth via token_manager (auto-refresh, global rate-limited)
-  2) Run Sniper Engine
-  3) Push trades.json to GitHub
-  4) Self-tune parameters
+  1) Authenticate Kite (token_manager)
+  2) Inject the Kite instance into utils   ← breaks circular import
+  3) Run Sniper Engine (generate & save trades)
+  4) Push trades.json to GitHub (optional)
+  5) Self-tune parameters (simple)
+
+
+Environment variables expected (set as GitHub Secrets):
+  KITE_API_KEY, KITE_API_SECRET, KITE_ACCESS_TOKEN
+  GITHUB_TOKEN  – only needed if you want the file push
 """
 
-# ── imports that must come first ───────────────────────────────────────────
-import kite_patch                              # global monkey-patch → rate-limits every Kite call
-from token_manager import refresh_if_needed    # auto-handles tokens / renewals
-from kiteconnect import exceptions as kc_ex
-
-# ── standard libs ──────────────────────────────────────────────────────────
-import os, sys, json, base64, requests, pathlib, datetime
-
-# ── project modules ────────────────────────────────────────────────────────
-from sniper_engine import generate_sniper_trades, save_trades_to_json
-from config import PARAMS_FILE                 # points to sniper_params.json
+# ── 0. Global patches & shared helpers ─────────────────────────────────────
+import kite_patch                              # applies rate-limiter monkey-patch
+from token_manager import refresh_if_needed    # daily access-token handling
+import utils                                   # MUST come before sniper_engine
 
 # ── 1. Kite auth ───────────────────────────────────────────────────────────
 try:
-    kite = refresh_if_needed()                 # returns ready-to-use KiteConnect
+    kite = refresh_if_needed()
+    utils.set_kite(kite)                       # inject Kite into utils.py
     print(f"✅ Kite auth OK – {kite.profile()['user_name']}")
-except kc_ex.TokenException as e:
-    print("🛑 Kite auth failed:", e)
-    sys.exit(1)
+except Exception as e:
+    raise SystemExit(f"🛑 Kite authentication failed: {e}")
 
-# ── 2. Generate Sniper trades ──────────────────────────────────────────────
-trades = generate_sniper_trades()
-save_trades_to_json(trades)
-print(f"💾 trades.json written with {len(trades)} trades.")
+# ── 2. Sniper Engine imports (safe now) ────────────────────────────────────
+from sniper_engine import generate_sniper_trades, save_trades_to_json
 
-# ── 3. Push trades.json to GitHub (optional) ───────────────────────────────
+# ── 3. Standard libs & constants ───────────────────────────────────────────
+import os, sys, json, base64, requests, pathlib, datetime
+from kiteconnect import exceptions as kc_ex
+from config import PARAMS_FILE                 # path to sniper_params.json
+
+# ── 4. Generate trades ─────────────────────────────────────────────────────
+try:
+    trades = generate_sniper_trades()
+    save_trades_to_json(trades)
+    print(f"💾 trades.json written with {len(trades)} trades.")
+except Exception as e:
+    raise SystemExit(f"🛑 Sniper Engine failed: {e}")
+
+# ── 5. Optional: push trades.json back to GitHub ───────────────────────────
 def push_to_github(path: str = "trades.json"):
     token = os.getenv("GITHUB_TOKEN")
     if not token:
@@ -46,18 +56,17 @@ def push_to_github(path: str = "trades.json"):
         "Accept": "application/vnd.github.v3+json",
     }
 
-    # read + base64-encode file
     with open(path, "rb") as f:
         content_b64 = base64.b64encode(f.read()).decode()
 
-    # check if file already exists (need SHA for update)
+    # Check if file exists (need SHA for update)
     sha = None
     r = requests.get(api, headers=headers)
     if r.status_code == 200:
         sha = r.json().get("sha")
 
     payload = {
-        "message": "Auto-update trades.json",
+        "message": f"Auto-update {path}",
         "content": content_b64,
         "branch":  "main",
     }
@@ -72,9 +81,8 @@ def push_to_github(path: str = "trades.json"):
 
 push_to_github()
 
-# ── 4. Inline self-tuner (simple adaptive params) ──────────────────────────
+# ── 6. Simple self-tuner (example) ─────────────────────────────────────────
 PERF_FILE = pathlib.Path("performance.json")
-
 try:
     records = json.loads(PERF_FILE.read_text()) if PERF_FILE.exists() else []
 except json.JSONDecodeError:
