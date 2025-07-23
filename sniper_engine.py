@@ -1,8 +1,8 @@
 """
 sniper_engine.py
-Tier-1: 20-bar Donchian breakout  + Cash + 1 σ strangle
-Tier-2 fallback (only if no breakouts):
-        highest-RSI names that pass core filters, 1.25 σ strangle
+Tier-1  : 20-bar breakout  → Cash + 1 σ strangle
+Tier-2  : highest-RSI F&O names → 1.25 σ strangle  (if no Tier-1)
+Tier-3  : highest-RSI (any) → Cash trade             (if still empty)
 """
 
 import json, math, datetime as dt
@@ -15,79 +15,66 @@ from utils import (
 
 # ── parameters ───────────────────────────────────────────────────────────
 DONCHIAN_WINDOW   = 20
-N_SIGMA_PRIMARY   = 1.0
-N_SIGMA_FALLBACKS = [1.25, 1.5]          # for breakout leg
-N_SIGMA_MOMENTUM  = 1.25                 # for fallback leg
-
-VOL_THRESHOLD = 1.0                      # ≥ 1.0 × 20-day avg
+VOL_THRESHOLD     = 1.0
+N_SIGMA_BREAKOUT  = 1.0
+N_SIGMA_MOMENTUM  = 1.25           # for option fallback
+TOP_N_MOMENTUM    = 5              # how many cash fallbacks
 
 # ── diagnostics ──────────────────────────────────────────────────────────
-fail_counts = {"RSI": 0, "ADX": 0, "MACD": 0, "VOL": 0}
+fail = {"RSI": 0, "ADX": 0, "MACD": 0, "VOL": 0}
 
 # ── filter helpers ───────────────────────────────────────────────────────
-def _validate(sym: str, cmp_: float) -> bool:
+def _validate(sym, cmp_):
     if cmp_ is None:
         return False
     if fetch_rsi(sym) < RSI_MIN:
-        fail_counts["RSI"] += 1
-        return False
+        fail["RSI"] += 1; return False
     if fetch_adx(sym) < ADX_MIN:
-        fail_counts["ADX"] += 1
-        return False
-    ivr = iv_rank(sym)               # 0 ⇒ IV fetch failed → allow
+        fail["ADX"] += 1; return False
+    ivr = iv_rank(sym)
     if ivr and ivr < 0.33:
         return False
     if not fetch_macd(sym):
-        fail_counts["MACD"] += 1
-        return False
+        fail["MACD"] += 1; return False
     if fetch_volume(sym) <= VOL_THRESHOLD:
-        fail_counts["VOL"] += 1
-        return False
+        fail["VOL"] += 1; return False
     return True
 
-
-def _breakout_dir(sym: str, cmp_: float) -> str | None:
+def _breakout_dir(sym, cmp_):
     hi, lo = donchian_high_low(sym, DONCHIAN_WINDOW)
-    if hi and cmp_ >= hi:
-        return "up"
-    if lo and cmp_ <= lo:
-        return "down"
+    if hi and cmp_ >= hi: return "up"
+    if lo and cmp_ <= lo: return "down"
     return None
 
 # ── trade builders ───────────────────────────────────────────────────────
-def _cash_trade(sym: str, cmp_: float, direction: str) -> dict:
+def _cash(sym, cmp_, direction, tag):
     long = direction == "up"
-    target = round(cmp_ * (1.02 if long else 0.98), 2)
-    sl     = round(cmp_ * (0.975 if long else 1.025), 2)
+    tgt  = round(cmp_ * (1.02 if long else 0.98), 2)
+    sl   = round(cmp_ * (0.975 if long else 1.025), 2)
     return {
         "date": dt.datetime.today().strftime("%Y-%m-%d"),
         "symbol": sym,
         "type": "Cash",
         "entry": cmp_,
-        "cmp": cmp_,
-        "target": target,
+        "cmp":   cmp_,
+        "target": tgt,
         "sl": sl,
         "pop_pct": DEFAULT_POP,
         "action": "Buy" if long else "Sell",
         "sector": fetch_sector_strength(sym),
-        "tags": ["RSI✅", "MACD✅", "DC✅", "IVR✅"],
+        "tags": ["RSI✅", tag],
         "status": "Open",
         "exit_date": "-",
         "holding_days": 0,
         "pnl": 0.0,
     }
 
-def _pick_strikes(cmp_: float, oc: dict, sigma: float, days: int):
-    band = sigma * math.sqrt(days / 365)
+def _strangle(sym, cmp_, oc, sigma, extra_tag=""):
+    band = sigma * math.sqrt(oc["days_to_exp"] / 365)
     ce = min((s for s in oc["CE"] if s >= cmp_ * (1 + band)), default=None)
     pe = max((s for s in oc["PE"] if s <= cmp_ * (1 - band)), default=None)
-    return (ce, pe) if ce and pe else None
-
-def _strangle_trade(sym, cmp_, oc, sigma, days, tag_extra=""):
-    strikes = _pick_strikes(cmp_, oc, sigma, days)
-    if not strikes:
+    if not (ce and pe):
         return None
-    ce, pe = strikes
     credit = round((oc["ltp_map"][ce] + oc["ltp_map"][pe]) / 2, 2)
     return {
         "date": dt.datetime.today().strftime("%Y-%m-%d"),
@@ -97,17 +84,12 @@ def _strangle_trade(sym, cmp_, oc, sigma, days, tag_extra=""):
         "cmp": credit,
         "target": round(credit * 0.70, 2),
         "sl": round(credit * 1.60, 2),
-        "pop_pct": f"{int(sigma * 100)}%",
+        "pop_pct": f"{int(sigma*100)}%",
         "action": "Sell",
         "sector": fetch_sector_strength(sym),
-        "tags": [f"{sigma:.2f}σ", "IVR✅", oc["expiry"]] + ( [tag_extra] if tag_extra else [] ),
-        "options": {
-            "expiry": oc["expiry"],
-            "call": ce,
-            "put": pe,
-            "call_ltp": oc["ltp_map"][ce],
-            "put_ltp": oc["ltp_map"][pe],
-        },
+        "tags": [f"{sigma:.2f}σ", oc["expiry"]] + ([extra_tag] if extra_tag else []),
+        "options": {"expiry": oc["expiry"], "call": ce, "put": pe,
+                    "call_ltp": oc["ltp_map"][ce], "put_ltp": oc["ltp_map"][pe]},
         "status": "Open",
         "exit_date": "-",
         "holding_days": 0,
@@ -115,59 +97,51 @@ def _strangle_trade(sym, cmp_, oc, sigma, days, tag_extra=""):
     }
 
 # ── main engine ──────────────────────────────────────────────────────────
-def generate_sniper_trades() -> list[dict]:
-    trades = []
-    validated, breakout = 0, 0
-    validated_syms = []          # store for fallback
+def generate_sniper_trades():
+    trades, validated, breakout = [], [], 0
 
+    # pass 1: breakout scan
     for sym in FNO_SYMBOLS:
         cmp_ = fetch_cmp(sym)
         if not _validate(sym, cmp_):
             continue
-        validated += 1
-        validated_syms.append((sym, cmp_))
-
-        direction = _breakout_dir(sym, cmp_)
-        if direction is None:
+        validated.append((sym, cmp_))
+        dir_ = _breakout_dir(sym, cmp_)
+        if dir_ is None:
             continue
         breakout += 1
+        trades.append(_cash(sym, cmp_, dir_, "DC✅"))
 
-        # cash leg
-        trades.append(_cash_trade(sym, cmp_, direction))
-
-        # 1 σ strangle leg
         oc = fetch_option_chain(sym)
         if oc:
-            days = oc.get("days_to_exp", 7)
-            tr = _strangle_trade(sym, cmp_, oc, N_SIGMA_PRIMARY, days)
-            if not tr:
-                for sig in N_SIGMA_FALLBACKS:
-                    tr = _strangle_trade(sym, cmp_, oc, sig, days)
-                    if tr:
-                        break
+            tr = _strangle(sym, cmp_, oc, N_SIGMA_BREAKOUT, "DC✅")
             if tr:
                 trades.append(tr)
 
-    # ── Fallback: highest-RSI momentum strangle if no breakout trades
-    if not trades:
-        top = sorted(validated_syms, key=lambda x: fetch_rsi(x[0]), reverse=True)[:5]
-        for sym, cmp_ in top:
+    # pass 2: option-strangle momentum fallback
+    if not trades and validated:
+        top_rsi = sorted(validated, key=lambda x: fetch_rsi(x[0]), reverse=True)[:TOP_N_MOMENTUM]
+        for sym, cmp_ in top_rsi:
             oc = fetch_option_chain(sym)
             if not oc:
                 continue
-            days = oc.get("days_to_exp", 7)
-            trade = _strangle_trade(sym, cmp_, oc, N_SIGMA_MOMENTUM, days, tag_extra="MOM✅")
-            if trade:
-                trades.append(trade)
+            tr = _strangle(sym, cmp_, oc, N_SIGMA_MOMENTUM, "MOM✅")
+            if tr:
+                trades.append(tr)
 
-    print("fail breakdown:", fail_counts)
-    print(f"stats: {{'validated': {validated}, 'breakout': {breakout}}}")
-    print(f"✅ trades: {len(trades)}")
+    # pass 3: cash momentum fallback
+    if not trades and validated:
+        top_rsi = sorted(validated, key=lambda x: fetch_rsi(x[0]), reverse=True)[:TOP_N_MOMENTUM]
+        for sym, cmp_ in top_rsi:
+            trades.append(_cash(sym, cmp_, "up", "MOM✅"))
+
+    print("fail breakdown:", fail)
+    print(f"validated: {len(validated)}, breakout: {breakout}, trades: {len(trades)}")
     return trades
 
-def save_trades_to_json(trades):
-    with open("trades.json", "w", encoding="utf-8") as f:
-        json.dump(trades, f, indent=2)
+def save_trades_to_json(t):
+    with open("trades.json", "w", encoding="utf-8") as fp:
+        json.dump(t, fp, indent=2)
 
 if __name__ == "__main__":
     save_trades_to_json(generate_sniper_trades())
