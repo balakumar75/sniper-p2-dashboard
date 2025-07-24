@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
 sniper_run_all.py
-  1) Authenticate with Kite
+  1) Authenticate Kite (token_manager)
   2) Inject kite into utils
   3) Run Sniper Engine → raw_trades
-  4) Remap keys (handling both "type" and "strategy") → trades.json
+  4) Remap to dashboard columns → write trades.json
   5) Push to GitHub + self-tune
 """
 
@@ -20,22 +20,21 @@ from token_manager import refresh_if_needed
 import utils
 from config import PARAMS_FILE
 
-# 1) Kite auth & inject
+# 1) Auth & inject
 kite = refresh_if_needed()
 utils.set_kite(kite)
 
-# 2) Import your engine
+# 2) Import engine
 from sniper_engine import generate_sniper_trades
 
-# 3) Generate raw trades
+# 3) Generate trades
 raw_trades = generate_sniper_trades()
 
-# 4) Remap for dashboard
-# Dashboard expects these exact columns:
+# 4) Remap keys for dashboard
 mapping = {
     "date":    "Date",
     "symbol":  "Symbol",
-    "type":    "Type",       # we’ll pull from t["type"] or t["strategy"]
+    "type":    "Type",       # might come from .get("type") or .get("strategy")
     "entry":   "Entry",
     "cmp":     "CMP",
     "target":  "Target",
@@ -46,34 +45,41 @@ mapping = {
     "action":  "Action",
 }
 
+# Which columns are numeric?
+numeric_cols = {"Entry","CMP","Target","SL","PoP","P&L (₹)"}
+
 dashboard_trades = []
 for t in raw_trades:
     row = {}
-    for src, dst in mapping.items():
-        if src == "type":
-            # prefer t["type"], fallback to t["strategy"]
+    for src_key, dst_key in mapping.items():
+        if src_key == "type":
+            # prefer explicit type field, else fallback to strategy
             v = t.get("type") if t.get("type") is not None else t.get("strategy")
         else:
-            v = t.get(src)
+            v = t.get(src_key)
 
-        # replace None/empty/NaN with dash
-        if v is None or v == "" or (isinstance(v, float) and math.isnan(v)):
-            v = "—"
-        row[dst] = v
+        # Numeric columns → null if missing/NaN
+        if dst_key in numeric_cols:
+            if v is None or v == "" or (isinstance(v, float) and math.isnan(v)):
+                row[dst_key] = None
+            else:
+                row[dst_key] = v
+        else:
+            # Text/date columns → empty string if missing
+            row[dst_key] = v if v is not None else ""
     dashboard_trades.append(row)
 
-# 5) Write the JSON file
+# 5) Write trades.json
 with open("trades.json", "w") as f:
     json.dump(dashboard_trades, f, indent=2)
 print(f"💾 trades.json written with {len(dashboard_trades)} rows.")
 
-# 6) Push to GitHub (optional)
+# 6) Push to GitHub
 def push_to_github(path="trades.json"):
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         print("⚠️ GITHUB_TOKEN not set – skipping GitHub push.")
         return
-
     repo = "balakumar75/sniper-p2-dashboard"
     api  = f"https://api.github.com/repos/{repo}/contents/{path}"
     hdrs = {
@@ -81,10 +87,9 @@ def push_to_github(path="trades.json"):
         "Accept":        "application/vnd.github.v3+json",
     }
     content_b64 = base64.b64encode(pathlib.Path(path).read_bytes()).decode()
-    # fetch existing SHA if any
+    # get existing SHA
     r = requests.get(api, headers=hdrs)
     sha = r.json().get("sha") if r.status_code == 200 else None
-
     payload = {
         "message": f"Auto-update {path}",
         "content": content_b64,
@@ -92,12 +97,9 @@ def push_to_github(path="trades.json"):
     }
     if sha:
         payload["sha"] = sha
-
-    resp = requests.put(api, headers=hdrs, data=json.dumps(payload))
-    if resp.status_code in (200, 201):
-        print("✅ Pushed to GitHub.")
-    else:
-        print(f"🛑 GitHub push failed: {resp.status_code}")
+    res = requests.put(api, headers=hdrs, data=json.dumps(payload))
+    print("✅ Pushed to GitHub." if res.status_code in (200,201)
+          else f"🛑 GitHub push failed: {res.status_code}")
 
 push_to_github()
 
