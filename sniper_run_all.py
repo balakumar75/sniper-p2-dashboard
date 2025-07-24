@@ -9,6 +9,7 @@ sniper_run_all.py
 """
 
 # ── 0. Patches & setup ───────────────────────────────────────────────────────
+import os                                     # ← added
 import kite_patch
 from token_manager import refresh_if_needed
 import utils
