@@ -57,13 +57,11 @@ jobs:
           )
           PY
 
-      - name: 💾 Commit tuned params
+      - name: 💾 Commit tuned params & reports
         run: |
           git config user.name  "tuner-bot"
           git config user.email "bot@users.noreply.github.com"
-          # Stage all tuned files
           git add config.py backtest_report.md results.csv best_params.json || true
-          # Commit & push only if there are changes
           if ! git diff --cached --quiet; then
             git commit -m "Weekly parameter tune $(date -u +'%Y-%m-%d')"
             git push origin main
