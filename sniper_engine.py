@@ -1,5 +1,5 @@
 """
-sniper_engine.py  •  Strangles + guaranteed RSI‐fallback engine
+sniper_engine.py  •  Strangles + RSI-fallback with full columns populated
 """
 from typing import List, Dict
 from datetime import date, timedelta
@@ -12,15 +12,15 @@ import utils
 MIN_TURNOVER_CR = 50      # ₹Cr (20-day avg)
 STRANGLE_DTE    = 30      # days until expiry
 ATR_WIDTH       = 1.2     # ±1.2×ATR strike width
-POPCUT          = 0.60    # require ≥60% combined PoP
+POPCUT          = 0.60    # require ≥60% combo PoP
 TOP_N_STRANG    = 10      # max strangle ideas
-RSI_FALLBACK_N  = 5       # if no strangles, take top-5 RSI stocks
+RSI_FALLBACK_N  = 5       # fallback top-RSI stock picks
 
 # ── EXPIRY FINDER ───────────────────────────────────────────────────────────
 def next_expiry(days_out=STRANGLE_DTE):
     today = date.today()
     e = date(today.year, today.month, 28)
-    while e.weekday() != 3:
+    while e.weekday() != 3:  # back to Thursday
         e -= timedelta(days=1)
     if (e - today).days < days_out:
         m = today.month + 1
@@ -36,9 +36,7 @@ def norm_cdf(x): return (1 + math.erf(x / math.sqrt(2))) / 2
 def bs_delta(spot, strike, dte, call=True, vol=0.25, r=0.05):
     t = dte / 365
     d1 = (math.log(spot/strike) + (r + 0.5*vol*vol)*t) / (vol*math.sqrt(t))
-    if call:
-        return math.exp(-r*t) * norm_cdf(d1)
-    return -math.exp(-r*t) * norm_cdf(-d1)
+    return math.exp(-r*t) * norm_cdf(d1) if call else -math.exp(-r*t) * norm_cdf(-d1)
 
 def round_down(x, step): return int(x // step * step)
 def round_up(x,   step): return int(math.ceil(x/step) * step)
@@ -48,7 +46,7 @@ def generate_sniper_trades() -> List[Dict]:
     today = date.today().isoformat()
     strangles: List[Dict] = []
 
-    # 1) Try naked short-strangles
+    # 1) Naked short-strangles
     for sym in FNO_SYMBOLS:
         df = utils.fetch_ohlc(sym, 60)
         if df is None or df.empty:
@@ -78,16 +76,18 @@ def generate_sniper_trades() -> List[Dict]:
             continue
 
         strangles.append({
-            "date":     today,
-            "symbol":   sym,
-            "strategy": "ShortStrangle",
-            "entry":    0,
-            "cmp":      spot,
-            "target":   0,
-            "sl":       0,
-            "pop":      combo,
-            "action":   "Sell",
-            "notes": {
+            "date":    today,
+            "symbol":  sym,
+            "type":    "Options-Strangle",
+            "entry":   0,
+            "cmp":     round(spot, 2),
+            "target":  0,
+            "sl":      0,
+            "pop":     combo,
+            "status":  "Open",
+            "pnl":     0.0,
+            "action":  "Sell",
+            "notes":   {
                 "expiry":      exp.isoformat(),
                 "put_strike":  put_strike,
                 "call_strike": call_strike,
@@ -96,12 +96,12 @@ def generate_sniper_trades() -> List[Dict]:
             },
         })
 
-    # 2) If we found any strangles, return the top N
+    # 2) If we found any strangles, return top-N
     if strangles:
         return sorted(strangles, key=lambda t: t["pop"], reverse=True)[:TOP_N_STRANG]
 
-    # 3) Fallback: pick the top-RSI_FALLBACK_N stocks by RSI (no cutoff)
-    rsi_list: List[tuple[str, float]] = []
+    # 3) Fallback: top-RSI stock picks
+    rsi_list: List[tuple[str,float]] = []
     for sym in FNO_SYMBOLS:
         df = utils.fetch_ohlc(sym, 60)
         if df is None or df.empty:
@@ -109,26 +109,27 @@ def generate_sniper_trades() -> List[Dict]:
         r_val = utils.rsi(df, 14).iloc[-1]
         rsi_list.append((sym, r_val))
 
-    # sort and take top N
+    # sort & build fallback trades
     rsi_list.sort(key=lambda x: x[1], reverse=True)
     fallback: List[Dict] = []
     for sym, r in rsi_list[:RSI_FALLBACK_N]:
         df1 = utils.fetch_ohlc(sym, 1)
-        price = df1["close"].iloc[-1] if (df1 is not None and not df1.empty) else None
+        price = df1["close"].iloc[-1] if df1 is not None and not df1.empty else None
         if price is None:
             continue
         fallback.append({
-            "date":     today,
-            "symbol":   sym,
-            "strategy": "RSI_Fallback",
-            "entry":    round(price, 2),
-            "cmp":      round(price, 2),
-            "target":   None,
-            "sl":       None,
-            "pop":      None,
-            "action":   "Buy",
-            "notes":    {"rsi": round(r, 2)},
+            "date":    today,
+            "symbol":  sym,
+            "type":    "Cash-Momentum",
+            "entry":   round(price, 2),
+            "cmp":     round(price, 2),
+            "target":  round(price * 1.03, 2),
+            "sl":      round(price * 0.98, 2),
+            "pop":     "—",
+            "status":  "Open",
+            "pnl":     0.0,
+            "action":  "Buy",
+            "notes":   {"rsi": round(r, 2)},
         })
 
     return fallback
-
