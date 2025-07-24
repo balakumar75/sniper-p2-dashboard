@@ -1,6 +1,6 @@
 """
 sniper_engine.py
-Strangles + RSI-with-PoP fallback (no empty PoP)
+Strangles + RSI-with-PoP fallback, formatting PoP as string
 """
 from typing import List, Dict
 from datetime import date, timedelta
@@ -23,7 +23,7 @@ TGT_PCT         = 3.0     # stock TGT %
 def next_expiry(days_out=STRANGLE_DTE):
     today = date.today()
     e = date(today.year, today.month, 28)
-    while e.weekday() != 3:  # last Thursday
+    while e.weekday() != 3:
         e -= timedelta(days=1)
     if (e - today).days < days_out:
         m = today.month + 1
@@ -50,19 +50,18 @@ def generate_sniper_trades() -> List[Dict]:
     strangles: List[Dict] = []
     df_map: Dict[str, any] = {}
 
-    # 1) Build 60-day OHLC for every symbol
+    # 1) Build 60-day OHLC for each symbol and try strangles
     for sym in FNO_SYMBOLS:
         df60 = utils.fetch_ohlc(sym, 60)
         if df60 is None or df60.empty:
             continue
         df_map[sym] = df60
 
-        # Liquidity filter
+        # liquidity filter
         avg_turn = (df60["close"] * df60["volume"]).rolling(20).mean().iloc[-1] / 1e7
         if avg_turn < MIN_TURNOVER_CR:
             continue
 
-        # Strangle components
         spot  = df60["close"].iloc[-1]
         atr14 = utils.atr(df60, 14).iloc[-1]
         width = ATR_WIDTH * atr14
@@ -78,30 +77,31 @@ def generate_sniper_trades() -> List[Dict]:
         pop_p   = 1 - abs(delta_p)
         pop_c   = 1 - abs(delta_c)
         combo   = round(pop_p * pop_c, 2)
+        combo_str = f"{combo:.2f}"
 
         if combo < POPCUT:
             continue
 
         strangles.append({
-            "date":   today,
-            "symbol": sym,
-            "type":   "Options-Strangle",
-            "entry":  0,
-            "cmp":    round(spot, 2),
-            "target": 0,
-            "sl":     0,
-            "pop":    combo,
-            "status": "Open",
-            "pnl":    0.0,
-            "action": "Sell",
+            "date":    today,
+            "symbol":  sym,
+            "type":    "Options-Strangle",
+            "entry":   0,
+            "cmp":     round(spot,2),
+            "target":  0,
+            "sl":      0,
+            "pop":     combo_str,    # now always a string
+            "status":  "Open",
+            "pnl":     0.0,
+            "action":  "Sell",
         })
 
-    # 2) If any strangles, return the top-N by PoP
+    # 2) If any strangles, return top-N by PoP
     if strangles:
-        return sorted(strangles, key=lambda x: x["pop"], reverse=True)[:TOP_N_STRANG]
+        return sorted(strangles, key=lambda t: float(t["pop"]), reverse=True)[:TOP_N_STRANG]
 
-    # 3) ELSE fallback: top RSI stocks with real PoP
-    rsi_list: List[tuple[str, float]] = []
+    # 3) ELSE fallback to top-RSI stocks with real PoP
+    rsi_list: List[tuple[str,float]] = []
     for sym, df60 in df_map.items():
         r_val = utils.rsi(df60, 14).iloc[-1]
         rsi_list.append((sym, r_val))
@@ -112,19 +112,20 @@ def generate_sniper_trades() -> List[Dict]:
         df60 = df_map[sym]
         price   = df60["close"].iloc[-1]
         pop_val = utils.hist_pop(df60, TGT_PCT, SL_PCT) or 0.0
+        pop_str = f"{pop_val:.2f}"
 
         fallback.append({
-            "date":   today,
-            "symbol": sym,
-            "type":   "Cash-Momentum",
-            "entry":  round(price, 2),
-            "cmp":    round(price, 2),
-            "target": round(price * (1 + TGT_PCT / 100), 2),
-            "sl":     round(price * (1 - SL_PCT  / 100), 2),
-            "pop":    pop_val,
-            "status": "Open",
-            "pnl":    0.0,
-            "action": "Buy",
+            "date":    today,
+            "symbol":  sym,
+            "type":    "Cash-Momentum",
+            "entry":   round(price,2),
+            "cmp":     round(price,2),
+            "target":  round(price*(1+TGT_PCT/100),2),
+            "sl":      round(price*(1-SL_PCT/100),2),
+            "pop":     pop_str,       # string here too
+            "status":  "Open",
+            "pnl":     0.0,
+            "action":  "Buy",
         })
 
     return fallback
