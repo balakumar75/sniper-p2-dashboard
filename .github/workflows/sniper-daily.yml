@@ -2,14 +2,13 @@ name: Sniper Engine Daily
 
 on:
   schedule:
-    # 04:45 UTC → 10:15 IST, Mon–Fri
+    # 04:45 UTC → 10:15 IST Mon–Fri
     - cron: '45 4 * * 1-5'
   workflow_dispatch:
 
 jobs:
   run-engine:
     runs-on: ubuntu-latest
-
     env:
       KITE_API_KEY:      ${{ secrets.KITE_API_KEY }}
       KITE_API_SECRET:   ${{ secrets.KITE_API_SECRET }}
@@ -33,11 +32,16 @@ jobs:
       - name: 🚀 Run Sniper Engine
         run: python sniper_run_all.py
 
-      - name: 💾 Commit trades.json
+      - name: 💾 Commit trades & history
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add trades.json || true
-          git diff --cached --quiet || git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
-          git pull --rebase origin main
-          git push --force-with-lease
+          # Stage both today's trades and the updated history
+          git add trades.json trade_history.json || true
+          # Only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "Daily run $(date -u +'%Y-%m-%d')"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
