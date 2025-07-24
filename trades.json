@@ -2,12 +2,14 @@
   {
     "date": "2025-07-24",
     "symbol": "ICICIBANK",
-    "strategy": "RSI_Fallback",
+    "type": "Cash-Momentum",
     "entry": 1480.9,
     "cmp": 1480.9,
-    "target": null,
-    "sl": null,
-    "pop": null,
+    "target": 1525.33,
+    "sl": 1451.28,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
     "notes": {
       "rsi": 64.42
@@ -16,12 +18,14 @@
   {
     "date": "2025-07-24",
     "symbol": "HDFCBANK",
-    "strategy": "RSI_Fallback",
+    "type": "Cash-Momentum",
     "entry": 2011.7,
     "cmp": 2011.7,
-    "target": null,
-    "sl": null,
-    "pop": null,
+    "target": 2072.05,
+    "sl": 1971.47,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
     "notes": {
       "rsi": 56.03
@@ -30,12 +34,14 @@
   {
     "date": "2025-07-24",
     "symbol": "SBIN",
-    "strategy": "RSI_Fallback",
+    "type": "Cash-Momentum",
     "entry": 816.5,
     "cmp": 816.5,
-    "target": null,
-    "sl": null,
-    "pop": null,
+    "target": 841.0,
+    "sl": 800.17,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
     "notes": {
       "rsi": 53.45
@@ -44,12 +50,14 @@
   {
     "date": "2025-07-24",
     "symbol": "INFY",
-    "strategy": "RSI_Fallback",
+    "type": "Cash-Momentum",
     "entry": 1553.0,
     "cmp": 1553.0,
-    "target": null,
-    "sl": null,
-    "pop": null,
+    "target": 1599.59,
+    "sl": 1521.94,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
     "notes": {
       "rsi": 27.93
@@ -58,12 +66,14 @@
   {
     "date": "2025-07-24",
     "symbol": "RELIANCE",
-    "strategy": "RSI_Fallback",
+    "type": "Cash-Momentum",
     "entry": 1402.8,
     "cmp": 1402.8,
-    "target": null,
-    "sl": null,
-    "pop": null,
+    "target": 1444.88,
+    "sl": 1374.74,
+    "pop": "\u2014",
+    "status": "Open",
+    "pnl": 0.0,
     "action": "Buy",
     "notes": {
       "rsi": 15.47
