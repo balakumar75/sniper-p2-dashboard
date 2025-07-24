@@ -1,5 +1,5 @@
 """
-sniper_engine.py  •  Strangles + RSI‐fallback engine
+sniper_engine.py  •  Strangles + guaranteed RSI‐fallback engine
 """
 from typing import List, Dict
 from datetime import date, timedelta
@@ -11,11 +11,10 @@ import utils
 # ── PARAMETERS ──────────────────────────────────────────────────────────────
 MIN_TURNOVER_CR = 50      # ₹Cr (20-day avg)
 STRANGLE_DTE    = 30      # days until expiry
-ATR_WIDTH       = 1.2     # ±1.2×ATR strike width (wider)
-POPCUT          = 0.60    # require ≥60% combined PoP (lower)
+ATR_WIDTH       = 1.2     # ±1.2×ATR strike width
+POPCUT          = 0.60    # require ≥60% combined PoP
 TOP_N_STRANG    = 10      # max strangle ideas
 RSI_FALLBACK_N  = 5       # if no strangles, take top-5 RSI stocks
-RSI_THRESHOLD   = 55
 
 # ── EXPIRY FINDER ───────────────────────────────────────────────────────────
 def next_expiry(days_out=STRANGLE_DTE):
@@ -37,7 +36,9 @@ def norm_cdf(x): return (1 + math.erf(x / math.sqrt(2))) / 2
 def bs_delta(spot, strike, dte, call=True, vol=0.25, r=0.05):
     t = dte / 365
     d1 = (math.log(spot/strike) + (r + 0.5*vol*vol)*t) / (vol*math.sqrt(t))
-    return (math.exp(-r*t) * norm_cdf(d1)) if call else (-math.exp(-r*t) * norm_cdf(-d1))
+    if call:
+        return math.exp(-r*t) * norm_cdf(d1)
+    return -math.exp(-r*t) * norm_cdf(-d1)
 
 def round_down(x, step): return int(x // step * step)
 def round_up(x,   step): return int(math.ceil(x/step) * step)
@@ -47,7 +48,7 @@ def generate_sniper_trades() -> List[Dict]:
     today = date.today().isoformat()
     strangles: List[Dict] = []
 
-    # 1) Try short‐strangles
+    # 1) Try naked short-strangles
     for sym in FNO_SYMBOLS:
         df = utils.fetch_ohlc(sym, 60)
         if df is None or df.empty:
@@ -95,35 +96,39 @@ def generate_sniper_trades() -> List[Dict]:
             },
         })
 
-    # If we got any strangles, return top-N by PoP
+    # 2) If we found any strangles, return the top N
     if strangles:
         return sorted(strangles, key=lambda t: t["pop"], reverse=True)[:TOP_N_STRANG]
 
-    # 2) Fallback: top-RSI stocks
-    rsi_list = []
+    # 3) Fallback: pick the top-RSI_FALLBACK_N stocks by RSI (no cutoff)
+    rsi_list: List[tuple[str, float]] = []
     for sym in FNO_SYMBOLS:
         df = utils.fetch_ohlc(sym, 60)
         if df is None or df.empty:
             continue
-        r = utils.rsi(df, 14).iloc[-1]
-        if r >= RSI_THRESHOLD:
-            rsi_list.append((sym, r))
+        r_val = utils.rsi(df, 14).iloc[-1]
+        rsi_list.append((sym, r_val))
 
+    # sort and take top N
     rsi_list.sort(key=lambda x: x[1], reverse=True)
-    fallback = []
+    fallback: List[Dict] = []
     for sym, r in rsi_list[:RSI_FALLBACK_N]:
-        price = df = utils.fetch_ohlc(sym, 1)["close"].iloc[-1]
+        df1 = utils.fetch_ohlc(sym, 1)
+        price = df1["close"].iloc[-1] if (df1 is not None and not df1.empty) else None
+        if price is None:
+            continue
         fallback.append({
             "date":     today,
             "symbol":   sym,
             "strategy": "RSI_Fallback",
-            "entry":    price,
-            "cmp":      price,
-            "target":   round(price * 1.03, 2),
-            "sl":       round(price * 0.98, 2),
+            "entry":    round(price, 2),
+            "cmp":      round(price, 2),
+            "target":   None,
+            "sl":       None,
             "pop":      None,
             "action":   "Buy",
-            "notes":    {"rsi": r},
+            "notes":    {"rsi": round(r, 2)},
         })
+
     return fallback
 
