@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "date": "2025-07-24",
+    "symbol": "ICICIBANK",
+    "strategy": "RSI_Fallback",
+    "entry": 1480.9,
+    "cmp": 1480.9,
+    "target": 1525.33,
+    "sl": 1451.28,
+    "pop": null,
+    "action": "Buy",
+    "notes": {
+      "rsi": 64.42089326267993
+    }
+  },
+  {
+    "date": "2025-07-24",
+    "symbol": "HDFCBANK",
+    "strategy": "RSI_Fallback",
+    "entry": 2011.7,
+    "cmp": 2011.7,
+    "target": 2072.05,
+    "sl": 1971.47,
+    "pop": null,
+    "action": "Buy",
+    "notes": {
+      "rsi": 56.03448275862073
+    }
+  }
+]
