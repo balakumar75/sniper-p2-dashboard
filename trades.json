@@ -5,12 +5,12 @@
     "strategy": "RSI_Fallback",
     "entry": 1480.9,
     "cmp": 1480.9,
-    "target": 1525.33,
-    "sl": 1451.28,
+    "target": null,
+    "sl": null,
     "pop": null,
     "action": "Buy",
     "notes": {
-      "rsi": 64.42089326267993
+      "rsi": 64.42
     }
   },
   {
@@ -19,12 +19,54 @@
     "strategy": "RSI_Fallback",
     "entry": 2011.7,
     "cmp": 2011.7,
-    "target": 2072.05,
-    "sl": 1971.47,
+    "target": null,
+    "sl": null,
     "pop": null,
     "action": "Buy",
     "notes": {
-      "rsi": 56.03448275862073
+      "rsi": 56.03
+    }
+  },
+  {
+    "date": "2025-07-24",
+    "symbol": "SBIN",
+    "strategy": "RSI_Fallback",
+    "entry": 816.5,
+    "cmp": 816.5,
+    "target": null,
+    "sl": null,
+    "pop": null,
+    "action": "Buy",
+    "notes": {
+      "rsi": 53.45
+    }
+  },
+  {
+    "date": "2025-07-24",
+    "symbol": "INFY",
+    "strategy": "RSI_Fallback",
+    "entry": 1553.0,
+    "cmp": 1553.0,
+    "target": null,
+    "sl": null,
+    "pop": null,
+    "action": "Buy",
+    "notes": {
+      "rsi": 27.93
+    }
+  },
+  {
+    "date": "2025-07-24",
+    "symbol": "RELIANCE",
+    "strategy": "RSI_Fallback",
+    "entry": 1402.8,
+    "cmp": 1402.8,
+    "target": null,
+    "sl": null,
+    "pop": null,
+    "action": "Buy",
+    "notes": {
+      "rsi": 15.47
     }
   }
 ]
