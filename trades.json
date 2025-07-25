@@ -1,6 +1,6 @@
 [
   {
-    "date": "2025-07-24",
+    "date": "2025-07-25",
     "symbol": "ICICIBANK",
     "type": "Cash-Momentum",
     "entry": 1488.6,
@@ -13,7 +13,7 @@
     "action": "Buy"
   },
   {
-    "date": "2025-07-24",
+    "date": "2025-07-25",
     "symbol": "HDFCBANK",
     "type": "Cash-Momentum",
     "entry": 2024.3,
@@ -26,7 +26,7 @@
     "action": "Buy"
   },
   {
-    "date": "2025-07-24",
+    "date": "2025-07-25",
     "symbol": "SBIN",
     "type": "Cash-Momentum",
     "entry": 820.65,
@@ -39,7 +39,7 @@
     "action": "Buy"
   },
   {
-    "date": "2025-07-24",
+    "date": "2025-07-25",
     "symbol": "INFY",
     "type": "Cash-Momentum",
     "entry": 1574.5,
@@ -52,7 +52,7 @@
     "action": "Buy"
   },
   {
-    "date": "2025-07-24",
+    "date": "2025-07-25",
     "symbol": "RELIANCE",
     "type": "Cash-Momentum",
     "entry": 1424.6,
