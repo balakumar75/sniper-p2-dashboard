@@ -1,67 +1,15 @@
 [
   {
     "date": "2025-07-25",
-    "symbol": "ICICIBANK",
-    "type": "Cash-Momentum",
-    "entry": 1488.6,
-    "cmp": 1488.6,
-    "target": 1533.26,
-    "sl": 1458.83,
-    "pop": 0.01,
-    "status": "Open",
-    "pnl": 0.0,
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-25",
-    "symbol": "HDFCBANK",
-    "type": "Cash-Momentum",
-    "entry": 2024.3,
-    "cmp": 2024.3,
-    "target": 2085.03,
-    "sl": 1983.81,
-    "pop": 0.01,
-    "status": "Open",
-    "pnl": 0.0,
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-25",
     "symbol": "SBIN",
-    "type": "Cash-Momentum",
-    "entry": 820.65,
-    "cmp": 820.65,
-    "target": 845.27,
-    "sl": 804.24,
-    "pop": 0.02,
+    "type": "Options-Strangle",
+    "entry": 0.0,
+    "cmp": 811.75,
+    "target": 0.0,
+    "sl": 0.0,
+    "pop": 0.61,
     "status": "Open",
     "pnl": 0.0,
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-25",
-    "symbol": "INFY",
-    "type": "Cash-Momentum",
-    "entry": 1574.5,
-    "cmp": 1574.5,
-    "target": 1621.74,
-    "sl": 1543.01,
-    "pop": 0.01,
-    "status": "Open",
-    "pnl": 0.0,
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-25",
-    "symbol": "RELIANCE",
-    "type": "Cash-Momentum",
-    "entry": 1424.6,
-    "cmp": 1424.6,
-    "target": 1467.34,
-    "sl": 1396.11,
-    "pop": 0.03,
-    "status": "Open",
-    "pnl": 0.0,
-    "action": "Buy"
+    "action": "Sell"
   }
 ]
