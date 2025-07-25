@@ -13,9 +13,9 @@ from datetime import date
 import textwrap
 
 # Paths
-BEST      = Path("best_params.json")
-CONFIG    = Path("config.py")
-REPORT    = Path("backtest_report.md")
+BEST   = Path("best_params.json")
+CONFIG = Path("config.py")
+REPORT = Path("backtest_report.md")
 
 # 1) Load best_params.json
 if not BEST.exists():
@@ -26,7 +26,7 @@ best = json.loads(BEST.read_text())
 
 # 2) Read and patch config.py
 cfg_lines = CONFIG.read_text().splitlines()
-mapping = {
+mapping   = {
     "RSI_MIN":         best.get("RSI"),
     "ADX_MIN":         best.get("ADX"),
     "VOL_MULTIPLIER":  best.get("VOL"),
@@ -42,13 +42,20 @@ for line in cfg_lines:
     new_cfg.append(line)
 
 CONFIG.write_text("\n".join(new_cfg) + "\n")
-print(f"✅ Updated config.py with best parameters.")
+print("✅ Updated config.py with best parameters.")
 
 # 3) Write backtest_report.md
-report_md = textwrap.dedent(f"""\
+report_md = textwrap.dedent(f"""
 # Weekly Back-test
 
 **Best combo**
 
 ```json
 {json.dumps(best, indent=2)}
+```
+
+_Auto-generated on {date.today().isoformat()}_
+""")
+
+REPORT.write_text(report_md)
+print("💾 Wrote backtest_report.md.")
