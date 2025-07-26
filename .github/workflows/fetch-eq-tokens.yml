@@ -1,6 +1,8 @@
 name: Fetch Equity Tokens
 
-on: workflow_dispatch
+# Use proper mapping here so "Run workflow" appears
+on:
+  workflow_dispatch:
 
 jobs:
   fetch:
@@ -11,12 +13,22 @@ jobs:
       KITE_ACCESS_TOKEN: ${{ secrets.KITE_ACCESS_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: python-version: '3.11'
-      - run: pip install -r requirements.txt
-      - run: python scripts/get_eq_tokens.py
-      - uses: actions/upload-artifact@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Generate spot token JSON
+        run: python scripts/get_eq_tokens.py
+
+      - name: 📤 Upload token artifact
+        uses: actions/upload-artifact@v4
         with:
           name: eq-tokens
           path: spot_tokens.json
