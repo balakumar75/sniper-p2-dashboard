@@ -1,61 +1,34 @@
 #!/usr/bin/env python3
-"""
-patch_config.py
+import json, pathlib, textwrap
+from datetime import datetime
 
-Reads best_params.json, updates config.py accordingly,
-and writes a backtest_report.md summary.
-"""
+ROOT = pathlib.Path(__file__).parent.parent
+BEST = ROOT / "best_params.json"
+CFG  = ROOT / "config.py"
+REP  = ROOT / ".github/scripts/backtest_report.md"
 
-import json
-import re
-from pathlib import Path
-from datetime import date
-import textwrap
-
-# Paths
-BEST   = Path("best_params.json")
-CONFIG = Path("config.py")
-REPORT = Path("backtest_report.md")
-
-# 1) Load best_params.json
-if not BEST.exists():
-    print("⚠️  best_params.json not found – skipping patch.")
-    exit(0)
-
+# 1) Patch config.py
 best = json.loads(BEST.read_text())
-
-# 2) Read and patch config.py
-cfg_lines = CONFIG.read_text().splitlines()
-mapping   = {
-    "RSI_MIN":         best.get("RSI"),
-    "ADX_MIN":         best.get("ADX"),
-    "VOL_MULTIPLIER":  best.get("VOL"),
-    "DONCHIAN_WINDOW": best.get("DC"),
-    "N_SIGMA_PRIMARY": best.get("SIGMA"),
+mapping = {
+    "RSI_MIN":        best["RSI"],
+    "ADX_MIN":        best["ADX"],
+    "VOL_MULTIPLIER": best["VOL"],
+    "POPCUT":         best["POPCUT"],
+    "TOP_N_MOMENTUM": best["MOM"]
 }
+lines = CFG.read_text().splitlines()
+out = []
+for L in lines:
+    for k,v in mapping.items():
+        if L.startswith(f"{k}"):
+            L = f"{k} = {v}"
+    out.append(L)
+CFG.write_text("\n".join(out))
 
-new_cfg = []
-for line in cfg_lines:
-    for key, val in mapping.items():
-        if re.match(rf"^{key}\s*=", line):
-            line = f"{key} = {val}"
-    new_cfg.append(line)
+# 2) Write report
+report = textwrap.dedent(f"""\
+# Weekly Back‑test Report
 
-CONFIG.write_text("\n".join(new_cfg) + "\n")
-print("✅ Updated config.py with best parameters.")
-
-# 3) Write backtest_report.md
-report_md = textwrap.dedent(f"""
-# Weekly Back-test
-
-**Best combo**
-
+**Best parameters**  
 ```json
 {json.dumps(best, indent=2)}
-```
-
-_Auto-generated on {date.today().isoformat()}_
-""")
-
-REPORT.write_text(report_md)
-print("💾 Wrote backtest_report.md.")
