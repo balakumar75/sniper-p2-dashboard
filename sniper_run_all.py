@@ -7,7 +7,7 @@ sniper_run_all.py
 3) Run Sniper Engine → raw trades (lower-case keys)
 4) Write trades.json
 5) Archive to trade_history.json
-6) Push trades.json to GitHub
+6) Push trades.json & trade_history.json to GitHub
 7) Simple self-tuner
 """
 
@@ -48,11 +48,11 @@ history.append({
 HIST.write_text(json.dumps(history, indent=2))
 print(f"🗄️  Appended {len(trades)} trades to trade_history.json (now {len(history)} runs).")
 
-# 6) Push trades.json to GitHub
-def push_to_github(path="trades.json"):
+# 6) Push files to GitHub
+def push_to_github(path: str):
     token = os.getenv("GITHUB_TOKEN")
     if not token:
-        print("⚠️ GITHUB_TOKEN not set – skipping GitHub push.")
+        print(f"⚠️ GITHUB_TOKEN not set – skipping push of {path}.")
         return
 
     repo = "balakumar75/sniper-p2-dashboard"
@@ -76,11 +76,13 @@ def push_to_github(path="trades.json"):
 
     res = requests.put(api, headers=hdrs, data=json.dumps(payload))
     if res.status_code in (200, 201):
-        print("✅ Pushed trades.json to GitHub.")
+        print(f"✅ Pushed {path} to GitHub.")
     else:
-        print(f"🛑 GitHub push failed: {res.status_code}")
+        print(f"🛑 Push failed for {path}: HTTP {res.status_code}")
 
-push_to_github()
+# Push both today's trades and the archive
+push_to_github("trades.json")
+push_to_github("trade_history.json")
 
 # 7) Simple self-tuner
 PERF = pathlib.Path("performance.json")
