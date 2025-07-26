@@ -78,9 +78,9 @@ def rsi(df, n=14):
     rs   = up.rolling(n).mean() / dn.rolling(n).mean()
     return 100 - 100 / (1 + rs)
 
-# ── Historical PoP (placeholder) ───────────────────────────────────────────
+# ── Historical PoP (your existing implementation) ───────────────────────────
 def hist_pop(symbol, tgt_pct, sl_pct, lookback_days=90):
-    # your existing implementation...
+    # …keep your existing code here…
     return None
 
 def avg_turnover(df, n=20):
@@ -98,40 +98,42 @@ def bs_delta(spot, strike, dte, call=True, vol=0.25, r=0.05):
     d1 = (math.log(spot/strike) + (r + 0.5 * vol**2) * t) / (vol * math.sqrt(t))
     return (math.exp(-r*t) * norm_cdf(d1)) if call else (-math.exp(-r*t) * norm_cdf(-d1))
 
-# ── New helpers with expiry‐string handling ─────────────────────────────────
+# ── Option & Future token lookups ──────────────────────────────────────────
 def option_token(symbol, strike, expiry, option_type):
     exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
     return OPTION_TOKENS[symbol][exp_str][option_type][strike]
 
-def fetch_option_price(token_id):
-    res = _kite.ltp(f"NFO:{token_id}")
-    return res[f"NFO:{token_id}"]["last_price"]
-
 def future_token(symbol, expiry):
     exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
-    return FUTURE_TOKENS[symbol][exp_str]
+    return FUTURE_TOKENS[symbol].get(exp_str, 0)
+
+# ── Price fetchers ──────────────────────────────────────────────────────────
+def fetch_option_price(token_id):
+    if not token_id:
+        return None
+    key = f"NFO:{token_id}"
+    res = _kite.ltp(key)
+    return res[key]["last_price"]
 
 def fetch_future_price(token_id):
-    res = _kite.ltp(f"NSE:FUT{token_id}")
-    return res[f"NSE:FUT{token_id}"]["last_price"]
+    if not token_id:
+        return None
+    key = f"NFO:{token_id}"
+    res = _kite.ltp(key)
+    return res[key]["last_price"]
 
-# ── Wrappers: compute last indicator value for a symbol ────────────────────
+# ── Wrappers for last indicator value ───────────────────────────────────────
 def fetch_rsi(symbol, lookback_days=60, n=14):
     df = fetch_ohlc(symbol, lookback_days)
-    if df is None or df.empty:
-        return None
-    return rsi(df, n).iloc[-1]
+    return None if df is None else rsi(df, n).iloc[-1]
 
 def fetch_adx(symbol, lookback_days=60, n=14):
     df = fetch_ohlc(symbol, lookback_days)
-    if df is None or df.empty:
-        return None
-    return adx(df, n).iloc[-1]
+    return None if df is None else adx(df, n).iloc[-1]
 
 def fetch_macd(symbol, lookback_days=60, fast=12, slow=26, signal=9):
     df = fetch_ohlc(symbol, lookback_days)
-    if df is None or df.empty:
-        return None
+    if df is None: return None
     exp1 = df["close"].ewm(span=fast, adjust=False).mean()
     exp2 = df["close"].ewm(span=slow, adjust=False).mean()
     macd_line = exp1 - exp2
