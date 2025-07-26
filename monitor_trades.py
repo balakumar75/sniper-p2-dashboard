@@ -22,24 +22,18 @@ for run in hist:
             entry, tgt, sl = t["entry"], t["target"], t["sl"]
             for _, row in df.iterrows():
                 if row["high"] >= tgt:
-                    t["status"] = "Target"
+                    t["status"]    = "Target"
                     t["exit_date"] = date.today().isoformat()
                     break
                 if row["low"] <= sl:
-                    t["status"] = "SL"
+                    t["status"]    = "SL"
                     t["exit_date"] = date.today().isoformat()
                     break
 
-        # Options-Strangle trades (check both legs)
+        # Options-Strangle trades (if you want per-leg tracking, flesh this out)
         elif t["type"] == "Options-Strangle":
-            # Put leg
-            ptkn = utils.option_token(t["symbol"], t["put_strike"], t["date"], "PE")
-            dfp  = utils.fetch_ohlc_by_token(ptkn, t["date"])
-            for _, r in dfp.iterrows():
-                # define your target/sl logic per leg if needed
-                # e.g. if r["high"] >= some target or r["low"] <= some SL
-                pass
-            # Call leg - similar if desired
+            # placeholder for leg-by-leg checks
+            pass
 
 # Write updated history back
 with open(HIST, "w") as f:
