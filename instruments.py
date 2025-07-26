@@ -1,41 +1,41 @@
 """
 instruments.py
 
-Defines your F&O universe and instrument tokens. Fill in the real token numbers
-from KiteConnect for each expiry/strike you plan to trade.
+F&O universe & instrument_token mappings.  Fill in the <REPLACE_WITH_TOKEN>
+entries by querying kite.instruments("NFO") in a REPL.
 """
-# Your F&O symbols
 from config import FNO_SYMBOLS
 
 # Spot mapping: symbol → instrument_token
 SYMBOL_TO_TOKEN = {
-    # e.g.
-    "RELIANCE":  738561,
-    "TCS":       2953217,
-    "HDFCBANK":  341249,
-    "INFY":      408065,
-    "ICICIBANK": 1270529,
-    # … add all FNO_SYMBOLS …
+    # Example:
+    # "RELIANCE":  738561,
+    # "TCS":       2953217,
+    # ... fill for all FNO_SYMBOLS ...
 }
 
-# Futures tokens by expiry (ISO date string → token)
+# Futures tokens by expiry
+# Replace <REPLACE_WITH_TOKEN> with the real token IDs
 FUTURE_TOKENS = {
     sym: {
-        "2025-07-31": 0,   # ← replace 0 with the real token
-        "2025-08-28": 0,
+        "2025-07-31": <REPLACE_WITH_TOKEN>,   # e.g. 10526722
+        "2025-08-28": <REPLACE_WITH_TOKEN>,
     }
     for sym in FNO_SYMBOLS
 }
 
 # Option tokens by expiry → type → strike → token
+# Replace <REPLACE_WITH_TOKEN> in each map.
 OPTION_TOKENS = {
     sym: {
         "2025-07-31": {
             "PE": {
-                # 800: 12345678,
+                # 1400: <REPLACE_WITH_TOKEN>,
+                # 1450: <REPLACE_WITH_TOKEN>,
             },
             "CE": {
-                # 840: 12345679,
+                # 1500: <REPLACE_WITH_TOKEN>,
+                # 1550: <REPLACE_WITH_TOKEN>,
             }
         }
     }
