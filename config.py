@@ -31,13 +31,13 @@ NSE100 = [
 FNO_SYMBOLS = sorted(NSE100)
 
 # ── Zero‑filter mode for debugging (let everything through) ──────────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 1.0
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
 
 # Allow all Options‑Strangle by setting PoP cutoff to zero
-POPCUT         = 0.0
+POPCUT         = 0.60
 
 # Pick the top 20 momentum symbols instead of just your usual 5
-TOP_N_MOMENTUM = 20
+TOP_N_MOMENTUM = 5
 
 # ── Self‑tuning params file (unused in debug) ──────────────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
