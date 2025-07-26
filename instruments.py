@@ -18,7 +18,7 @@ FNO_SYMBOLS = [
 SYMBOL_TO_TOKEN = {
     "RELIANCE":  738561,
     "HDFCBANK":  341249,
-    "ICICIBANK":1270529,
+    "ICICIBANK": 1270529,
     "INFY":      408065,
     "TCS":       2953217,
     "SBIN":      779521,
@@ -29,22 +29,22 @@ SYMBOL_TO_TOKEN = {
 }
 
 # ── Futures by expiry (YYYY-MM-DD) ─────────────────────────────────────────
-# Replace <FUT_TOKEN> with actual instrument_token for that contract
+# Replace the zeros with the real instrument_tokens for each contract
 FUTURE_TOKENS = {
     sym: {
-        "2025-07-31": <FUT_TOKEN>,
-        "2025-08-28": <FUT_TOKEN>,
+        "2025-07-31": 0,
+        "2025-08-28": 0,
     }
     for sym in FNO_SYMBOLS
 }
 
 # ── Options by expiry → type → strike → token ──────────────────────────────
-# Replace <PE_TOKEN>, <CE_TOKEN> with actual tokens
+# Replace the zeros with the real instrument_tokens for each option
 OPTION_TOKENS = {
     sym: {
         "2025-07-31": {
-            "PE": {800: <PE_TOKEN>, 780: <PE_TOKEN>},
-            "CE": {820: <CE_TOKEN>, 840: <CE_TOKEN>},
+            "PE": {800: 0, 780: 0},
+            "CE": {820: 0, 840: 0},
         },
         # add other expiries as needed
     }
