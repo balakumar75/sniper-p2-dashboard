@@ -2,7 +2,7 @@
 utils.py
 
 Data-fetch, indicators, & helpers for options/futures.
-Includes Black-Scholes delta functions (norm_cdf, bs_delta).
+Includes Black-Scholes delta and expiry handling.
 """
 import time
 import datetime as dt
@@ -48,14 +48,12 @@ def fetch_ohlc(sym: str, days: int) -> pd.DataFrame | None:
     return None
 
 # Indicators
-
 def atr(df, n=14):
     high_low = df["high"] - df["low"]
     high_cp  = (df["high"] - df["close"].shift()).abs()
     low_cp   = (df["low"]  - df["close"].shift()).abs()
     tr       = pd.concat([high_low, high_cp, low_cp], axis=1).max(axis=1)
     return tr.rolling(n).mean()
-
 
 def adx(df, n=14):
     up   = df["high"].diff()
@@ -72,7 +70,6 @@ def adx(df, n=14):
     dx = (plus_di - minus_di).abs() / (plus_di + minus_di) * 100
     return dx.rolling(n).mean()
 
-
 def rsi(df, n=14):
     diff = df["close"].diff().dropna()
     up   = diff.clip(lower=0)
@@ -81,8 +78,9 @@ def rsi(df, n=14):
     return 100 - 100 / (1 + rs)
 
 # Historical PoP
-# (Your existing implementation)
-# def hist_pop(...): ...
+def hist_pop(symbol, tgt_pct, sl_pct, lookback_days=90):
+    # existing implementation...
+    pass
 
 def avg_turnover(df, n=20):
     if df is None or df.empty:
@@ -91,27 +89,26 @@ def avg_turnover(df, n=20):
     return round(turn / 1e7, 2)
 
 # Black-Scholes helpers
-
 def norm_cdf(x):
     return (1 + math.erf(x / math.sqrt(2))) / 2
-
 
 def bs_delta(spot, strike, dte, call=True, vol=0.25, r=0.05):
     t = dte / 365
     d1 = (math.log(spot/strike) + (r + 0.5 * vol**2) * t) / (vol * math.sqrt(t))
     return (math.exp(-r*t) * norm_cdf(d1)) if call else (-math.exp(-r*t) * norm_cdf(-d1))
 
-# New helpers
-
+# New helpers with expiry string handling
 def option_token(symbol, strike, expiry, option_type):
-    return OPTION_TOKENS[symbol][expiry][option_type][strike]
+    exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
+    return OPTION_TOKENS[symbol][exp_str][option_type][strike]
 
 def fetch_option_price(token_id):
     res = _kite.ltp(f"NFO:{token_id}")
     return res[f"NFO:{token_id}"]["last_price"]
 
 def future_token(symbol, expiry):
-    return FUTURE_TOKENS[symbol][expiry]
+    exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
+    return FUTURE_TOKENS[symbol][exp_str]
 
 def fetch_future_price(token_id):
     res = _kite.ltp(f"NSE:FUT{token_id}")
