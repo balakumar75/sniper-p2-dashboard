@@ -26,5 +26,76 @@
   {
     "run_date": "2025-07-26",
     "trades": []
+  },
+  {
+    "run_date": "2025-07-26",
+    "trades": [
+      {
+        "date": "2025-07-26",
+        "symbol": "ICICIBANK",
+        "type": "Cash-Momentum",
+        "entry": 1477.1,
+        "SL": 1462.33,
+        "Target": 1506.64,
+        "PoP": 1.0,
+        "status": "Open",
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-26",
+        "symbol": "HDFCBANK",
+        "type": "Cash-Momentum",
+        "entry": 2004.6,
+        "SL": 1984.55,
+        "Target": 2044.69,
+        "PoP": 1.0,
+        "status": "Open",
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-26",
+        "symbol": "SBIN",
+        "type": "Cash-Momentum",
+        "entry": 806.55,
+        "SL": 798.48,
+        "Target": 822.68,
+        "PoP": 1.0,
+        "status": "Open",
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-26",
+        "symbol": "INFY",
+        "type": "Cash-Momentum",
+        "entry": 1515.7,
+        "SL": 1500.54,
+        "Target": 1546.01,
+        "PoP": 1.0,
+        "status": "Open",
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-26",
+        "symbol": "TCS",
+        "type": "Cash-Momentum",
+        "entry": 3135.8,
+        "SL": 3104.44,
+        "Target": 3198.52,
+        "PoP": 1.0,
+        "status": "Open",
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-26",
+        "symbol": "RELIANCE",
+        "type": "Cash-Momentum",
+        "entry": 1391.7,
+        "SL": 1377.78,
+        "Target": 1419.53,
+        "PoP": 1.0,
+        "status": "Open",
+        "action": "Buy"
+      }
+    ]
   }
 ]
