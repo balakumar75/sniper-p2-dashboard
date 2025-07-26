@@ -30,11 +30,19 @@ FNO_SYMBOLS = sorted(NSE100)
 
 # ── Default thresholds (overridden by tuner) ──────────────────────────────
 RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
-DEFAULT_POP = "85%"
 
+# ── Engine parameters ──────────────────────────────────────────────────────
+# Minimum PoP cutoff for Options-Strangle
+POPCUT = 0.60
+# How many Cash-Momentum picks at fallback
+TOP_N_MOMENTUM = 5
+
+# ── Self-tuning params file ────────────────────────────────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
     p = json.loads(PARAMS_FILE.read_text())
     RSI_MIN        = p.get("RSI_MIN",        RSI_MIN)
     ADX_MIN        = p.get("ADX_MIN",        ADX_MIN)
     VOL_MULTIPLIER = p.get("VOL_MULTIPLIER", VOL_MULTIPLIER)
+    POPCUT         = p.get("POPCUT",         POPCUT)
+    TOP_N_MOMENTUM = p.get("TOP_N_MOMENTUM", TOP_N_MOMENTUM)
