@@ -1,7 +1,9 @@
 """
 config.py – central settings + self‑tuning parameters
 """
-import os, json, pathlib
+import os
+import json
+import pathlib
 from dotenv import load_dotenv
 
 load_dotenv("config.env", override=False)
@@ -28,17 +30,20 @@ NSE100 = [
 ]
 FNO_SYMBOLS = sorted(NSE100)
 
-# ── Default thresholds (overridden by tuner) ──────────────────────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 1
+# ── Zero‑filter mode for debugging (let everything through) ──────────────────
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 1.0
 
-# ── Engine parameters ──────────────────────────────────────────────────────
-POPCUT         = 0.0   # minimum PoP for Options‑Strangle
-TOP_N_MOMENTUM = 10     # fallback Cash‑Momentum picks
+# Allow all Options‑Strangle by setting PoP cutoff to zero
+POPCUT         = 0.0
 
-# ── Self‑tuning params file ────────────────────────────────────────────────
+# Pick the top 20 momentum symbols instead of just your usual 5
+TOP_N_MOMENTUM = 20
+
+# ── Self‑tuning params file (unused in debug) ──────────────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
     p = json.loads(PARAMS_FILE.read_text())
+    # In debug mode we ignore these, but we still load so there's no error
     RSI_MIN        = p.get("RSI_MIN",        RSI_MIN)
     ADX_MIN        = p.get("ADX_MIN",        ADX_MIN)
     VOL_MULTIPLIER = p.get("VOL_MULTIPLIER", VOL_MULTIPLIER)
