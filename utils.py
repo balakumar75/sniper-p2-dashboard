@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 """
 utils.py
 
-Data-fetch, indicators, & helpers for options/futures.
-Includes Black-Scholes delta and expiry handling.
+Data‐fetch, indicators, & helpers for options/futures.
+Includes Black‐Scholes, PoP, and new fetch_* wrappers.
 """
 import time
 import datetime as dt
@@ -14,19 +15,19 @@ from rate_limiter import gate
 
 # Kite instance injected at runtime
 _kite = None
-
 def set_kite(k):
-    global _kite; _kite = k
+    global _kite
+    _kite = k
 
 # Date helpers
-def _today(): return dt.date.today()
+def _today():     return dt.date.today()
 def _days_ago(d): return _today() - dt.timedelta(days=d)
 
 # Instrument lookup
 from instruments import SYMBOL_TO_TOKEN, OPTION_TOKENS, FUTURE_TOKENS
-
 def token(sym): return SYMBOL_TO_TOKEN[sym]
 
+# ── OHLC fetch with retry ────────────────────────────────────────────────────
 def fetch_ohlc(sym: str, days: int) -> pd.DataFrame | None:
     if _kite is None:
         raise RuntimeError("utils.set_kite(kite) not called")
@@ -47,7 +48,7 @@ def fetch_ohlc(sym: str, days: int) -> pd.DataFrame | None:
             return None
     return None
 
-# Indicators
+# ── Core indicators ─────────────────────────────────────────────────────────
 def atr(df, n=14):
     high_low = df["high"] - df["low"]
     high_cp  = (df["high"] - df["close"].shift()).abs()
@@ -77,10 +78,10 @@ def rsi(df, n=14):
     rs   = up.rolling(n).mean() / dn.rolling(n).mean()
     return 100 - 100 / (1 + rs)
 
-# Historical PoP
+# ── Historical PoP (placeholder) ───────────────────────────────────────────
 def hist_pop(symbol, tgt_pct, sl_pct, lookback_days=90):
-    # existing implementation...
-    pass
+    # your existing implementation...
+    return None
 
 def avg_turnover(df, n=20):
     if df is None or df.empty:
@@ -88,7 +89,7 @@ def avg_turnover(df, n=20):
     turn = (df["close"] * df["volume"]).rolling(n).mean().iloc[-1]
     return round(turn / 1e7, 2)
 
-# Black-Scholes helpers
+# ── Black‐Scholes helpers ────────────────────────────────────────────────────
 def norm_cdf(x):
     return (1 + math.erf(x / math.sqrt(2))) / 2
 
@@ -97,7 +98,7 @@ def bs_delta(spot, strike, dte, call=True, vol=0.25, r=0.05):
     d1 = (math.log(spot/strike) + (r + 0.5 * vol**2) * t) / (vol * math.sqrt(t))
     return (math.exp(-r*t) * norm_cdf(d1)) if call else (-math.exp(-r*t) * norm_cdf(-d1))
 
-# New helpers with expiry string handling
+# ── New helpers with expiry‐string handling ─────────────────────────────────
 def option_token(symbol, strike, expiry, option_type):
     exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
     return OPTION_TOKENS[symbol][exp_str][option_type][strike]
@@ -113,3 +114,27 @@ def future_token(symbol, expiry):
 def fetch_future_price(token_id):
     res = _kite.ltp(f"NSE:FUT{token_id}")
     return res[f"NSE:FUT{token_id}"]["last_price"]
+
+# ── Wrappers: compute last indicator value for a symbol ────────────────────
+def fetch_rsi(symbol, lookback_days=60, n=14):
+    df = fetch_ohlc(symbol, lookback_days)
+    if df is None or df.empty:
+        return None
+    return rsi(df, n).iloc[-1]
+
+def fetch_adx(symbol, lookback_days=60, n=14):
+    df = fetch_ohlc(symbol, lookback_days)
+    if df is None or df.empty:
+        return None
+    return adx(df, n).iloc[-1]
+
+def fetch_macd(symbol, lookback_days=60, fast=12, slow=26, signal=9):
+    df = fetch_ohlc(symbol, lookback_days)
+    if df is None or df.empty:
+        return None
+    exp1 = df["close"].ewm(span=fast, adjust=False).mean()
+    exp2 = df["close"].ewm(span=slow, adjust=False).mean()
+    macd_line = exp1 - exp2
+    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+    hist = macd_line - signal_line
+    return hist.iloc[-1]
