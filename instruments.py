@@ -1,52 +1,43 @@
 """
 instruments.py
 
-Defines:
-- FNO_SYMBOLS
-- SYMBOL_TO_TOKEN
-- FUTURE_TOKENS (futures by expiry)
-- OPTION_TOKENS (options by expiry, type, strike)
+Defines your F&O universe and instrument tokens. Fill in the real token numbers
+from KiteConnect for each expiry/strike you plan to trade.
 """
+# Your F&O symbols
+from config import FNO_SYMBOLS
 
-# ── Your F&O universe ───────────────────────────────────────────────────────
-FNO_SYMBOLS = [
-    "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS",
-    "SBIN",      "LTIM",     "TITAN",     "ONGC", "CIPLA",
-]
-
-# ── Spot mapping: symbol → instrument_token ─────────────────────────────────
+# Spot mapping: symbol → instrument_token
 SYMBOL_TO_TOKEN = {
+    # e.g.
     "RELIANCE":  738561,
-    "HDFCBANK":  341249,
-    "ICICIBANK": 1270529,
-    "INFY":      408065,
     "TCS":       2953217,
-    "SBIN":      779521,
-    "LTIM":      2631937,
-    "TITAN":     10005857,
-    "ONGC":      5409281,
-    "CIPLA":     350067,
+    "HDFCBANK":  341249,
+    "INFY":      408065,
+    "ICICIBANK": 1270529,
+    # … add all FNO_SYMBOLS …
 }
 
-# ── Futures by expiry (YYYY-MM-DD) ─────────────────────────────────────────
-# Replace the zeros with the real instrument_tokens for each contract
+# Futures tokens by expiry (ISO date string → token)
 FUTURE_TOKENS = {
     sym: {
-        "2025-07-31": 0,
+        "2025-07-31": 0,   # ← replace 0 with the real token
         "2025-08-28": 0,
     }
     for sym in FNO_SYMBOLS
 }
 
-# ── Options by expiry → type → strike → token ──────────────────────────────
-# Replace the zeros with the real instrument_tokens for each option
+# Option tokens by expiry → type → strike → token
 OPTION_TOKENS = {
     sym: {
         "2025-07-31": {
-            "PE": {800: 0, 780: 0},
-            "CE": {820: 0, 840: 0},
-        },
-        # add other expiries as needed
+            "PE": {
+                # 800: 12345678,
+            },
+            "CE": {
+                # 840: 12345679,
+            }
+        }
     }
     for sym in FNO_SYMBOLS
 }
