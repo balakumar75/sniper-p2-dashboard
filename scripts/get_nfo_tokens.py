@@ -6,49 +6,57 @@ import sys
 import json
 from datetime import date
 
-# ── Ensure repo root is on PYTHONPATH ──────────────────────────────────────
+# ── Make repo root importable ────────────────────────────────────────────────
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, repo_root)
 
-import kite_patch                  # patch KiteConnect host
+import kite_patch                   # ensure KiteConnect uses your patched host
 from token_manager import refresh_if_needed
 from config import FNO_SYMBOLS
 
 # 1️⃣ Authenticate
 kite = refresh_if_needed()
 
-# 2️⃣ Download NFO instruments
+# 2️⃣ Download all NFO instruments
 all_nfo = kite.instruments("NFO")
 
-# 3️⃣ Prepare containers for one expiry
-expiry_date = date(2025, 7, 31)          # adjust if needed
+# 3️⃣ Prepare containers for a single expiry
+expiry_date = date(2025, 7, 31)     # adjust if you need a different expiry
 
 future_tokens = { sym: 0 for sym in FNO_SYMBOLS }
 option_pe     = { sym: {} for sym in FNO_SYMBOLS }
 option_ce     = { sym: {} for sym in FNO_SYMBOLS }
 
-# 4️⃣ Populate via each instrument’s fields
-for inst in all_nfo:
-    sym     = inst.get("symbol")         # e.g. "RELIANCE"
-    exp      = inst.get("expiry")        # a datetime.date
-    itype    = inst.get("instrument_type")# "FUT", "PE", or "CE"
-    tok      = inst.get("instrument_token")
-    strike   = inst.get("strike")        # a float or int
+# Sort symbols by length so longer names (e.g. BHARTIARTL) match before shorter (e.g. ITC)
+syms_sorted = sorted(FNO_SYMBOLS, key=lambda s: len(s), reverse=True)
 
-    # Only our universe and the target expiry
-    if sym not in FNO_SYMBOLS or exp != expiry_date:
+# 4️⃣ Populate by inspecting each instrument’s fields
+for inst in all_nfo:
+    ts       = inst.get("tradingsymbol", "")
+    inst_type= inst.get("instrument_type")
+    exp      = inst.get("expiry")         # a datetime.date
+    tok      = inst.get("instrument_token")
+    strike   = inst.get("strike")         # float or int
+
+    # skip different expiries
+    if exp != expiry_date:
         continue
 
-    if itype == "FUT":
+    # find which underlying symbol this belongs to
+    sym = next((s for s in syms_sorted if ts.startswith(s)), None)
+    if not sym:
+        continue
+
+    if inst_type == "FUT":
         future_tokens[sym] = tok
 
-    elif itype == "PE" and strike is not None:
+    elif inst_type == "PE" and strike is not None:
         option_pe[sym][int(strike)] = tok
 
-    elif itype == "CE" and strike is not None:
+    elif inst_type == "CE" and strike is not None:
         option_ce[sym][int(strike)] = tok
 
-# 5️⃣ Write JSON for copy–paste
+# 5️⃣ Write out JSON for easy copy–paste into instruments.py
 with open("future_tokens.json", "w") as f:
     json.dump(future_tokens, f, indent=2)
 with open("option_pe.json", "w") as f:
