@@ -2,41 +2,25 @@
 """
 monitor_trades.py
 
-Reads trade_history.json and marks each Open trade as Target or SL.
+Marks Open trades in trade_history.json as Target or SL if hit.
 """
 import json
 from datetime import date
 import utils
 
-HIST = "trade_history.json"
-hist = json.loads(open(HIST).read())
-
+H="trade_history.json"
+hist=json.loads(open(H).read())
 for run in hist:
     for t in run["trades"]:
-        if t.get("status") != "Open":
-            continue
-
-        # Cash-Momentum & Futures trades
-        if t["type"] in ("Cash-Momentum", "Futures"):
-            df = utils.fetch_ohlc(t["symbol"], 90)
-            entry, tgt, sl = t["entry"], t["target"], t["sl"]
-            for _, row in df.iterrows():
-                if row["high"] >= tgt:
-                    t["status"]    = "Target"
-                    t["exit_date"] = date.today().isoformat()
-                    break
-                if row["low"] <= sl:
-                    t["status"]    = "SL"
-                    t["exit_date"] = date.today().isoformat()
-                    break
-
-        # Options-Strangle trades (if you want per-leg tracking, flesh this out)
-        elif t["type"] == "Options-Strangle":
-            # placeholder for leg-by-leg checks
-            pass
-
-# Write updated history back
-with open(HIST, "w") as f:
-    json.dump(hist, f, indent=2)
-
+        if t.get("status")!="Open": continue
+        if t["type"] in ("Cash-Momentum","Futures"):
+            df=utils.fetch_ohlc(t["symbol"],90)
+            if df is None: continue
+            for _,r in df.iterrows():
+                if r["high"]>=t.get("Target",0):
+                    t["status"]="Target"; t["exit_date"]=date.today().isoformat(); break
+                if r["low"]<=t.get("SL",0):
+                    t["status"]="SL"; t["exit_date"]=date.today().isoformat(); break
+        # Options-Strangle leg‑by‑leg logic can be added here
+with open(H,"w") as f: json.dump(hist,f,indent=2)
 print("✅ trade_history.json updated")
