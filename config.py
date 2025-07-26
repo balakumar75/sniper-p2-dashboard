@@ -1,5 +1,5 @@
 """
-config.py – central settings + self-tuning parameters
+config.py – central settings + self‑tuning parameters
 """
 import os, json, pathlib
 from dotenv import load_dotenv
@@ -10,23 +10,32 @@ API_KEY       = os.getenv("KITE_API_KEY")       or os.getenv("ZERODHA_API_KEY", 
 API_SECRET    = os.getenv("KITE_API_SECRET")    or os.getenv("ZERODHA_API_SECRET", "")
 ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN")  or os.getenv("ZERODHA_ACCESS_TOKEN", "")
 
-# ── NSE-100 universe (full list) ──────────────────────────────────────────
+# ── Universe: NIFTY‑100 constituents ────────────────────────────────────────
 NSE100 = [
     "RELIANCE","TCS","HDFCBANK","INFY","ICICIBANK","ITC","KOTAKBANK","LT","SBIN",
-    # … rest of your 100 symbols …
+    "AXISBANK","BHARTIARTL","BAJFINANCE","ASIANPAINT","MARUTI","SUNPHARMA","NTPC",
+    "POWERGRID","M&M","ONGC","TITAN","HCLTECH","ULTRACEMCO","TECHM","DIVISLAB",
+    "JSWSTEEL","WIPRO","HINDUNILVR","BAJAJ-AUTO","CIPLA","NESTLEIND","GRASIM",
+    "BRITANNIA","COALINDIA","UPL","BAJAJFINSV","ADANIPORTS","TATASTEEL",
+    "HEROMOTOCO","BPCL","EICHERMOT","HDFCLIFE","DRREDDY","HINDALCO","SHREECEM",
+    "SBILIFE","APOLLOHOSP","BAJAJHLDNG","DABUR","DMART","ICICIPRULI",
+    "INDUSINDBK","IOC","GODREJCP","LTIM","NAUKRI","PIDILITIND","PGHH","SIEMENS",
+    "SRF","VEDL","ADANIENT","AMBUJACEM","AUBANK","BAJAJCON","BANDHANBNK",
+    "BERGEPAINT","BIOCON","BOSCHLTD","CANBK","CHOLAFIN","COLPAL","COROMANDEL",
+    "CROMPTON","DELTACORP","GAIL","GLENMARK","HINDPETRO","ICICIGI","IDEA","IGL",
+    "IRCTC","LUPIN","MUTHOOTFIN","PETRONET","PNB","RBLBANK","SAIL","TRENT",
+    "TVSMOTOR","UBL","UJJIVANSFB","VOLTAS","ZEEL"
 ]
 FNO_SYMBOLS = sorted(NSE100)
 
 # ── Default thresholds (overridden by tuner) ──────────────────────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 1.0
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
 
 # ── Engine parameters ──────────────────────────────────────────────────────
-# Allow every strangle
-POPCUT = 0.0
-# Generate up to 10 cash‐momentum picks
-TOP_N_MOMENTUM = 10
+POPCUT         = 0.60   # minimum PoP for strangles
+TOP_N_MOMENTUM = 5      # fallback cash‑momentum picks
 
-# ── Self-tuning params file ────────────────────────────────────────────────
+# ── Self‑tuning params file ────────────────────────────────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
     p = json.loads(PARAMS_FILE.read_text())
