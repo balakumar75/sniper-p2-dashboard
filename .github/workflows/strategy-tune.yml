@@ -8,7 +8,6 @@ on:
 jobs:
   tune:
     runs-on: ubuntu-latest
-    # bump timeout to 2 hours instead of default 1
     timeout-minutes: 120
     env:
       KITE_API_KEY:      ${{ secrets.KITE_API_KEY }}
@@ -20,12 +19,14 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'                    # automatically caches ~/.cache/pip
+          cache: 'pip'
 
       - name: 📦 Install dependencies & run back-test
         run: |
@@ -34,8 +35,7 @@ jobs:
           python backtest.py
 
       - name: 🔧 Patch config.py with best params
-        run: |
-          python .github/scripts/patch_config.py
+        run: python .github/scripts/patch_config.py
 
       - name: 💾 Commit tuned params
         run: |
