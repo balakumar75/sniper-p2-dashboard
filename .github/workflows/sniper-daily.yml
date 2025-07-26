@@ -29,18 +29,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🚀 Run Sniper Engine
+      - name: 🚀 Run Sniper engine
         run: python sniper_run_all.py
 
       - name: 💾 Commit trades & history
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-          # Stage both today's trades and history
+          # Stage both the latest signals and the archive
           git add trades.json trade_history.json || true
-          # Commit only if there are staged changes
+          # Only commit if there's anything new
           if ! git diff --cached --quiet; then
-            git commit -m "Daily run $(date -u +'%Y-%m-%d')"
+            git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
             git push origin main
           else
             echo "No changes to commit"
