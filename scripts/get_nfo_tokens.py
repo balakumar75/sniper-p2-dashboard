@@ -4,49 +4,52 @@
 import os
 import sys
 import json
-from datetime import datetime
+from datetime import date, datetime
 
-# ── Make repo root importable ───────────────────────────────────────────────
+# ── Ensure repo root is on PYTHONPATH ──────────────────────────────────────
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, repo_root)
 
-import kite_patch                  # ← apply the same host‐patch as your main script
+import kite_patch
 from token_manager import refresh_if_needed
 from config import FNO_SYMBOLS
 
-# 1️⃣ Authenticate
+# 1️⃣ Authenticate & patch host
 kite = refresh_if_needed()
 
-# 2️⃣ Fetch all NFO instruments
+# 2️⃣ Download NFO instruments
 all_nfo = kite.instruments("NFO")
 
-# 3️⃣ Prepare containers
-expiry_date = datetime(2025, 7, 31)               # change date if needed
-expiry_ts   = expiry_date.strftime("%d%b%Y").upper()  # e.g. "31JUL2025"
+# 3️⃣ Prepare containers for one expiry
+expiry_date = date(2025, 7, 31)           # adjust as needed
+expiry_iso  = expiry_date.isoformat()    # "2025-07-31"
 
 future_tokens = { sym: 0 for sym in FNO_SYMBOLS }
 option_pe     = { sym: {} for sym in FNO_SYMBOLS }
 option_ce     = { sym: {} for sym in FNO_SYMBOLS }
 
-# 4️⃣ Populate futures & options
+# 4️⃣ Populate via each instrument’s fields
 for inst in all_nfo:
-    ts  = inst["tradingsymbol"]     # e.g. "RELIANCE31JUL2025PE1400"
-    tok = inst["instrument_token"]
+    sym   = inst.get("symbol")
+    exp   = inst.get("expiry", "")[:10]   # e.g. "2025-07-31"
+    itype = inst.get("instrument_type")    # "FUT", "CE", or "PE"
+    tok   = inst.get("instrument_token")
+    strike = inst.get("strike", None)
 
-    for sym in FNO_SYMBOLS:
-        # FUTURES
-        if ts == f"{sym}{expiry_ts}":
-            future_tokens[sym] = tok
+    # Skip if not in your universe or wrong expiry
+    if sym not in FNO_SYMBOLS or exp != expiry_iso:
+        continue
 
-        # OPTIONS: PE / CE
-        if ts.startswith(f"{sym}{expiry_ts}PE"):
-            strike = int(ts.split("PE")[-1])
-            option_pe[sym][strike] = tok
-        if ts.startswith(f"{sym}{expiry_ts}CE"):
-            strike = int(ts.split("CE")[-1])
-            option_ce[sym][strike] = tok
+    if itype == "FUT":
+        future_tokens[sym] = tok
 
-# 5️⃣ Write out JSON files
+    elif itype == "PE" and strike is not None:
+        option_pe[sym][strike] = tok
+
+    elif itype == "CE" and strike is not None:
+        option_ce[sym][strike] = tok
+
+# 5️⃣ Write JSON for copy–paste
 with open("future_tokens.json", "w") as f:
     json.dump(future_tokens, f, indent=2)
 with open("option_pe.json", "w") as f:
