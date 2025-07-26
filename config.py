@@ -10,7 +10,7 @@ API_KEY       = os.getenv("KITE_API_KEY")       or os.getenv("ZERODHA_API_KEY", 
 API_SECRET    = os.getenv("KITE_API_SECRET")    or os.getenv("ZERODHA_API_SECRET", "")
 ACCESS_TOKEN  = os.getenv("KITE_ACCESS_TOKEN")  or os.getenv("ZERODHA_ACCESS_TOKEN", "")
 
-# ── Universe: NIFTY‑100 constituents ────────────────────────────────────────
+# ── NSE‑100 universe ─────────────────────────────────────────────────────────
 NSE100 = [
     "RELIANCE","TCS","HDFCBANK","INFY","ICICIBANK","ITC","KOTAKBANK","LT","SBIN",
     "AXISBANK","BHARTIARTL","BAJFINANCE","ASIANPAINT","MARUTI","SUNPHARMA","NTPC",
@@ -32,8 +32,8 @@ FNO_SYMBOLS = sorted(NSE100)
 RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
 
 # ── Engine parameters ──────────────────────────────────────────────────────
-POPCUT         = 0.60   # minimum PoP for strangles
-TOP_N_MOMENTUM = 5      # fallback cash‑momentum picks
+POPCUT         = 0.60   # minimum PoP for Options‑Strangle
+TOP_N_MOMENTUM = 5      # fallback Cash‑Momentum picks
 
 # ── Self‑tuning params file ────────────────────────────────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
