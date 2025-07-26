@@ -2,7 +2,7 @@ name: Strategy Tune
 
 on:
   schedule:
-    - cron: '0 0 * * 0'       # every Sunday 00:00 UTC
+    - cron: '0 0 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -11,40 +11,25 @@ jobs:
     timeout-minutes: 120
     env:
       KITE_API_KEY:      ${{ secrets.KITE_API_KEY }}
-      KITE_ACCESS_TOKEN: ${{ secrets.KITE_ACCESS_TOKEN }}
       KITE_API_SECRET:   ${{ secrets.KITE_API_SECRET }}
-      KITE_USER_ID:      ${{ secrets.KITE_USER_ID }}
+      KITE_ACCESS_TOKEN: ${{ secrets.KITE_ACCESS_TOKEN }}
       GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: 📦 Install dependencies & run back-test
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt tqdm
-          python backtest.py
-
-      - name: 🔧 Patch config.py with best params
-        run: python .github/scripts/patch_config.py
-
-      - name: 💾 Commit tuned params
-        run: |
-          git config user.name  "tuner-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add config.py backtest_report.md results.csv best_params.json || true
-          if ! git diff --cached --quiet; then
-            git commit -m "Weekly strategy tune $(date -u +'%Y-%m-%d')"
-            git push origin main
-          else
-            echo "No changes to commit"
-          fi
+    - uses: actions/checkout@v4
+      with: { token: ${{ secrets.GITHUB_TOKEN }} }
+    - uses: actions/setup-python@v5
+      with: { python-version: '3.11', cache: 'pip' }
+    - run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt tqdm
+        python backtest.py
+    - run: python .github/scripts/patch_config.py
+    - run: |
+        git config user.name  "tuner-bot"
+        git config user.email "bot@users.noreply.github.com"
+        git add config.py backtest_report.md results.csv best_params.json || true
+        if ! git diff --cached --quiet; then
+          git commit -m "Weekly strategy tune $(date -u +'%Y-%m-%d')"
+          git push origin main
+        fi
