@@ -1,8 +1,9 @@
+# .github/workflows/sniper-daily.yml
 name: Sniper Engine Daily
 
 on:
   schedule:
-    # 04:45 UTC → 10:15 IST Mon–Fri
+    # 04:45 UTC → 10:15 IST Mon–Fri
     - cron: '45 4 * * 1-5'
   workflow_dispatch:
 
@@ -19,8 +20,6 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -33,23 +32,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🚀 Run Sniper Engine
+      - name: 🚀 Run Sniper engine
         run: python sniper_run_all.py
 
       - name: 💾 Commit trades & history
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-
-          # Sync to the latest remote state
-          git fetch origin main
-          git reset --hard origin/main
-
-          # Stage and commit
           git add trades.json trade_history.json || true
           if ! git diff --cached --quiet; then
             git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
             git push origin main
           else
             echo "No changes to commit"
+          fi
+
+      - name: 📁 Copy to docs and commit
+        run: |
+          mkdir -p docs
+          cp trades.json docs/trades.json
+          cp trade_history.json docs/trade_history.json
+          git config user.name  "sniper-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add docs/trades.json docs/trade_history.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync docs JSONs $(date -u +'%Y-%m-%d')"
+            git push origin main
+          else
+            echo "docs JSONs already up-to-date"
           fi
