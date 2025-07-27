@@ -118,50 +118,5 @@
     "pop": 1.0,
     "status": "Open",
     "action": "Sell"
-  },
-  {
-    "date": "2025-07-27",
-    "symbol": "ADANIENT",
-    "type": "Futures",
-    "entry": 0.0,
-    "rsi": 0.0,
-    "status": "Open",
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-27",
-    "symbol": "ADANIPORTS",
-    "type": "Futures",
-    "entry": 0.0,
-    "rsi": 0.0,
-    "status": "Open",
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-27",
-    "symbol": "AMBUJACEM",
-    "type": "Futures",
-    "entry": 0.0,
-    "rsi": 0.0,
-    "status": "Open",
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-27",
-    "symbol": "APOLLOHOSP",
-    "type": "Futures",
-    "entry": 0.0,
-    "rsi": 0.0,
-    "status": "Open",
-    "action": "Buy"
-  },
-  {
-    "date": "2025-07-27",
-    "symbol": "ASIANPAINT",
-    "type": "Futures",
-    "entry": 0.0,
-    "rsi": 0.0,
-    "status": "Open",
-    "action": "Buy"
   }
 ]
