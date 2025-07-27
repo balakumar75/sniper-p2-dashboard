@@ -6,11 +6,11 @@ import sys
 import json
 from datetime import date
 
-# ── Make repo root importable ────────────────────────────────────────────────
+# ── Make your repo root importable ───────────────────────────────────────────
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, repo_root)
 
-import kite_patch                   # ensure KiteConnect uses your patched host
+import kite_patch                  # ← patch KiteConnect host
 from token_manager import refresh_if_needed
 from config import FNO_SYMBOLS
 
@@ -20,43 +20,37 @@ kite = refresh_if_needed()
 # 2️⃣ Download all NFO instruments
 all_nfo = kite.instruments("NFO")
 
-# 3️⃣ Prepare containers for a single expiry
-expiry_date = date(2025, 7, 31)     # adjust if you need a different expiry
+# 3️⃣ Set your target expiry
+expiry_date = date(2025, 7, 31)      # adjust if you want a different monthly expiry
 
+# 4️⃣ Prepare containers
 future_tokens = { sym: 0 for sym in FNO_SYMBOLS }
 option_pe     = { sym: {} for sym in FNO_SYMBOLS }
 option_ce     = { sym: {} for sym in FNO_SYMBOLS }
 
-# Sort symbols by length so longer names (e.g. BHARTIARTL) match before shorter (e.g. ITC)
-syms_sorted = sorted(FNO_SYMBOLS, key=lambda s: len(s), reverse=True)
-
-# 4️⃣ Populate by inspecting each instrument’s fields
+# 5️⃣ Populate: use instrument_type == "FUT" or "OPT" + option_type
 for inst in all_nfo:
-    ts       = inst.get("tradingsymbol", "")
-    inst_type= inst.get("instrument_type")
-    exp      = inst.get("expiry")         # a datetime.date
-    tok      = inst.get("instrument_token")
-    strike   = inst.get("strike")         # float or int
+    sym    = inst["symbol"]           # underlying e.g. "RELIANCE"
+    exp    = inst["expiry"]           # a datetime.date
+    itype  = inst["instrument_type"]  # "FUT" or "OPT"
+    tok    = inst["instrument_token"]
+    strike = inst.get("strike")
 
-    # skip different expiries
-    if exp != expiry_date:
+    # Only care about your universe & the chosen expiry
+    if sym not in FNO_SYMBOLS or exp != expiry_date:
         continue
 
-    # find which underlying symbol this belongs to
-    sym = next((s for s in syms_sorted if ts.startswith(s)), None)
-    if not sym:
-        continue
-
-    if inst_type == "FUT":
+    if itype == "FUT":
         future_tokens[sym] = tok
 
-    elif inst_type == "PE" and strike is not None:
-        option_pe[sym][int(strike)] = tok
+    elif itype == "OPT":
+        otype = inst.get("option_type")  # "PE" or "CE"
+        if otype == "PE" and strike is not None:
+            option_pe[sym][int(strike)] = tok
+        elif otype == "CE" and strike is not None:
+            option_ce[sym][int(strike)] = tok
 
-    elif inst_type == "CE" and strike is not None:
-        option_ce[sym][int(strike)] = tok
-
-# 5️⃣ Write out JSON for easy copy–paste into instruments.py
+# 6️⃣ Write JSON artifacts
 with open("future_tokens.json", "w") as f:
     json.dump(future_tokens, f, indent=2)
 with open("option_pe.json", "w") as f:
