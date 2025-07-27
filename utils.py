@@ -102,6 +102,16 @@ def bs_delta(spot: float,
     def N(x): return 0.5 * (1 + math.erf(x/math.sqrt(2)))
     return N(d1) if call else N(d1) - 1
 
+# ── 2.5) Average turnover for filtering ──────────────────────────────────────
+def avg_turnover(df: pd.DataFrame) -> float:
+    """
+    Returns the average daily turnover (volume * close) from the DataFrame.
+    """
+    if df is None or df.empty:
+        return 0.0
+    turnover = df["volume"] * df["close"]
+    return float(turnover.mean())
+
 # ── 3) Token lookups ─────────────────────────────────────────────────────────
 def future_token(symbol: str, expiry: str) -> int:
     return FUTURE_TOKENS.get(symbol, {}).get(expiry, 0)
@@ -115,7 +125,7 @@ def option_token(symbol: str,
                         .get(otype, {}) \
                         .get(strike, 0)
 
-# ── 4) LTP fetchers (fixed) ─────────────────────────────────────────────────
+# ── 4) LTP fetchers ──────────────────────────────────────────────────────────
 def fetch_future_price(token: int) -> float | None:
     """
     Return the last traded price for the future with instrument_token `token`.
