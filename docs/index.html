@@ -28,29 +28,39 @@
 
 <script>
 async function loadTrades() {
-  const url = "https://raw.githubusercontent.com/balakumar75/sniper-p2-dashboard/main/trades.json?t=" + Date.now();
-  const res = await fetch(url, {cache: "no-store"});
-  const trades = await res.json();
-  const tbody  = document.querySelector("#trades tbody");
-  tbody.innerHTML = trades.length
-    ? trades.map(tr => `
-        <tr>
-          <td>${tr.date}</td>
-          <td>${tr.symbol}</td>
-          <td>${tr.type}</td>
-          <td>${tr.entry}</td>
-          <td>${tr.cmp}</td>
-          <td>${tr.target}</td>
-          <td>${tr.sl}</td>
-          <td>${tr.pop_pct ?? tr.pop}</td>
-          <td>${tr.status}</td>
-          <td>${tr.pnl}</td>
-          <td class="${tr.action==='Buy'?'buy':'sell'}">${tr.action}</td>
-        </tr>`).join("")
-    : `<tr><td colspan="11">❌ No trades found in file or failed to load.</td></tr>`;
+  // Fetch from the same folder (docs/) that contains this index.html
+  const res = await fetch("trades.json", { cache: "no-store" });
+  let trades = [];
+  try {
+    trades = await res.json();
+  } catch {
+    // JSON parse failed or 404
+  }
+
+  const tbody = document.querySelector("#trades tbody");
+  if (!trades || trades.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11">❌ No trades found in file or failed to load.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = trades.map(tr => `
+    <tr>
+      <td>${tr.date ?? ""}</td>
+      <td>${tr.symbol ?? ""}</td>
+      <td>${tr.type ?? ""}</td>
+      <td>${tr.entry ?? ""}</td>
+      <td>${tr.cmp ?? ""}</td>
+      <td>${tr.target ?? ""}</td>
+      <td>${tr.sl ?? ""}</td>
+      <td>${tr.pop ?? ""}</td>
+      <td>${tr.status ?? ""}</td>
+      <td>${tr.pnl ?? ""}</td>
+      <td class="${tr.action === 'Buy' ? 'buy' : 'sell'}">${tr.action ?? ""}</td>
+    </tr>
+  `).join("");
 }
+
 loadTrades();
 </script>
 </body>
 </html>
-
