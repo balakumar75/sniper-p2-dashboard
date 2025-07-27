@@ -28,14 +28,14 @@ NSE100 = [
 ]
 FNO_SYMBOLS = sorted(NSE100)
 
-# ── Production thresholds (can tune these over time) ────────────────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
+# Production thresholds tuned for higher‑probability signals
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 60, 20, 1.5
 
-# Minimum “Probability of Profit” for the Strangle leg (0.6 = 60%)
-POPCUT         = 0.60
+# Options‑Strangle: require at least a 75% PoP (i.e. 25% max max‑loss chance)
+POPCUT         = 0.75
 
-# Number of top‐RSI names to pick for the Cash‑Momentum leg
-TOP_N_MOMENTUM = 5
+# Cash‑Momentum: only pick the very top 3 by RSI (instead of 5)
+TOP_N_MOMENTUM = 3
 
 # ── Self‑tuning params file (used by your inline tuner) ─────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
