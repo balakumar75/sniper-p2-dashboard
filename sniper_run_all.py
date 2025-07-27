@@ -4,8 +4,8 @@ sniper_run_all.py
 
 1) Authenticate with Kite (token_manager)
 2) Inject kite into utils
-3) Run Sniper Engine → raw trades (Title‑Case keys)
-4) Normalize keys to lower‑case and write trades.json
+3) Run Sniper Engine → raw trades (any-keycase)
+4) Normalize keys (lowercase) and write trades.json
 5) Archive to trade_history.json
 6) Push trades.json to GitHub
 7) Simple self‑tuner
@@ -23,6 +23,13 @@ from token_manager import refresh_if_needed
 import utils
 from config import PARAMS_FILE      # path to sniper_params.json
 
+# ── helper to pull either key variant ────────────────────────────────────────
+def pull(t: dict, *keys, default=None):
+    for k in keys:
+        if k in t and t[k] is not None:
+            return t[k]
+    return default
+
 # 1) Authenticate & inject
 kite = refresh_if_needed()
 utils.set_kite(kite)
@@ -37,17 +44,17 @@ trades = generate_sniper_trades()
 normalized = []
 for t in trades:
     normalized.append({
-        "date":    t.get("Date"),
-        "symbol":  t.get("Symbol"),
-        "type":    t.get("Type"),
-        "entry":   t.get("Entry"),
-        "cmp":     t.get("CMP"),
-        "target":  t.get("Target"),
-        "sl":      t.get("SL"),
-        "pop":     t.get("PoP"),
-        "status":  t.get("Status"),
-        "pnl":     t.get("P&L (₹)"),
-        "action":  t.get("Action"),
+        "date":    pull(t, "date",    "Date"),
+        "symbol":  pull(t, "symbol",  "Symbol"),
+        "type":    pull(t, "type",    "Type"),
+        "entry":   pull(t, "entry",   "Entry"),
+        "cmp":     pull(t, "cmp",     "CMP"),
+        "target":  pull(t, "target",  "Target"),
+        "sl":      pull(t, "sl",      "SL"),
+        "pop":     pull(t, "pop",     "PoP"),
+        "status":  pull(t, "status",  "Status"),
+        "pnl":     pull(t, "pnl",     "P&L (₹)"),
+        "action":  pull(t, "action",  "Action"),
     })
 
 with open("trades.json", "w") as f:
