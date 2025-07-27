@@ -28,19 +28,21 @@ NSE100 = [
 ]
 FNO_SYMBOLS = sorted(NSE100)
 
-# Production thresholds tuned for higher‑probability signals
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 1.0
+# ── Production thresholds tuned for higher‑probability signals ───────────────
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 60, 20, 1.5
 
-# Options‑Strangle: require at least a 75% PoP (i.e. 25% max max‑loss chance)
-POPCUT         = 0.0
+# Options‑Strangle: require ≥75% historical PoP
+POPCUT         = 0.75
 
-# Cash‑Momentum: only pick the very top 3 by RSI (instead of 5)
-TOP_N_MOMENTUM = 10
+# Cash‑Momentum: pick only top 3 by RSI
+TOP_N_MOMENTUM = 3
 
-# ── Self‑tuning params file (used by your inline tuner) ─────────────────────
+# ── Self‑tuning params file (optional) ──────────────────────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
     p = json.loads(PARAMS_FILE.read_text())
     RSI_MIN        = p.get("RSI_MIN",        RSI_MIN)
     ADX_MIN        = p.get("ADX_MIN",        ADX_MIN)
     VOL_MULTIPLIER = p.get("VOL_MULTIPLIER", VOL_MULTIPLIER)
+    POPCUT         = p.get("POPCUT",         POPCUT)
+    TOP_N_MOMENTUM = p.get("TOP_N_MOMENTUM", TOP_N_MOMENTUM)
