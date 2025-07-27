@@ -303,5 +303,130 @@
         "action": "Buy"
       }
     ]
+  },
+  {
+    "run_date": "2025-07-27",
+    "trades": [
+      {
+        "date": "2025-07-27",
+        "symbol": "ADANIENT",
+        "type": "Options-Strangle",
+        "put_strike": 2500,
+        "call_strike": 2600,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "ADANIPORTS",
+        "type": "Options-Strangle",
+        "put_strike": 1350,
+        "call_strike": 1450,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "AMBUJACEM",
+        "type": "Options-Strangle",
+        "put_strike": 600,
+        "call_strike": 650,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "APOLLOHOSP",
+        "type": "Options-Strangle",
+        "put_strike": 7300,
+        "call_strike": 7650,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "ASIANPAINT",
+        "type": "Options-Strangle",
+        "put_strike": 2250,
+        "call_strike": 2400,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "AUBANK",
+        "type": "Options-Strangle",
+        "put_strike": 700,
+        "call_strike": 800,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "AXISBANK",
+        "type": "Options-Strangle",
+        "put_strike": 1050,
+        "call_strike": 1150,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "BAJAJ-AUTO",
+        "type": "Options-Strangle",
+        "put_strike": 7850,
+        "call_strike": 8300,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "BAJAJCON",
+        "type": "Options-Strangle",
+        "put_strike": 200,
+        "call_strike": 250,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      },
+      {
+        "date": "2025-07-27",
+        "symbol": "BAJAJFINSV",
+        "type": "Options-Strangle",
+        "put_strike": 1900,
+        "call_strike": 2050,
+        "put_price": 0.0,
+        "call_price": 0.0,
+        "pop": 1.0,
+        "status": "Open",
+        "action": "Sell"
+      }
+    ]
   }
 ]
