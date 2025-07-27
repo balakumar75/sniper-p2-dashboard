@@ -1,177 +1,139 @@
-#!/usr/bin/env python3
-"""
-utils.py
+import math
+from datetime import date, timedelta
+import pandas as pd
+from instruments import SYMBOL_TO_TOKEN, FUTURE_TOKENS, OPTION_TOKENS
 
-Data-fetch, indicators & helpers for options/futures.
-Includes:
-  • OHLC fetch w/ retry
-  • ATR, ADX, RSI
-  • Historical PoP backtest
-  • Black‑Scholes delta
-  • Option/Future token lookups & price fetchers
-  • Wrapper fetch_rsi, fetch_adx, fetch_macd
-"""
-import time, datetime as dt, math, pandas as pd
-from kiteconnect import exceptions as kc_ex
-from rate_limiter import gate
-from instruments import SYMBOL_TO_TOKEN, OPTION_TOKENS, FUTURE_TOKENS
+# ── Global Kite instance ────────────────────────────────────────────────────
+kite = None
+def set_kite(k):
+    """Inject the authenticated KiteConnect instance."""
+    global kite
+    kite = k
 
-_kite = None
-def set_kite(k): 
-    global _kite; _kite = k
+# ── 1) Fetch historical OHLC ─────────────────────────────────────────────────
+def fetch_ohlc(symbol: str, n_days: int) -> pd.DataFrame | None:
+    """
+    Returns the last n_days of daily OHLC for `symbol`, or None on error.
+    """
+    token = SYMBOL_TO_TOKEN.get(symbol, 0)
+    if not token:
+        print(f"❌ OHLC {symbol}: no instrument token")
+        return None
 
-def _today(): return dt.date.today()
-def _days_ago(d): return _today() - dt.timedelta(days=d)
+    end   = date.today()
+    start = end - timedelta(days=n_days)
+    try:
+        data = kite.historical_data(token, start.isoformat(), end.isoformat(), "day")
+        df = pd.DataFrame(data)
+        df["date"] = pd.to_datetime(df["date"]).dt.date
+        return df
+    except Exception as e:
+        print(f"❌ OHLC {symbol}: {e}")
+        return None
 
-def token(sym): return SYMBOL_TO_TOKEN[sym]
-
-def fetch_ohlc(sym: str, days: int) -> pd.DataFrame | None:
-    if _kite is None:
-        raise RuntimeError("utils.set_kite(kite) not called")
-    for attempt in range(5):
-        gate()
-        try:
-            data = _kite.historical_data(
-                token(sym), _days_ago(days), _today(), interval="day"
-            )
-            df = pd.DataFrame(data)
-            return df if not df.empty else None
-        except kc_ex.InputException as e:
-            if "Too many requests" in str(e):
-                time.sleep(2**attempt)
-                continue
-            return None
-        except Exception:
-            return None
-    return None
-
-# ── INDICATORS ───────────────────────────────────────────────────────────────
-def atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
-    hl = df["high"] - df["low"]
-    hc = (df["high"] - df["close"].shift()).abs()
-    lc = (df["low"]  - df["close"].shift()).abs()
-    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
-    return tr.rolling(n).mean()
-
-def adx(df: pd.DataFrame, n: int = 14) -> pd.Series:
-    up, down = df["high"].diff(), -df["low"].diff()
-    plus_dm  = up.where((up>down)&(up>0), 0.0)
-    minus_dm = down.where((down>up)&(down>0),0.0)
-    hl = df["high"] - df["low"]
-    hc = (df["high"] - df["close"].shift()).abs()
-    lc = (df["low"]  - df["close"].shift()).abs()
-    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
-    atr14 = tr.rolling(n).mean()
-    plus_di  = 100 * plus_dm.rolling(n).sum() / atr14
-    minus_di = 100 * minus_dm.rolling(n).sum() / atr14
-    dx = (plus_di - minus_di).abs() / (plus_di + minus_di) * 100
-    return dx.rolling(n).mean()
-
-def rsi(df: pd.DataFrame, n: int = 14) -> pd.Series:
+# ── 2) Technical indicators ───────────────────────────────────────────────────
+def fetch_rsi(symbol: str, period: int = 14) -> float:
+    df = fetch_ohlc(symbol, period + 20)
+    if df is None or len(df) < period:
+        return 0.0
     diff = df["close"].diff().dropna()
-    up   = diff.clip(lower=0)
-    dn   = -diff.clip(upper=0)
-    rs   = up.rolling(n).mean() / dn.rolling(n).mean()
-    return 100 - 100 / (1 + rs)
+    up   = diff.clip(lower=0).rolling(period).mean()
+    down = (-diff.clip(upper=0)).rolling(period).mean()
+    if down.iloc[-1] == 0:
+        return 100.0
+    rs = up.iloc[-1] / down.iloc[-1]
+    return 100 - (100 / (1 + rs))
 
-# ── HISTORICAL PROBABILITY OF PROFIT ──────────────────────────────────────────
+def fetch_adx(symbol: str, period: int = 14) -> float:
+    df = fetch_ohlc(symbol, period * 3)
+    if df is None or len(df) < period * 3:
+        return 0.0
+    # Simple ADX calculation
+    from ta.trend import ADXIndicator
+    adx = ADXIndicator(df["high"], df["low"], df["close"], period).adx()
+    return float(adx.iloc[-1])
+
+def fetch_macd(symbol: str) -> tuple[float, float, float]:
+    df = fetch_ohlc(symbol, 60)
+    if df is None or len(df) < 26:
+        return (0.0, 0.0, 0.0)
+    exp12   = df["close"].ewm(span=12).mean()
+    exp26   = df["close"].ewm(span=26).mean()
+    macd    = exp12 - exp26
+    signal  = macd.ewm(span=9).mean()
+    hist    = macd - signal
+    return (float(macd.iloc[-1]), float(signal.iloc[-1]), float(hist.iloc[-1]))
+
+def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    high_low   = df["high"] - df["low"]
+    high_close = (df["high"] - df["close"].shift()).abs()
+    low_close  = (df["low"]  - df["close"].shift()).abs()
+    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+    return tr.rolling(period).mean()
+
 def hist_pop(symbol: str,
              tgt_pct: float,
              sl_pct: float,
              lookback_days: int = 90) -> float:
-    """
-    Fraction of next-day bars where high>=target before low<=SL.
-    """
     df = fetch_ohlc(symbol, lookback_days)
     if df is None or df.empty:
         return 0.0
-
-    wins = 0
-    total = 0
+    wins = total = 0
     for i in range(len(df) - 1):
-        entry = df["close"].iloc[i]
-        high  = df["high"].iloc[i+1]
-        low   = df["low"].iloc[i+1]
-
-        target = entry * (1 + tgt_pct / 100)
-        sl_val = entry * (1 - sl_pct / 100)
-
+        entry  = df["close"].iloc[i]
+        high   = df["high"].iloc[i+1]
+        low    = df["low"].iloc[i+1]
+        target = entry * (1 + tgt_pct/100)
+        sl_val = entry * (1 - sl_pct/100)
         if high >= target:
             wins += 1
         total += 1
-
-    return round(wins / total, 2) if total else 0.0
-
-def avg_turnover(df: pd.DataFrame, n: int = 20) -> float:
-    if df is None or df.empty:
-        return 0.0
-    val = (df["close"] * df["volume"]).rolling(n).mean().iloc[-1]
-    return round(val / 1e7, 2)
-
-# ── BLACK‑SCHOLES DELTA ──────────────────────────────────────────────────────
-def norm_cdf(x: float) -> float:
-    return (1 + math.erf(x / math.sqrt(2))) / 2
+    return round(wins/total, 2) if total else 0.0
 
 def bs_delta(spot: float,
              strike: float,
-             dte: int,
-             call: bool = True,
-             vol: float = 0.25,
-             r: float = 0.05) -> float:
-    t = dte / 365
+             t: float,
+             r: float = 0.0,
+             vol: float = 0.0,
+             call: bool = True) -> float:
+    if vol == 0 or t == 0:
+        return 0.0
     d1 = (math.log(spot/strike) + (r + 0.5 * vol**2) * t) / (vol * math.sqrt(t))
-    return (math.exp(-r*t) * norm_cdf(d1)) if call else (-math.exp(-r*t) * norm_cdf(-d1))
+    def N(x): return 0.5 * (1 + math.erf(x/math.sqrt(2)))
+    return N(d1) if call else N(d1) - 1
 
-# ── TOKEN LOOKUPS & PRICE FETCHERS ───────────────────────────────────────────
+# ── 3) Token lookups ─────────────────────────────────────────────────────────
+def future_token(symbol: str, expiry: str) -> int:
+    return FUTURE_TOKENS.get(symbol, {}).get(expiry, 0)
+
 def option_token(symbol: str,
-                 strike: int,
-                 expiry,
-                 option_type: str) -> int:
-    exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
-    return OPTION_TOKENS[symbol][exp_str][option_type].get(strike, 0)
+                 strike: float,
+                 expiry: str,
+                 otype: str) -> int:
+    return OPTION_TOKENS.get(symbol, {}) \
+                        .get(expiry, {}) \
+                        .get(otype, {}) \
+                        .get(strike, 0)
 
-def future_token(symbol: str, expiry) -> int:
-    exp_str = expiry if isinstance(expiry, str) else expiry.isoformat()
-    return FUTURE_TOKENS[symbol].get(exp_str, 0)
-
-def fetch_option_price(token_id: int) -> float | None:
-    if not token_id or _kite is None:
+# ── 4) LTP fetchers (fixed) ─────────────────────────────────────────────────
+def fetch_future_price(token: int) -> float | None:
+    """
+    Return the last traded price for the future with instrument_token `token`.
+    """
+    try:
+        res = kite.ltp([token])
+        return float(res.get(str(token), {}).get("last_price", 0.0))
+    except Exception as e:
+        print(f"❌ FUT {token}: {e}")
         return None
-    key = f"NFO:{token_id}"
-    res = _kite.ltp(key)
-    return res[key]["last_price"]
 
-def fetch_future_price(token_id: int) -> float | None:
-    if not token_id or _kite is None:
+def fetch_option_price(token: int) -> float | None:
+    """
+    Return the last traded price for the option with instrument_token `token`.
+    """
+    try:
+        res = kite.ltp([token])
+        return float(res.get(str(token), {}).get("last_price", 0.0))
+    except Exception as e:
+        print(f"❌ OPT {token}: {e}")
         return None
-    key = f"NFO:{token_id}"
-    res = _kite.ltp(key)
-    return res[key]["last_price"]
-
-# ── WRAPPER FETCHERS ─────────────────────────────────────────────────────────
-def fetch_rsi(symbol: str,
-              lookback_days: int = 60,
-              n: int = 14) -> float | None:
-    df = fetch_ohlc(symbol, lookback_days)
-    return None if df is None else rsi(df, n).iloc[-1]
-
-def fetch_adx(symbol: str,
-              lookback_days: int = 60,
-              n: int = 14) -> float | None:
-    df = fetch_ohlc(symbol, lookback_days)
-    return None if df is None else adx(df, n).iloc[-1]
-
-def fetch_macd(symbol: str,
-               lookback_days: int = 60,
-               fast: int = 12,
-               slow: int = 26,
-               signal: int = 9) -> float | None:
-    df = fetch_ohlc(symbol, lookback_days)
-    if df is None:
-        return None
-    exp1 = df["close"].ewm(span=fast, adjust=False).mean()
-    exp2 = df["close"].ewm(span=slow, adjust=False).mean()
-    macd_line = exp1 - exp2
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    hist = macd_line - signal_line
-    return hist.iloc[-1]
