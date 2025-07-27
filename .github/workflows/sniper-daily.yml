@@ -1,4 +1,4 @@
-# .github/workflows/sniper-daily.yml
+# .github/workflows/sniper‑daily.yml
 name: Sniper Engine Daily
 
 on:
@@ -39,15 +39,15 @@ jobs:
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add trades.json trade_history.json || true
+          git add trades.json trade_history.json
           if ! git diff --cached --quiet; then
             git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
             git push origin main
           else
-            echo "No changes to commit"
+            echo "No changes to trade files"
           fi
 
-      - name: 📁 Copy to docs and commit
+      - name: 📁 Mirror JSONs into docs/
         run: |
           mkdir -p docs
           cp trades.json docs/trades.json
