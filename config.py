@@ -1,9 +1,7 @@
 """
 config.py – central settings + self‑tuning parameters
 """
-import os
-import json
-import pathlib
+import os, json, pathlib
 from dotenv import load_dotenv
 
 load_dotenv("config.env", override=False)
@@ -30,22 +28,19 @@ NSE100 = [
 ]
 FNO_SYMBOLS = sorted(NSE100)
 
-# ── Zero‑filter mode for debugging (let everything through) ──────────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 1.0
+# ── Production thresholds (can tune these over time) ────────────────────────
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
 
-# Allow all Options‑Strangle by setting PoP cutoff to zero
-POPCUT         = 0.0
+# Minimum “Probability of Profit” for the Strangle leg (0.6 = 60%)
+POPCUT         = 0.60
 
-# Pick the top 20 momentum symbols instead of just your usual 5
-TOP_N_MOMENTUM = 20
+# Number of top‐RSI names to pick for the Cash‑Momentum leg
+TOP_N_MOMENTUM = 5
 
-# ── Self‑tuning params file (unused in debug) ──────────────────────────────
+# ── Self‑tuning params file (used by your inline tuner) ─────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
     p = json.loads(PARAMS_FILE.read_text())
-    # In debug mode we ignore these, but we still load so there's no error
     RSI_MIN        = p.get("RSI_MIN",        RSI_MIN)
     ADX_MIN        = p.get("ADX_MIN",        ADX_MIN)
     VOL_MULTIPLIER = p.get("VOL_MULTIPLIER", VOL_MULTIPLIER)
-    POPCUT         = p.get("POPCUT",         POPCUT)
-    TOP_N_MOMENTUM = p.get("TOP_N_MOMENTUM", TOP_N_MOMENTUM)
