@@ -696,5 +696,140 @@
         "Action": "Buy"
       }
     ]
+  },
+  {
+    "run_date": "2025-07-28",
+    "trades": [
+      {
+        "date": "2025-07-28",
+        "symbol": "BOSCHLTD",
+        "type": "Cash-Momentum",
+        "entry": 38205.0,
+        "cmp": 38205.0,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "UPL",
+        "type": "Cash-Momentum",
+        "entry": 727.8,
+        "cmp": 727.8,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "GLENMARK",
+        "type": "Cash-Momentum",
+        "entry": 2136.5,
+        "cmp": 2136.5,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "CIPLA",
+        "type": "Cash-Momentum",
+        "entry": 1570.0,
+        "cmp": 1570.0,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "ICICIBANK",
+        "type": "Cash-Momentum",
+        "entry": 1488.0,
+        "cmp": 1488.0,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "DABUR",
+        "type": "Cash-Momentum",
+        "entry": 523.05,
+        "cmp": 523.05,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "AMBUJACEM",
+        "type": "Cash-Momentum",
+        "entry": 607.0,
+        "cmp": 607.0,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "BIOCON",
+        "type": "Cash-Momentum",
+        "entry": 388.05,
+        "cmp": 388.05,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "MUTHOOTFIN",
+        "type": "Cash-Momentum",
+        "entry": 2647.0,
+        "cmp": 2647.0,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "date": "2025-07-28",
+        "symbol": "SBILIFE",
+        "type": "Cash-Momentum",
+        "entry": 1847.8,
+        "cmp": 1847.8,
+        "target": null,
+        "sl": null,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      }
+    ]
   }
 ]
