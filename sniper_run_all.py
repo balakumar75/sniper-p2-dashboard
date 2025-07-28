@@ -1,14 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 sniper_run_all.py
 
 1) Authenticate with Kite (token_manager)
 2) Inject kite into utils
-3) Run Sniper Engine → raw trades (any-keycase)
-4) Normalize keys (lowercase) and write trades.json
-5) Archive to trade_history.json
+3) Run Sniper Engine → raw trades (lower-case keys)
+4) Write trades.json (auto-cast NumPy types)
+5) Archive to trade_history.json (same)
 6) Push trades.json to GitHub
-7) Simple self‑tuner
+7) Simple self-tuner
 """
 
 import os
@@ -18,17 +18,14 @@ import requests
 import pathlib
 from datetime import date
 
-import kite_patch                   # apply our host URL patch
+import kite_patch
 from token_manager import refresh_if_needed
 import utils
-from config import PARAMS_FILE      # path to sniper_params.json
+from config import PARAMS_FILE
 
-# ── helper to pull either key variant ────────────────────────────────────────
-def pull(t: dict, *keys, default=None):
-    for k in keys:
-        if k in t and t[k] is not None:
-            return t[k]
-    return default
+# ── Helper for JSON dumping NumPy types ────────────────────────────────────
+# The `default=int` tells json.dump to call int(...) on any non-serializable values
+JSON_DUMP_KW = dict(indent=2, default=int)
 
 # 1) Authenticate & inject
 kite = refresh_if_needed()
@@ -40,36 +37,24 @@ from sniper_engine import generate_sniper_trades
 # 3) Generate raw trades
 trades = generate_sniper_trades()
 
-# 4) Normalize keys and write trades.json
-normalized = []
-for t in trades:
-    normalized.append({
-        "date":    pull(t, "date",    "Date"),
-        "symbol":  pull(t, "symbol",  "Symbol"),
-        "type":    pull(t, "type",    "Type"),
-        "entry":   pull(t, "entry",   "Entry"),
-        "cmp":     pull(t, "cmp",     "CMP"),
-        "target":  pull(t, "target",  "Target"),
-        "sl":      pull(t, "sl",      "SL"),
-        "pop":     pull(t, "pop",     "PoP"),
-        "status":  pull(t, "status",  "Status"),
-        "pnl":     pull(t, "pnl",     "P&L (₹)"),
-        "action":  pull(t, "action",  "Action"),
-    })
-
+# 4) Write trades.json (cast NumPy types to Python primitives)
 with open("trades.json", "w") as f:
-    json.dump(normalized, f, indent=2)
-print(f"💾 trades.json written with {len(normalized)} trades.")
+    json.dump(trades, f, **JSON_DUMP_KW)
+print(f"💾 trades.json written with {len(trades)} trades.")
 
 # 5) Archive to trade_history.json
 HIST = pathlib.Path("trade_history.json")
-history = json.loads(HIST.read_text()) if HIST.exists() else []
+try:
+    history = json.loads(HIST.read_text()) if HIST.exists() else []
+except json.JSONDecodeError:
+    history = []
+
 history.append({
     "run_date": date.today().isoformat(),
-    "trades":   normalized
+    "trades":   trades
 })
-HIST.write_text(json.dumps(history, indent=2))
-print(f"🗄️  Appended {len(normalized)} trades to trade_history.json (now {len(history)} runs).")
+HIST.write_text(json.dumps(history, **JSON_DUMP_KW))
+print(f"🗄️  Appended {len(trades)} trades to trade_history.json (now {len(history)} runs).")
 
 # 6) Push trades.json to GitHub
 def push_to_github(path="trades.json"):
@@ -93,9 +78,8 @@ def push_to_github(path="trades.json"):
         "message": f"Auto-update {path}",
         "content": content_b64,
         "branch":  "main",
+        **({"sha": sha} if sha else {})
     }
-    if sha:
-        payload["sha"] = sha
 
     res = requests.put(api, headers=hdrs, data=json.dumps(payload))
     if res.status_code in (200, 201):
@@ -105,7 +89,7 @@ def push_to_github(path="trades.json"):
 
 push_to_github()
 
-# 7) Simple self‑tuner
+# 7) Simple self-tuner
 PERF = pathlib.Path("performance.json")
 try:
     records = json.loads(PERF.read_text()) if PERF.exists() else []
@@ -120,8 +104,8 @@ if records:
         PARAMS_FILE.write_text(json.dumps(new_params, indent=2))
         print("🔧 Raised ADX_MIN to 22 based on recent SL hits.")
     else:
-        print("ℹ️  No parameter change today.")
+        print("ℹ️ No parameter change today.")
 else:
-    print("ℹ️  No performance data yet.")
+    print("ℹ️ No performance data yet.")
 
 print("✅ Sniper run complete.")
