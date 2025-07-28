@@ -6,11 +6,10 @@ import utils
 
 def generate_sniper_trades() -> list[dict]:
     trades = []
-    today = date.today().isoformat()
+    today  = date.today().isoformat()
 
-    print("⚙️  Debug: fetching RSI / ADX / Vol (100d lookback) for each symbol")
+    print("⚙️  Debug: RSI / ADX / Vol / ATR for each symbol")
 
-    # 1) Cash‑Momentum only
     scores = []
     for sym in FNO_SYMBOLS:
         df = utils.fetch_ohlc(sym, days=30)
@@ -19,29 +18,33 @@ def generate_sniper_trades() -> list[dict]:
 
         rsi = utils.fetch_rsi(sym, period=14)
         adx = utils.fetch_adx(sym, period=14)
+        atr = utils.fetch_atr(sym, period=14)
         vol = int(df["volume"].iloc[-1])
 
-        print(f" • {sym:12s} RSI={rsi:5.1f}  ADX={adx:5.1f}  Vol={vol:,}")
+        print(f" • {sym:12s} RSI={rsi:5.1f}  ADX={adx:5.1f}  ATR={atr:6.2f}  Vol={vol:,}")
 
-        scores.append((sym, rsi, df))
+        scores.append((sym, rsi, df, atr))
 
     # pick top N by RSI
-    for sym, rsi, df in sorted(scores, key=lambda x: x[1], reverse=True)[:TOP_N_MOMENTUM]:
-        price = float(round(df["close"].iloc[-1], 2))
+    for sym, rsi, df, atr in sorted(scores, key=lambda x: x[1], reverse=True)[:TOP_N_MOMENTUM]:
+        entry = float(round(df["close"].iloc[-1], 2))
+        sl    = float(round(entry - atr, 2))
+        tgt   = float(round(entry + atr, 2))
+
         trades.append({
             "date":   today,
             "symbol": sym,
             "type":   "Cash-Momentum",
-            "entry":  price,
-            "cmp":    price,
-            "target": None,
-            "sl":     None,
+            "entry":  entry,
+            "cmp":    entry,
+            "target": tgt,
+            "sl":     sl,
             "pop":    None,
             "status": "Open",
             "pnl":    None,
             "action": "Buy",
         })
 
-    # 🚧 OPTIONS‑STRANGLE BLOCK SKIPPED FOR NOW 🚧
+    # … your Options‑Strangle block if you still want it, unchanged …
 
     return trades
