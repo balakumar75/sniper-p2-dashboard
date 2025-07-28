@@ -1,4 +1,3 @@
-# .github/workflows/sniper‑daily.yml
 name: Sniper Engine Daily
 
 on:
@@ -20,9 +19,6 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -35,39 +31,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🚀 Run Sniper engine
+      - name: 🚀 Run Sniper Engine
         run: python sniper_run_all.py
 
       - name: 💾 Commit trades & history
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add trades.json trade_history.json
+          git add trades.json trade_history.json docs/trades.json || true
           if ! git diff --cached --quiet; then
             git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
-            git pull --rebase origin main
             git push origin main
           else
-            echo "No changes to trade files"
+            echo "No changes to commit"
           fi
-
-      - name: 📁 Conditionally sync to docs/
-        shell: bash
-        run: |
-          # if trades.json is empty, skip overwriting docs/trades.json
-          if [ "$(jq length trades.json)" -eq 0 ]; then
-            echo "🔒 No new trades today; preserving existing docs/trades.json"
-            exit 0
-          fi
-
-          echo "✅ New trades found; updating docs/"
-          mkdir -p docs
-          cp trades.json docs/trades.json
-          cp trade_history.json docs/trade_history.json
-
-          git config user.name  "sniper-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add docs/trades.json docs/trade_history.json
-          git commit -m "Sync docs JSONs $(date -u +'%Y-%m-%d')"
-          git pull --rebase origin main
-          git push origin main
