@@ -28,16 +28,12 @@ NSE100 = [
 ]
 FNO_SYMBOLS = sorted(NSE100)
 
-# ── Production thresholds tuned for higher‑probability signals ───────────────
-RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 60, 20, 1.5
+# ── DEBUG SANITY‑CHECK MODE: loosen filters to see output immediately ───────
+RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 0, 0, 0.0
+POPCUT         = 0.0
+TOP_N_MOMENTUM = 10
 
-# Options‑Strangle: require ≥75% historical PoP
-POPCUT         = 0.75
-
-# Cash‑Momentum: pick only top 3 by RSI
-TOP_N_MOMENTUM = 3
-
-# ── Self‑tuning params file (optional) ──────────────────────────────────────
+# ── Self‑tuning params file (not used during debug) ───────────────────────
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
     p = json.loads(PARAMS_FILE.read_text())
