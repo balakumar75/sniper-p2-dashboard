@@ -3,14 +3,18 @@
 sniper_run_all.py
 
 1) Authenticate & inject
-2) Run Sniper Engine → raw trades (no dates here)
+2) Generate trades
 3) Preserve entry_date from docs/trades.json
-4) Write root + docs/trades.json
-5) Archive to trade_history.json
+4) Write trades.json (root + docs)
+5) Archive to trade_history.json (no duplicates, skip empty)
 6) Push & commit
 """
 
-import os, json, base64, requests, pathlib
+import os
+import json
+import base64
+import requests
+import pathlib
 from datetime import date
 
 import kite_patch
@@ -25,11 +29,12 @@ JSON_KW = dict(indent=2, default=int)
 kite = refresh_if_needed()
 utils.set_kite(kite)
 
-# 2) Generate fresh trades (they do NOT include any date)
+# 2) Generate fresh trades (they don’t include any dates yet)
 from sniper_engine import generate_sniper_trades
 new_trades = generate_sniper_trades()
 
-# 3) Load yesterday’s open trades to preserve entry_date
+# 3) Preserve entry_date from docs/trades.json
+today_iso = date.today().isoformat()
 docs_dir  = pathlib.Path("docs")
 docs_dir.mkdir(exist_ok=True)
 docs_file = docs_dir / "trades.json"
@@ -39,14 +44,12 @@ if docs_file.exists():
 else:
     old_trades = []
 
-# build a map: (symbol,type) → entry_date
+# map (symbol,type) → entry_date
 entry_map = {
     (t["symbol"], t["type"]): t.get("entry_date")
     for t in old_trades
 }
 
-today_iso = date.today().isoformat()
-# assign entry_date: preserve if present, else today
 for t in new_trades:
     key = (t["symbol"], t["type"])
     t["entry_date"] = entry_map.get(key, today_iso)
@@ -67,32 +70,38 @@ try:
 except json.JSONDecodeError:
     history = []
 
-# append full snapshot with entry_date
-history.append({
-    "run_date":     today_iso,
-    "open_trades":  new_trades
-})
-hist_file.write_text(json.dumps(history, **JSON_KW))
-print(f"🗄️  Appended {len(new_trades)} trades to trade_history.json (runs={len(history)})")
+if new_trades:
+    if history and history[-1].get("run_date") == today_iso:
+        history[-1]["open_trades"] = new_trades
+        print(f"🔄 Updated existing history entry for {today_iso} with {len(new_trades)} trades.")
+    else:
+        history.append({"run_date": today_iso, "open_trades": new_trades})
+        print(f"🗄️  Appended {len(new_trades)} trades to trade_history.json (runs={len(history)})")
+else:
+    print("ℹ️  No trades — not adding empty entry to trade_history.json.")
 
-# 6) Push to GitHub: API push for root, CLI for docs & history
+hist_file.write_text(json.dumps(history, **JSON_KW))
+
+# 6) Push & commit
 def push_and_commit():
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         print("⚠️ GITHUB_TOKEN not set – skipping push.")
         return
 
-    repo = "balakumar75/sniper-p2-dashboard"
-
-    # 6a) GitHub API for root trades.json
+    repo     = "balakumar75/sniper-p2-dashboard"
     api_base = f"https://api.github.com/repos/{repo}/contents"
+
+    # 6a) GitHub API push for root trades.json
     for fn in ("trades.json",):
-        path = api_base + f"/{fn}"
-        hdrs = {"Authorization":f"token {token}",
-                "Accept":"application/vnd.github.v3+json"}
-        b64   = base64.b64encode(pathlib.Path(fn).read_bytes()).decode()
-        resp  = requests.get(path, headers=hdrs)
-        sha   = resp.json().get("sha") if resp.status_code==200 else None
+        path = f"{api_base}/{fn}"
+        hdrs = {
+            "Authorization": f"token {token}",
+            "Accept":        "application/vnd.github.v3+json"
+        }
+        b64  = base64.b64encode(pathlib.Path(fn).read_bytes()).decode()
+        resp = requests.get(path, headers=hdrs)
+        sha  = resp.json().get("sha") if resp.status_code == 200 else None
         payload = {
             "message": f"Auto-update {fn}",
             "content": b64,
@@ -107,11 +116,11 @@ def push_and_commit():
     os.system('git config user.email "bot@users.noreply.github.com"')
     os.system('git add docs/trades.json trade_history.json')
     os.system(
-        'if ! git diff --cached --quiet; then '
-        'git commit -m "Daily trades '+today_iso+'" && '
-        'git pull --rebase origin main && '
-        'git push origin main; '
-        'else echo "No changes to commit"; fi'
+        f'if ! git diff --cached --quiet; then '
+        f'git commit -m "Daily trades {today_iso}" && '
+        f'git pull --rebase origin main && '
+        f'git push origin main; '
+        f'else echo "No changes to commit"; fi'
     )
 
 push_and_commit()
