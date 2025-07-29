@@ -1,0 +1,35 @@
+name: Phase2&3 Signals
+
+on:
+  schedule:
+    - cron: '30 10 * * 1-5'   # runs Mon–Fri at 10:30 UTC, after your daily engine + monitor
+  workflow_dispatch:        # also lets you trigger it manually
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt scipy
+
+      - name: 🔥 Sector Momentum Heatmap
+        run: |
+          python - <<'PYCODE'
+          from sector_momentum import compute_sector_momentum
+          df = compute_sector_momentum()
+          print(df.to_markdown(index=False))
+          PYCODE
+
+      - name: 🔔 ICT Alerts to Discord
+        run: python alert_trades.py
