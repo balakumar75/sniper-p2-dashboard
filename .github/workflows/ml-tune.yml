@@ -33,10 +33,14 @@ jobs:
       - name: 🔍 Run ML optimization
         run: python scripts/ml_optimize.py
 
-      - name: 💾 Commit model artifact
+      - name: 💾 Commit model artifact if it exists
         run: |
-          git config user.name  "ml-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add model.pkl
-          git commit -m "Retrain ML model $(date -u +'%Y-%m-%d')" || echo "no change"
-          git push origin main
+          if [ -f model.pkl ]; then
+            git config user.name  "ml-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git add model.pkl
+            git commit -m "Retrain ML model $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
+            git push origin main
+          else
+            echo "☑️ model.pkl not found – skipping commit"
+          fi
