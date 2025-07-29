@@ -966,5 +966,140 @@
         "action": "Buy"
       }
     ]
+  },
+  {
+    "entry_date": "2025-07-29",
+    "trades": [
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "BOSCHLTD",
+        "type": "Cash-Momentum",
+        "entry": 40090.0,
+        "cmp": 40090.0,
+        "target": 41022.5,
+        "sl": 39157.5,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "GLENMARK",
+        "type": "Cash-Momentum",
+        "entry": 2165.7,
+        "cmp": 2165.7,
+        "target": 2247.29,
+        "sl": 2084.11,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "CIPLA",
+        "type": "Cash-Momentum",
+        "entry": 1570.3,
+        "cmp": 1570.3,
+        "target": 1597.21,
+        "sl": 1543.39,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "UPL",
+        "type": "Cash-Momentum",
+        "entry": 724.6,
+        "cmp": 724.6,
+        "target": 740.78,
+        "sl": 708.42,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "AMBUJACEM",
+        "type": "Cash-Momentum",
+        "entry": 611.75,
+        "cmp": 611.75,
+        "target": 622.14,
+        "sl": 601.36,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "BIOCON",
+        "type": "Cash-Momentum",
+        "entry": 397.9,
+        "cmp": 397.9,
+        "target": 408.08,
+        "sl": 387.72,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "ICICIBANK",
+        "type": "Cash-Momentum",
+        "entry": 1484.9,
+        "cmp": 1484.9,
+        "target": 1502.51,
+        "sl": 1467.29,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "COROMANDEL",
+        "type": "Cash-Momentum",
+        "entry": 2500.0,
+        "cmp": 2500.0,
+        "target": 2576.61,
+        "sl": 2423.39,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "SUNPHARMA",
+        "type": "Cash-Momentum",
+        "entry": 1718.0,
+        "cmp": 1718.0,
+        "target": 1741.32,
+        "sl": 1694.68,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      },
+      {
+        "entry_date": "2025-07-29",
+        "symbol": "HINDALCO",
+        "type": "Cash-Momentum",
+        "entry": 693.95,
+        "cmp": 693.95,
+        "target": 704.45,
+        "sl": 683.45,
+        "pop": null,
+        "status": "Open",
+        "pnl": null,
+        "action": "Buy"
+      }
+    ]
   }
 ]
