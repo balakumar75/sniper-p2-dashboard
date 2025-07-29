@@ -4,3 +4,10 @@ python-dotenv
 kiteconnect
 requests
 tqdm
+
+# For Greeks, sector & ICT signals
+scipy
+
+# For ML optimization
+scikit-learn
+joblib
