@@ -3,10 +3,11 @@
 sniper_run_all.py
 
 1) Authenticate & inject
-2) Run engine → trades
-3) Write root + docs/trades.json
-4) Archive to trade_history.json
-5) Push & commit
+2) Run Sniper Engine → raw trades (no dates here)
+3) Preserve entry_date from docs/trades.json
+4) Write root + docs/trades.json
+5) Archive to trade_history.json
+6) Push & commit
 """
 
 import os, json, base64, requests, pathlib
@@ -17,61 +18,101 @@ from token_manager import refresh_if_needed
 import utils
 from config import PARAMS_FILE
 
-# helper to JSON‑dump numpy types
+# JSON dump helper (casts numpy types to native ints)
 JSON_KW = dict(indent=2, default=int)
 
-# 1) Auth & inject
+# 1) Authenticate & inject
 kite = refresh_if_needed()
 utils.set_kite(kite)
 
-# 2) Run engine
+# 2) Generate fresh trades (they do NOT include any date)
 from sniper_engine import generate_sniper_trades
-trades = generate_sniper_trades()
+new_trades = generate_sniper_trades()
 
-# 3a) Write root trades.json
-path_root = pathlib.Path("trades.json")
-path_root.write_text(json.dumps(trades, **JSON_KW))
-print(f"💾 trades.json with {len(trades)} trades.")
+# 3) Load yesterday’s open trades to preserve entry_date
+docs_dir  = pathlib.Path("docs")
+docs_dir.mkdir(exist_ok=True)
+docs_file = docs_dir / "trades.json"
 
-# 3b) Write docs/trades.json
-docs = pathlib.Path("docs")
-docs.mkdir(exist_ok=True)
-path_docs = docs / "trades.json"
-path_docs.write_text(json.dumps(trades, **JSON_KW))
-print(f"💾 docs/trades.json with {len(trades)} trades.")
+if docs_file.exists():
+    old_trades = json.loads(docs_file.read_text())
+else:
+    old_trades = []
 
-# 4) Archive
-hist = pathlib.Path("trade_history.json")
+# build a map: (symbol,type) → entry_date
+entry_map = {
+    (t["symbol"], t["type"]): t.get("entry_date")
+    for t in old_trades
+}
+
+today_iso = date.today().isoformat()
+# assign entry_date: preserve if present, else today
+for t in new_trades:
+    key = (t["symbol"], t["type"])
+    t["entry_date"] = entry_map.get(key, today_iso)
+
+# 4a) Write root trades.json
+root_file = pathlib.Path("trades.json")
+root_file.write_text(json.dumps(new_trades, **JSON_KW))
+print(f"💾 trades.json written with {len(new_trades)} trades.")
+
+# 4b) Write docs/trades.json
+docs_file.write_text(json.dumps(new_trades, **JSON_KW))
+print(f"💾 docs/trades.json written with {len(new_trades)} trades.")
+
+# 5) Archive to trade_history.json
+hist_file = pathlib.Path("trade_history.json")
 try:
-    history = json.loads(hist.read_text()) if hist.exists() else []
-except:
+    history = json.loads(hist_file.read_text()) if hist_file.exists() else []
+except json.JSONDecodeError:
     history = []
-history.append({"entry_date": date.today().isoformat(), "trades": trades})
-hist.write_text(json.dumps(history, **JSON_KW))
-print(f"🗄️  Appended to trade_history.json (runs={len(history)})")
 
-# 5) Push & commit via GitHub API + CLI
+# append full snapshot with entry_date
+history.append({
+    "run_date":     today_iso,
+    "open_trades":  new_trades
+})
+hist_file.write_text(json.dumps(history, **JSON_KW))
+print(f"🗄️  Appended {len(new_trades)} trades to trade_history.json (runs={len(history)})")
+
+# 6) Push to GitHub: API push for root, CLI for docs & history
 def push_and_commit():
     token = os.getenv("GITHUB_TOKEN")
     if not token:
-        print("⚠️ No GITHUB_TOKEN – skipping push.")
+        print("⚠️ GITHUB_TOKEN not set – skipping push.")
         return
 
     repo = "balakumar75/sniper-p2-dashboard"
-    for fn in ("trades.json",):
-        api = f"https://api.github.com/repos/{repo}/contents/{fn}"
-        hdr = {"Authorization":f"token {token}", "Accept":"application/vnd.github.v3+json"}
-        b64 = base64.b64encode(pathlib.Path(fn).read_bytes()).decode()
-        r = requests.get(api, headers=hdr)
-        sha = r.json().get("sha") if r.status_code==200 else None
-        payload = {"message":f"Auto-update {fn}","content":b64,"branch":"main", **({"sha":sha} if sha else {})}
-        res = requests.put(api, headers=hdr, data=json.dumps(payload))
-        print("✅ Pushed", fn) if res.status_code in (200,201) else print("❌ Push failed", fn)
 
+    # 6a) GitHub API for root trades.json
+    api_base = f"https://api.github.com/repos/{repo}/contents"
+    for fn in ("trades.json",):
+        path = api_base + f"/{fn}"
+        hdrs = {"Authorization":f"token {token}",
+                "Accept":"application/vnd.github.v3+json"}
+        b64   = base64.b64encode(pathlib.Path(fn).read_bytes()).decode()
+        resp  = requests.get(path, headers=hdrs)
+        sha   = resp.json().get("sha") if resp.status_code==200 else None
+        payload = {
+            "message": f"Auto-update {fn}",
+            "content": b64,
+            "branch":  "main",
+            **({"sha": sha} if sha else {})
+        }
+        put = requests.put(path, headers=hdrs, data=json.dumps(payload))
+        print("✅ Pushed", fn) if put.status_code in (200,201) else print("🛑 Push failed", fn)
+
+    # 6b) CLI commit for docs/trades.json & trade_history.json
     os.system('git config user.name  "sniper-bot"')
     os.system('git config user.email "bot@users.noreply.github.com"')
-    os.system('git add trade_history.json docs/trades.json')
-    os.system('if ! git diff --cached --quiet; then git commit -m "Daily trades '+date.today().isoformat()+'" && git push origin main; fi')
+    os.system('git add docs/trades.json trade_history.json')
+    os.system(
+        'if ! git diff --cached --quiet; then '
+        'git commit -m "Daily trades '+today_iso+'" && '
+        'git pull --rebase origin main && '
+        'git push origin main; '
+        'else echo "No changes to commit"; fi'
+    )
 
 push_and_commit()
 
