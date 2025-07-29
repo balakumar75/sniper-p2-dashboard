@@ -105,7 +105,10 @@ def hist_pop(symbol: str, tgt_pct: float, sl_pct: float, lookback_days: int = 90
 # ── 7) Option helpers ──────────────────────────────────────────────────────
 def option_token(symbol: str, strike: float, expiry: str, opt_type: str) -> int | None:
     from instruments import OPTION_TOKENS
-    return OPTION_TOKENS.get(symbol, {}).get(expiry, {}).get(opt_type, {}).get(strike)
+    return OPTION_TOKENS.get(symbol, {}) \
+                        .get(expiry, {}) \
+                        .get(opt_type, {}) \
+                        .get(strike)
 
 def fetch_option_price(token: int) -> float | None:
     if _kite is None:
