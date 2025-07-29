@@ -2,12 +2,17 @@ name: Phase2&3 Signals
 
 on:
   schedule:
-    - cron: '30 10 * * 1-5'   # runs Mon–Fri at 10:30 UTC, after your daily engine + monitor
-  workflow_dispatch:        # also lets you trigger it manually
+    - cron: '30 10 * * 1-5'   # Mon–Fri at 10:30 UTC
+  workflow_dispatch:
 
 jobs:
   detect:
     runs-on: ubuntu-latest
+
+    env:
+      KITE_API_KEY:      ${{ secrets.KITE_API_KEY }}
+      KITE_API_SECRET:   ${{ secrets.KITE_API_SECRET }}
+      KITE_ACCESS_TOKEN: ${{ secrets.KITE_ACCESS_TOKEN }}
 
     steps:
       - name: 📥 Checkout code
@@ -24,12 +29,7 @@ jobs:
           pip install -r requirements.txt scipy
 
       - name: 🔥 Sector Momentum Heatmap
-        run: |
-          python - <<'PYCODE'
-          from sector_momentum import compute_sector_momentum
-          df = compute_sector_momentum()
-          print(df.to_markdown(index=False))
-          PYCODE
+        run: python scripts/sector_momentum_run.py
 
       - name: 🔔 ICT Alerts to Discord
         run: python alert_trades.py
