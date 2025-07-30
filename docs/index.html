@@ -12,29 +12,34 @@
     tr:nth-child(even){background:#1a1a1a}
     .buy {color:#2ecc71; font-weight:bold}
     .sell{color:#e74c3c; font-weight:bold}
-    .filter-container {margin-top:20px;}
-    .filter-container label {margin-right:8px;}
-    .filter-container select {padding:4px; margin-right:16px; background:#222; color:#eee; border:1px solid #444;}
+    .filter-container {margin-top:20px; display:flex; flex-wrap:wrap; gap:12px;}
+    .filter-container label {margin-right:4px;}
+    .filter-container select {padding:4px; background:#222; color:#eee; border:1px solid #444;}
+    .tag {font-weight:bold;}
+    .tag.yes {color:#2ecc71;}
+    .tag.no  {color:#e74c3c;}
   </style>
 </head>
 <body>
   <h1>📈 Sniper Trades (live)</h1>
 
   <div class="filter-container">
-    <label for="filter-status">Status:</label>
-    <select id="filter-status">
-      <option value="">All</option>
-    </select>
+    <div><label for="filter-status">Status:</label><select id="filter-status"><option value="">All</option></select></div>
+    <div><label for="filter-sector_strength">Sector Strength:</label><select id="filter-sector_strength"><option value="">All</option></select></div>
+    <div><label for="filter-fno_ok">F&O OK:</label><select id="filter-fno_ok"><option value="">All</option><option value="true">Yes</option><option value="false">No</option></select></div>
+    <div><label for="filter-ict_ok">ICT OK:</label><select id="filter-ict_ok"><option value="">All</option><option value="true">Yes</option><option value="false">No</option></select></div>
+    <div><label for="filter-vwap_ok">VWAP OK:</label><select id="filter-vwap_ok"><option value="">All</option><option value="true">Yes</option><option value="false">No</option></select></div>
+    <div><label for="filter-obv_ok">OBV OK:</label><select id="filter-obv_ok"><option value="">All</option><option value="true">Yes</option><option value="false">No</option></select></div>
+    <div><label for="filter-strangle_ok">Strangle OK:</label><select id="filter-strangle_ok"><option value="">All</option><option value="true">Yes</option><option value="false">No</option></select></div>
   </div>
 
   <table id="trades">
     <thead>
       <tr>
-        <th>Entry Date</th>
-        <th>Exit Date</th>
-        <th>Symbol</th><th>Type</th><th>Entry</th><th>CMP</th>
-        <th>Target</th><th>SL</th><th>PoP</th>
-        <th>Status</th><th>P&L (₹)</th><th>Action</th>
+        <th>Entry Date</th><th>Exit Date</th><th>Symbol</th><th>Type</th>
+        <th>Entry</th><th>CMP</th><th>Target</th><th>SL</th><th>PoP</th>
+        <th>Status</th><th>Sector Strength</th><th>F&O OK</th><th>ICT OK</th>
+        <th>VWAP OK</th><th>OBV OK</th><th>Strangle OK</th><th>P&L (₹)</th><th>Action</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -43,50 +48,79 @@
 <script>
 let tradesData = [];
 
-async function loadTrades() {
-  const url = "trades.json?t=" + Date.now();
-  const res = await fetch(url, {cache: "no-store"});
-  tradesData = await res.json();
-  populateStatusFilter();
-  renderTable();
-}
-
-function populateStatusFilter() {
-  const select = document.getElementById('filter-status');
-  const statuses = [...new Set(tradesData.map(t => t.status))];
-  statuses.sort().forEach(status => {
+function populateFilter(id, key) {
+  const sel = document.getElementById(id);
+  const values = [...new Set(tradesData.map(t => t[key]))].sort();
+  values.forEach(v => {
     const opt = document.createElement('option');
-    opt.value = status;
-    opt.textContent = status;
-    select.appendChild(opt);
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
   });
 }
 
 function renderTable() {
-  const statusVal = document.getElementById('filter-status').value;
-  const tbody = document.querySelector("#trades tbody");
-  const filtered = tradesData.filter(t => {
-    return (!statusVal || t.status === statusVal);
-  });
-  tbody.innerHTML = filtered.length ? filtered.map(tr => `
-    <tr>
-      <td>${tr.entry_date}</td>
-      <td>${tr.exit_date || ''}</td>
-      <td>${tr.symbol}</td>
-      <td>${tr.type}</td>
-      <td>${tr.entry}</td>
-      <td>${tr.cmp}</td>
-      <td>${tr.target}</td>
-      <td>${tr.sl}</td>
-      <td>${tr.pop}</td>
-      <td>${tr.status}</td>
-      <td>${tr.pnl}</td>
-      <td class="${tr.action==='Buy'?'buy':'sell'}">${tr.action}</td>
-    </tr>
-  `).join('') : `<tr><td colspan="12">❌ No trades found or failed to load.</td></tr>`;
+  const f = {
+    status: document.getElementById('filter-status').value,
+    sector_strength: document.getElementById('filter-sector_strength').value,
+    fno_ok: document.getElementById('filter-fno_ok').value,
+    ict_ok: document.getElementById('filter-ict_ok').value,
+    vwap_ok: document.getElementById('filter-vwap_ok').value,
+    obv_ok: document.getElementById('filter-obv_ok').value,
+    strangle_ok: document.getElementById('filter-strangle_ok').value,
+  };
+  const tbody = document.querySelector('#trades tbody');
+  tbody.innerHTML = '';
+
+  tradesData
+    .filter(t => (
+      (!f.status          || t.status === f.status) &&
+      (!f.sector_strength || t.sector_strength === f.sector_strength) &&
+      (!f.fno_ok          || String(t.fno_ok) === f.fno_ok) &&
+      (!f.ict_ok          || String(t.ict_ok) === f.ict_ok) &&
+      (!f.vwap_ok         || String(t.vwap_ok) === f.vwap_ok) &&
+      (!f.obv_ok          || String(t.obv_ok) === f.obv_ok) &&
+      (!f.strangle_ok     || String(t.strangle_ok) === f.strangle_ok)
+    ))
+    .forEach(t => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${t.entry_date}</td>
+        <td>${t.exit_date || ''}</td>
+        <td>${t.symbol}</td>
+        <td>${t.type}</td>
+        <td>${t.entry}</td>
+        <td>${t.cmp}</td>
+        <td>${t.target}</td>
+        <td>${t.sl}</td>
+        <td>${t.pop}</td>
+        <td>${t.status}</td>
+        <td>${t.sector_strength}</td>
+        <td><span class="tag ${t.fno_ok?'yes':'no'}">${t.fno_ok?'✔':'✖'}</span></td>
+        <td><span class="tag ${t.ict_ok?'yes':'no'}">${t.ict_ok?'✔':'✖'}</span></td>
+        <td><span class="tag ${t.vwap_ok?'yes':'no'}">${t.vwap_ok?'✔':'✖'}</span></td>
+        <td><span class="tag ${t.obv_ok?'yes':'no'}">${t.obv_ok?'✔':'✖'}</span></td>
+        <td><span class="tag ${t.strangle_ok?'yes':'no'}">${t.strangle_ok?'✔':'✖'}</span></td>
+        <td>${t.pnl}</td>
+        <td class="${t.action==='Buy'?'buy':'sell'}">${t.action}</td>
+      `;
+      tbody.appendChild(row);
+    });
 }
 
+async function loadTrades() {
+  const res = await fetch('trades.json?t=' + Date.now(), {cache:'no-store'});
+  tradesData = await res.json();
+  populateFilter('filter-status', 'status');
+  populateFilter('filter-sector_strength', 'sector_strength');
+  renderTable();
+}
+
+['filter-fno_ok','filter-ict_ok','filter-vwap_ok','filter-obv_ok','filter-strangle_ok']
+  .forEach(id => document.getElementById(id).addEventListener('change', renderTable));
+
 document.getElementById('filter-status').addEventListener('change', renderTable);
+document.getElementById('filter-sector_strength').addEventListener('change', renderTable);
 
 loadTrades();
 </script>
