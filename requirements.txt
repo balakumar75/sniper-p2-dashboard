@@ -4,6 +4,7 @@ python-dotenv
 kiteconnect
 requests
 tqdm
+tabulate
 
 # For Greeks, sector & ICT signals
 scipy
