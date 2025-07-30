@@ -1,6 +1,16 @@
 import pandas as pd
 import numpy as np
 
+# Global kite client placeholder
+_kite = None
+
+def set_kite(kite_client):
+    """
+    Set the global Kite Connect client for use in API-based utils.
+    """
+    global _kite
+    _kite = kite_client
+
 
 def fetch_ohlc(symbol: str, days: int) -> pd.DataFrame:
     """
