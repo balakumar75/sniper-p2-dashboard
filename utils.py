@@ -160,4 +160,5 @@ def fetch_sector_rotation() -> dict:
     """
     Fetch sector rotation data.
     Stub: returns empty dict; integrate real sector rotation data source.
-    ""
+    """
+    return {}
