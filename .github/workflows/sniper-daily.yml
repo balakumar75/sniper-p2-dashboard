@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -43,14 +46,11 @@ jobs:
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-          # stage the updated files
+          # Stage updated files
           git add docs/trades.json docs/trade_history.json || true
-          # only commit if there are changes
+          # Commit only if there are changes
           if ! git diff --cached --quiet; then
             git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
-            # grab any remote changes and rebase your commit on top
-            git pull --rebase origin main
-            # now push the rebased commit
             git push origin main
           else
             echo "No changes to commit"
