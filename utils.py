@@ -23,14 +23,12 @@ def fetch_ohlc(symbol: str, days: int) -> pd.DataFrame:
     if _kite is None:
         raise RuntimeError("Kite client not set. Call set_kite() first.")
     instrument = f"NSE:{symbol}"
-    # Get instrument token from LTP response
     data = _kite.ltp([instrument])
     token = data[instrument]['instrument_token']
 
     to_date   = datetime.now()
     from_date = to_date - timedelta(days=days)
 
-    # Fetch daily candles
     raw = _kite.historical_data(
         instrument_token=token,
         from_date=from_date,
@@ -73,12 +71,19 @@ def fetch_adx(symbol: str, period: int) -> float:
 
     up_move   = df['high'] - df['high_prev']
     down_move = df['low_prev'] - df['low']
-    plus_dm   = np.where((up_move > down_move) & (up_move > 0), up_move, 0)
-    minus_dm  = np.where((down_move > up_move) & (down_move > 0), down_move, 0)
+    # Convert to pandas Series for ewm operations
+    plus_dm_series = pd.Series(
+        np.where((up_move > down_move) & (up_move > 0), up_move, 0),
+        index=df.index
+    )
+    minus_dm_series = pd.Series(
+        np.where((down_move > up_move) & (down_move > 0), down_move, 0),
+        index=df.index
+    )
 
     atr = tr.rolling(window=period, min_periods=period).mean()
-    plus_di  = 100 * (plus_dm.ewm(alpha=1/period).mean() / atr)
-    minus_di = 100 * (minus_dm.ewm(alpha=1/period).mean() / atr)
+    plus_di  = 100 * (plus_dm_series.ewm(alpha=1/period).mean() / atr)
+    minus_di = 100 * (minus_dm_series.ewm(alpha=1/period).mean() / atr)
     dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di)
     adx = dx.ewm(alpha=1/period).mean()
     return round(adx.iloc[-1], 2)
