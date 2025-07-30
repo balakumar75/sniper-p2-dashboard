@@ -39,7 +39,9 @@
         <th>Entry Date</th><th>Exit Date</th><th>Symbol</th><th>Type</th>
         <th>Entry</th><th>CMP</th><th>Target</th><th>SL</th><th>PoP</th>
         <th>Status</th><th>Sector Strength</th><th>F&O OK</th><th>ICT OK</th>
-        <th>VWAP OK</th><th>OBV OK</th><th>Strangle OK</th><th>P&L (₹)</th><th>Action</th>
+        <th>VWAP OK</th><th>OBV OK</th><th>Strangle OK</th>
+        <th>Call Strike</th><th>Put Strike</th><th>Call Price</th><th>Put Price</th>
+        <th>P&L (₹)</th><th>Action</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -60,7 +62,7 @@ function populateFilter(id, key) {
 }
 
 function renderTable() {
-  const f = {
+  const filters = {
     status: document.getElementById('filter-status').value,
     sector_strength: document.getElementById('filter-sector_strength').value,
     fno_ok: document.getElementById('filter-fno_ok').value,
@@ -74,13 +76,13 @@ function renderTable() {
 
   tradesData
     .filter(t => (
-      (!f.status          || t.status === f.status) &&
-      (!f.sector_strength || t.sector_strength === f.sector_strength) &&
-      (!f.fno_ok          || String(t.fno_ok) === f.fno_ok) &&
-      (!f.ict_ok          || String(t.ict_ok) === f.ict_ok) &&
-      (!f.vwap_ok         || String(t.vwap_ok) === f.vwap_ok) &&
-      (!f.obv_ok          || String(t.obv_ok) === f.obv_ok) &&
-      (!f.strangle_ok     || String(t.strangle_ok) === f.strangle_ok)
+      (!filters.status          || t.status          === filters.status) &&
+      (!filters.sector_strength || t.sector_strength === filters.sector_strength) &&
+      (!filters.fno_ok          || String(t.fno_ok)   === filters.fno_ok) &&
+      (!filters.ict_ok          || String(t.ict_ok)   === filters.ict_ok) &&
+      (!filters.vwap_ok         || String(t.vwap_ok)  === filters.vwap_ok) &&
+      (!filters.obv_ok          || String(t.obv_ok)   === filters.obv_ok) &&
+      (!filters.strangle_ok     || String(t.strangle_ok)=== filters.strangle_ok)
     ))
     .forEach(t => {
       const row = document.createElement('tr');
@@ -96,11 +98,15 @@ function renderTable() {
         <td>${t.pop}</td>
         <td>${t.status}</td>
         <td>${t.sector_strength}</td>
-        <td><span class="tag ${t.fno_ok?'yes':'no'}">${t.fno_ok?'✔':'✖'}</span></td>
-        <td><span class="tag ${t.ict_ok?'yes':'no'}">${t.ict_ok?'✔':'✖'}</span></td>
-        <td><span class="tag ${t.vwap_ok?'yes':'no'}">${t.vwap_ok?'✔':'✖'}</span></td>
-        <td><span class="tag ${t.obv_ok?'yes':'no'}">${t.obv_ok?'✔':'✖'}</span></td>
-        <td><span class="tag ${t.strangle_ok?'yes':'no'}">${t.strangle_ok?'✔':'✖'}</span></td>
+        <td><span class="tag ${t.fno_ok ? 'yes' : 'no'}">${t.fno_ok ? '✔' : '✖'}</span></td>
+        <td><span class="tag ${t.ict_ok ? 'yes' : 'no'}">${t.ict_ok ? '✔' : '✖'}</span></td>
+        <td><span class="tag ${t.vwap_ok ? 'yes' : 'no'}">${t.vwap_ok ? '✔' : '✖'}</span></td>
+        <td><span class="tag ${t.obv_ok ? 'yes' : 'no'}">${t.obv_ok ? '✔' : '✖'}</span></td>
+        <td><span class="tag ${t.strangle_ok ? 'yes' : 'no'}">${t.strangle_ok ? '✔' : '✖'}</span></td>
+        <td>${t.call_strike || ''}</td>
+        <td>${t.put_strike || ''}</td>
+        <td>${t.call_price || ''}</td>
+        <td>${t.put_price || ''}</td>
         <td>${t.pnl}</td>
         <td class="${t.action==='Buy'?'buy':'sell'}">${t.action}</td>
       `;
@@ -109,7 +115,7 @@ function renderTable() {
 }
 
 async function loadTrades() {
-  const res = await fetch('trades.json?t=' + Date.now(), {cache:'no-store'});
+  const res = await fetch('trades.json?t=' + Date.now(), { cache: 'no-store' });
   tradesData = await res.json();
   populateFilter('filter-status', 'status');
   populateFilter('filter-sector_strength', 'sector_strength');
@@ -119,8 +125,8 @@ async function loadTrades() {
 ['filter-fno_ok','filter-ict_ok','filter-vwap_ok','filter-obv_ok','filter-strangle_ok']
   .forEach(id => document.getElementById(id).addEventListener('change', renderTable));
 
-document.getElementById('filter-status').addEventListener('change', renderTable);
-document.getElementById('filter-sector_strength').addEventListener('change', renderTable);
+['filter-status','filter-sector_strength']
+  .forEach(id => document.getElementById(id).addEventListener('change', renderTable));
 
 loadTrades();
 </script>
