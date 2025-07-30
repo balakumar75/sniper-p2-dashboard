@@ -2,8 +2,7 @@ name: Sniper Engine Daily
 
 on:
   schedule:
-    # 04:45 UTC → 10:15 IST Mon–Fri
-    - cron: '45 4 * * 1-5'
+    - cron: '45 4 * * 1-5'    # 10:15 IST Mon–Fri
   workflow_dispatch:
 
 jobs:
@@ -17,10 +16,8 @@ jobs:
       GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: 📥 Checkout code (full history)
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -36,18 +33,19 @@ jobs:
       - name: 🚀 Run Sniper Engine
         run: python sniper_run_all.py
 
-      - name: 💾 Commit trades & history
+      - name: 📂 Copy trades into docs
+        run: |
+          mkdir -p docs
+          cp trades.json docs/trades.json
+          cp trade_history.json docs/trade_history.json || true
+
+      - name: 💾 Commit trades & history in docs
         run: |
           git config user.name  "sniper-bot"
           git config user.email "bot@users.noreply.github.com"
-
-          # Stage any updated files
-          git add trades.json trade_history.json docs/trades.json || true
-
-          # If there are staged changes, commit, rebase remote, then push
+          git add docs/trades.json docs/trade_history.json || true
           if ! git diff --cached --quiet; then
             git commit -m "Daily trades $(date -u +'%Y-%m-%d')"
-            git pull --rebase origin main
             git push origin main
           else
             echo "No changes to commit"
