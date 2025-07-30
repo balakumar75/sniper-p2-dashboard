@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # Load environment variables for Kite Connect
 load_dotenv()
-API_KEY = os.getenv("KITE_API_KEY")
+API_KEY      = os.getenv("KITE_API_KEY")
 ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN")
 
 kite = KiteConnect(api_key=API_KEY)
@@ -19,7 +19,7 @@ trades_api = Blueprint('trades_api', __name__)
 TRADES_FILE = os.path.join(
     os.path.dirname(__file__),  # e.g. /path/to/your/app
     "..",                       # up one level
-    "docs",                    # into docs/
+    "docs",                     # into docs/
     "trades.json"
 )
 
@@ -29,7 +29,7 @@ def fetch_live_price(trade):
     Falls back to the original CMP if there's an error.
     """
     symbol = trade.get('symbol')
-    ttype = trade.get('type', 'Cash').lower()
+    ttype  = trade.get('type', 'Cash').lower()
     # Determine the correct exchange prefix
     if ttype in ('futures', 'options'):
         instrument = f"NFO:{symbol}"
@@ -49,7 +49,7 @@ def get_trades():
             with open(TRADES_FILE, "r", encoding="utf-8") as f:
                 trades = json.load(f)
 
-            # Refresh CMP for all open trades
+            # 1) Refresh CMP for all open trades
             for t in trades:
                 if t.get('status', 'Open').lower() == 'open':
                     old_cmp = t.get('cmp')
@@ -58,13 +58,13 @@ def get_trades():
                         print(f"🔄 Updated CMP for {t['symbol']}: {old_cmp} → {new_cmp}")
                         t['cmp'] = new_cmp
 
-            # Sort by entry_date descending (newest first)
+            # 2) Sort by entry_date descending (newest first)
             trades.sort(
                 key=lambda x: datetime.strptime(x.get('entry_date', ''), '%Y-%m-%d'),
                 reverse=True
             )
 
-            # Log loaded trades and types
+            # 3) Log loaded trades and types
             types = {t.get('type', 'Unknown') for t in trades}
             print(f"✅ Loaded {len(trades)} trades — types: {types}")
 
