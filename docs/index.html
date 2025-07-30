@@ -12,10 +12,21 @@
     tr:nth-child(even){background:#1a1a1a}
     .buy {color:#2ecc71; font-weight:bold}
     .sell{color:#e74c3c; font-weight:bold}
+    .filter-container {margin-top:20px;}
+    .filter-container label {margin-right:8px;}
+    .filter-container select {padding:4px; margin-right:16px; background:#222; color:#eee; border:1px solid #444;}
   </style>
 </head>
 <body>
   <h1>📈 Sniper Trades (live)</h1>
+
+  <div class="filter-container">
+    <label for="filter-status">Status:</label>
+    <select id="filter-status">
+      <option value="">All</option>
+    </select>
+  </div>
+
   <table id="trades">
     <thead>
       <tr>
@@ -30,35 +41,52 @@
   </table>
 
 <script>
+let tradesData = [];
+
 async function loadTrades() {
-  // fetch from the same docs folder
   const url = "trades.json?t=" + Date.now();
   const res = await fetch(url, {cache: "no-store"});
-  const trades = await res.json();
-  const tbody  = document.querySelector("#trades tbody");
-
-  tbody.innerHTML = trades.length
-    ? trades.map(tr => `
-      <tr>
-        <td>${tr.entry_date}</td>
-        <td>${tr.exit_date || ""}</td>
-        <td>${tr.symbol}</td>
-        <td>${tr.type}</td>
-        <td>${tr.entry}</td>
-        <td>${tr.cmp}</td>
-        <td>${tr.target}</td>
-        <td>${tr.sl}</td>
-        <td>${tr.pop}</td>
-        <td>${tr.status}</td>
-        <td>${tr.pnl}</td>
-        <td class="${tr.action==='Buy'?'buy':'sell'}">
-          ${tr.action}
-        </td>
-      </tr>`).join("")
-    : `<tr><td colspan="12">
-         ❌ No trades found or failed to load.
-       </td></tr>`;
+  tradesData = await res.json();
+  populateStatusFilter();
+  renderTable();
 }
+
+function populateStatusFilter() {
+  const select = document.getElementById('filter-status');
+  const statuses = [...new Set(tradesData.map(t => t.status))];
+  statuses.sort().forEach(status => {
+    const opt = document.createElement('option');
+    opt.value = status;
+    opt.textContent = status;
+    select.appendChild(opt);
+  });
+}
+
+function renderTable() {
+  const statusVal = document.getElementById('filter-status').value;
+  const tbody = document.querySelector("#trades tbody");
+  const filtered = tradesData.filter(t => {
+    return (!statusVal || t.status === statusVal);
+  });
+  tbody.innerHTML = filtered.length ? filtered.map(tr => `
+    <tr>
+      <td>${tr.entry_date}</td>
+      <td>${tr.exit_date || ''}</td>
+      <td>${tr.symbol}</td>
+      <td>${tr.type}</td>
+      <td>${tr.entry}</td>
+      <td>${tr.cmp}</td>
+      <td>${tr.target}</td>
+      <td>${tr.sl}</td>
+      <td>${tr.pop}</td>
+      <td>${tr.status}</td>
+      <td>${tr.pnl}</td>
+      <td class="${tr.action==='Buy'?'buy':'sell'}">${tr.action}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="12">❌ No trades found or failed to load.</td></tr>`;
+}
+
+document.getElementById('filter-status').addEventListener('change', renderTable);
 
 loadTrades();
 </script>
