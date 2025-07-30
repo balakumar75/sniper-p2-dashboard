@@ -5,7 +5,6 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Global Kite Connect client placeholder
-evironment
 _kite = None
 
 def set_kite(kite_client):
@@ -24,7 +23,7 @@ def fetch_ohlc(symbol: str, days: int) -> pd.DataFrame:
     if _kite is None:
         raise RuntimeError("Kite client not set. Call set_kite() first.")
     instrument = f"NSE:{symbol}"
-    # Get instrument_token from LTP response
+    # Get instrument token from LTP response
     data = _kite.ltp([instrument])
     token = data[instrument]['instrument_token']
 
@@ -41,10 +40,6 @@ def fetch_ohlc(symbol: str, days: int) -> pd.DataFrame:
     df = pd.DataFrame(raw)
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
-    # Ensure numeric columns exist
-    df.rename(columns={
-        'open': 'open', 'high': 'high', 'low': 'low', 'close': 'close', 'volume': 'volume'
-    }, inplace=True)
     return df[['open','high','low','close','volume']]
 
 
@@ -69,7 +64,6 @@ def fetch_adx(symbol: str, period: int) -> float:
     Calculate the period-day ADX for the symbol.
     """
     df = fetch_ohlc(symbol, days=period * 3)
-    # True Range
     df['high_prev'] = df['high'].shift(1)
     df['low_prev']  = df['low'].shift(1)
     tr1 = df['high'] - df['low']
@@ -77,7 +71,6 @@ def fetch_adx(symbol: str, period: int) -> float:
     tr3 = (df['low']  - df['close'].shift(1)).abs()
     tr  = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
 
-    # Directional Movement
     up_move   = df['high'] - df['high_prev']
     down_move = df['low_prev'] - df['low']
     plus_dm   = np.where((up_move > down_move) & (up_move > 0), up_move, 0)
@@ -111,7 +104,6 @@ def hist_pop(symbol: str, tgt_pct: float, sl_pct: float) -> float:
     Historical Probability of Profit calculation.
     Stub: returns a placeholder percentage; integrate real backtest logic here.
     """
-    # Replace with your historical pop model or data lookup
     return 85.0
 
 
@@ -126,7 +118,7 @@ def check_fno_exists(symbol: str) -> bool:
 def check_ict_liquidity(symbol: str, df: pd.DataFrame) -> bool:
     """
     Check ICT liquidity-grab conditions.
-    Stub: always returns True; implement your logic using `df` price data.
+    Implement logic using df price data as needed.
     """
     return True
 
@@ -134,7 +126,7 @@ def check_ict_liquidity(symbol: str, df: pd.DataFrame) -> bool:
 def check_vwap_confluence(symbol: str) -> bool:
     """
     Check VWAP institutional confluence.
-    Stub: always returns True; implement by comparing price vs. VWAP levels.
+    Stub: returns True; implement real VWAP logic here.
     """
     return True
 
@@ -142,7 +134,7 @@ def check_vwap_confluence(symbol: str) -> bool:
 def check_obv_confirmation(symbol: str, df: pd.DataFrame) -> bool:
     """
     Check OBV accumulation/distribution confirmation.
-    Stub: always returns True; implement real OBV analysis here.
+    Stub: returns True; implement real OBV analysis here.
     """
     return True
 
@@ -168,5 +160,4 @@ def fetch_sector_rotation() -> dict:
     """
     Fetch sector rotation data.
     Stub: returns empty dict; integrate real sector rotation data source.
-    """
-    return {}
+    ""
