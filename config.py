@@ -35,6 +35,13 @@ FNO_SYMBOLS = sorted(NSE100)
 RSI_MIN, ADX_MIN, VOL_MULTIPLIER = 50, 18, 1.5
 DEFAULT_POP                     = "85%"    # historical PoP threshold as a percentage string
 
+# ── Short‑strangle parameters ─────────────────────────────────────────────
+# Standard‑deviation bands for strike selection
+STRANGLE_SD_BANDS = [1.0, 1.5, 2.0]
+
+# PoP (%) threshold required to allow trades in weak sectors
+SECTOR_POP_EXCEPT = 90
+
 # Path to sniper_params.json for self‑tuning
 PARAMS_FILE = pathlib.Path(__file__).parent / "sniper_params.json"
 if PARAMS_FILE.exists():
