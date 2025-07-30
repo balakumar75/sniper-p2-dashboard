@@ -9,7 +9,6 @@ from datetime import date, datetime, timedelta
 from scipy.stats import norm
 
 # ── 0) Kite instance (injected via set_kite) ───────────────────────────────
-
 _kite = None
 
 def set_kite(kite):
@@ -17,7 +16,6 @@ def set_kite(kite):
     _kite = kite
 
 # ── 1) Fetch OHLC candles from Kite ────────────────────────────────────────
-
 def fetch_ohlc(symbol: str, days: int = 30, interval: str = "day") -> pd.DataFrame:
     """
     Returns a DataFrame with columns ['date','open','high','low','close','volume']
@@ -25,15 +23,15 @@ def fetch_ohlc(symbol: str, days: int = 30, interval: str = "day") -> pd.DataFra
     """
     if _kite is None:
         raise RuntimeError("utils.set_kite(kite) not called")
-    # instruments.py defines SYMBOL_TO_TOKEN
     from instruments import SYMBOL_TO_TOKEN
     token = SYMBOL_TO_TOKEN.get(symbol, 0)
     if not token:
-        return pd.DataFrame()  # no token → empty
+        return pd.DataFrame()
 
     to_dt   = date.today()
     from_dt = to_dt - timedelta(days=days)
-    data = _kite.historical(
+    # ← call historical_data, not historical
+    data = _kite.historical_data(
         instrument_token=token,
         from_date=from_dt.isoformat(),
         to_date=to_dt.isoformat(),
@@ -51,12 +49,10 @@ def fetch_ohlc(symbol: str, days: int = 30, interval: str = "day") -> pd.DataFra
         "close":  "close",
         "volume": "volume"
     })
-    # ensure chronological order
     df["date"] = pd.to_datetime(df["date"])
     return df.sort_values("date").reset_index(drop=True)
 
 # ── 2) RSI ──────────────────────────────────────────────────────────────────
-
 def fetch_rsi(symbol: str, period: int = 14) -> float:
     df = fetch_ohlc(symbol, days=period*3)
     if df.empty or len(df) < period:
@@ -71,7 +67,6 @@ def fetch_rsi(symbol: str, period: int = 14) -> float:
     return float(rsi.iloc[-1])
 
 # ── 3) ADX ─────────────────────────────────────────────────────────────────
-
 def fetch_adx(symbol: str, period: int = 14) -> float:
     df = fetch_ohlc(symbol, days=period*3)
     if df.empty or len(df) < period+1:
@@ -91,7 +86,6 @@ def fetch_adx(symbol: str, period: int = 14) -> float:
     return float(adx.iloc[-1])
 
 # ── 4) ATR ─────────────────────────────────────────────────────────────────
-
 def fetch_atr(symbol: str, period: int = 14) -> float:
     df = fetch_ohlc(symbol, days=period*3)
     if df.empty or len(df) < period:
@@ -105,11 +99,7 @@ def fetch_atr(symbol: str, period: int = 14) -> float:
     return float(atr.iloc[-1])
 
 # ── 5) Historic PoP (proxy) ────────────────────────────────────────────────
-
 def hist_pop(symbol: str, tgt_pct: float, sl_pct: float) -> float:
-    """
-    Simple proxy: how often in last N days did a ±tgt_pct move NOT hit ±sl_pct first?
-    """
     df = fetch_ohlc(symbol, days=60)
     if df.empty:
         return 0.0
@@ -118,14 +108,12 @@ def hist_pop(symbol: str, tgt_pct: float, sl_pct: float) -> float:
     for i in range(1, len(df)):
         base = df["close"].iloc[i-1]
         high = df["high"].iloc[i]
-        low  = df["low"].iloc[i]
         if (high - base)/base*100 >= tgt_pct:
             wins += 1
         total += 1
     return float(wins/total*100) if total else 0.0
 
 # ── 6) MACD ────────────────────────────────────────────────────────────────
-
 def fetch_macd(symbol: str, fast: int = 12, slow: int = 26, signal: int = 9):
     df = fetch_ohlc(symbol, days=slow*3)
     if df.empty:
@@ -137,11 +125,7 @@ def fetch_macd(symbol: str, fast: int = 12, slow: int = 26, signal: int = 9):
     hist       = macd_line - sig_line
     return float(macd_line.iloc[-1]), float(sig_line.iloc[-1]), float(hist.iloc[-1])
 
-# ── 7) Option / future price helpers ───────────────────────────────────────
-# (if you have functions like fetch_future_price / option_token etc.)
-
-# ── 8) Black–Scholes Greeks ────────────────────────────────────────────────
-
+# ── 7) Black–Scholes Greeks ────────────────────────────────────────────────
 def _bs_d1(S, K, r, sigma, T):
     return (math.log(S/K) + (r + 0.5*sigma*sigma)*T)/(sigma*math.sqrt(T))
 
