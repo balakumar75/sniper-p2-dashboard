@@ -4,11 +4,14 @@
   <meta charset="UTF-8" />
   <title>Sniper Trades</title>
   <style>
-    body {font-family:Arial,sans-serif;padding:20px;background:#111;color:#eee}
-    h1{color:#2ecc71} table{width:100%;border-collapse:collapse;margin-top:20px}
-    th,td{border:1px solid #444;padding:8px;text-align:center}
-    th{background:#333} tr:nth-child(even){background:#1a1a1a}
-    .buy{color:#2ecc71;font-weight:bold} .sell{color:#e74c3c;font-weight:bold}
+    body {font-family: Arial, sans-serif; padding: 20px; background:#111; color:#eee}
+    h1   {color:#2ecc71}
+    table{width:100%; border-collapse:collapse; margin-top:20px}
+    th,td{border:1px solid #444; padding:8px; text-align:center}
+    th   {background:#333}
+    tr:nth-child(even){background:#1a1a1a}
+    .buy {color:#2ecc71; font-weight:bold}
+    .sell{color:#e74c3c; font-weight:bold}
   </style>
 </head>
 <body>
@@ -16,9 +19,11 @@
   <table id="trades">
     <thead>
       <tr>
-        <th>Entry Date</th><th>Exit Date</th><th>Symbol</th><th>Type</th>
-        <th>Entry</th><th>CMP</th><th>Target</th><th>SL</th>
-        <th>PoP</th><th>Status</th><th>P&L (₹)</th><th>Action</th>
+        <th>Entry Date</th>
+        <th>Exit Date</th>
+        <th>Symbol</th><th>Type</th><th>Entry</th><th>CMP</th>
+        <th>Target</th><th>SL</th><th>PoP</th>
+        <th>Status</th><th>P&L (₹)</th><th>Action</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -26,31 +31,31 @@
 
 <script>
 async function loadTrades() {
-  const url = "./trades.json?t="+Date.now();
-  const res = await fetch(url,{cache:"no-store"});
+  const url = "docs/trades.json?t="+Date.now();
+  const res = await fetch(url, {cache:"no-store"});
   const trades = await res.json();
-  const tbody = document.querySelector("#trades tbody");
-
-  if (!trades.length) {
-    tbody.innerHTML = `<tr><td colspan="12">❌ No open trades.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = trades.map(tr=>`
-    <tr>
-      <td>${tr.entry_date}</td>
-      <td>${tr.exit_date||""}</td>
-      <td>${tr.symbol}</td>
-      <td>${tr.type}</td>
-      <td>${tr.entry}</td>
-      <td>${tr.cmp}</td>
-      <td>${tr.target}</td>
-      <td>${tr.sl}</td>
-      <td>${tr.pop||""}</td>
-      <td>${tr.status}</td>
-      <td>${tr.pnl||""}</td>
-      <td class="${tr.action==='Buy'?'buy':'sell'}">${tr.action}</td>
-    </tr>`).join("");
+  const tbody  = document.querySelector("#trades tbody");
+  tbody.innerHTML = trades.length
+    ? trades.map(tr => `
+      <tr>
+        <td>${tr.entry_date}</td>
+        <td>${tr.exit_date||""}</td>
+        <td>${tr.symbol}</td>
+        <td>${tr.type}</td>
+        <td>${tr.entry}</td>
+        <td>${tr.cmp}</td>
+        <td>${tr.target}</td>
+        <td>${tr.sl}</td>
+        <td>${tr.pop}</td>
+        <td>${tr.status}</td>
+        <td>${tr.pnl}</td>
+        <td class="${tr.action==='Buy'?'buy':'sell'}">
+          ${tr.action}
+        </td>
+      </tr>`).join("")
+    : `<tr><td colspan="12">
+         ❌ No trades found or failed to load.
+       </td></tr>`;
 }
 loadTrades();
 </script>
