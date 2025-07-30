@@ -1535,5 +1535,20 @@
         "entry_date": "2025-07-30"
       }
     ]
+  },
+  {
+    "date": "2025-07-30",
+    "symbol": "PGHH",
+    "type": "Cash-Momentum",
+    "entry": 13329,
+    "cmp": 13329,
+    "target": 13605.32,
+    "sl": 13052.68,
+    "pop": 0.0,
+    "status": "Target Hit",
+    "pnl": 0.0,
+    "action": "Buy",
+    "entry_date": "2025-07-30",
+    "exit_date": "2025-07-30"
   }
 ]
