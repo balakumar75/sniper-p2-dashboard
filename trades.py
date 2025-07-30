@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify
 from kiteconnect import KiteConnect
 from dotenv import load_dotenv
 
-# Load your Kite Connect credentials
+# Load environment variables for Kite Connect
 load_dotenv()
 API_KEY = os.getenv("KITE_API_KEY")
 ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN")
@@ -14,16 +14,23 @@ kite = KiteConnect(api_key=API_KEY)
 kite.set_access_token(ACCESS_TOKEN)
 
 trades_api = Blueprint('trades_api', __name__)
-TRADES_FILE = os.path.join(os.path.dirname(__file__), "trades.json")
+
+# Point to trades.json in the docs folder
+TRADES_FILE = os.path.join(
+    os.path.dirname(__file__),  # e.g. /path/to/your/app
+    "..",                       # up one level
+    "docs",                    # into docs/
+    "trades.json"
+)
 
 def fetch_live_price(trade):
     """
-    Fetch the latest price for a given trade.
+    Fetch the latest price for a given trade using Kite Connect.
     Falls back to the original CMP if there's an error.
     """
     symbol = trade.get('symbol')
     ttype = trade.get('type', 'Cash').lower()
-    # Prefix correctly for NSE vs NFO
+    # Determine the correct exchange prefix
     if ttype in ('futures', 'options'):
         instrument = f"NFO:{symbol}"
     else:
@@ -42,28 +49,28 @@ def get_trades():
             with open(TRADES_FILE, "r", encoding="utf-8") as f:
                 trades = json.load(f)
 
-            # 1) Refresh CMP for all open trades
+            # Refresh CMP for all open trades
             for t in trades:
                 if t.get('status', 'Open').lower() == 'open':
-                    old = t.get('cmp')
-                    new = fetch_live_price(t)
-                    if new != old:
-                        print(f"🔄 Updated CMP for {t['symbol']}: {old} → {new}")
-                        t['cmp'] = new
+                    old_cmp = t.get('cmp')
+                    new_cmp = fetch_live_price(t)
+                    if new_cmp != old_cmp:
+                        print(f"🔄 Updated CMP for {t['symbol']}: {old_cmp} → {new_cmp}")
+                        t['cmp'] = new_cmp
 
-            # 2) Sort by entry date descending
+            # Sort by entry_date descending (newest first)
             trades.sort(
-                key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'),
+                key=lambda x: datetime.strptime(x.get('entry_date', ''), '%Y-%m-%d'),
                 reverse=True
             )
 
-            # 3) Log count and types
+            # Log loaded trades and types
             types = {t.get('type', 'Unknown') for t in trades}
             print(f"✅ Loaded {len(trades)} trades — types: {types}")
 
             return jsonify(trades), 200
         else:
-            print("❌ trades.json not found")
+            print(f"❌ trades.json not found at {TRADES_FILE}")
             return jsonify([]), 200
 
     except Exception as e:
