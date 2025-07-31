@@ -1969,5 +1969,53 @@
         }
       }
     ]
+  },
+  {
+    "entry_date": "2025-07-30",
+    "symbol": "AMBUJACEM",
+    "type": "Sniper-Multi",
+    "entry": 617.5,
+    "cmp": 617.5,
+    "target": 632.76,
+    "sl": 602.24,
+    "pop": 85.0,
+    "status": "SL Hit",
+    "sector": "Neutral",
+    "fno_ok": true,
+    "ict_ok": true,
+    "vwap_ok": true,
+    "obv_ok": true,
+    "sector_strength": "Neutral",
+    "strangle_ok": true,
+    "strangle": {
+      "call_strike": "AMBUJACEM_C",
+      "put_strike": "AMBUJACEM_P",
+      "expiry": "2025-07-30"
+    },
+    "exit_date": "2025-07-31"
+  },
+  {
+    "entry_date": "2025-07-30",
+    "symbol": "HINDUNILVR",
+    "type": "Sniper-Multi",
+    "entry": 2433.9,
+    "cmp": 2433.9,
+    "target": 2495.39,
+    "sl": 2372.42,
+    "pop": 85.0,
+    "status": "Target Hit",
+    "sector": "Neutral",
+    "fno_ok": true,
+    "ict_ok": true,
+    "vwap_ok": true,
+    "obv_ok": true,
+    "sector_strength": "Neutral",
+    "strangle_ok": true,
+    "strangle": {
+      "call_strike": "HINDUNILVR_C",
+      "put_strike": "HINDUNILVR_P",
+      "expiry": "2025-07-30"
+    },
+    "exit_date": "2025-07-31"
   }
 ]
