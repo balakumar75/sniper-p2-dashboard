@@ -3,10 +3,10 @@
     "entry_date": "2025-07-30",
     "symbol": "AMBUJACEM",
     "type": "Sniper-Multi",
-    "entry": 617.5,
-    "cmp": 617.5,
-    "target": 632.76,
-    "sl": 602.24,
+    "entry": 614.95,
+    "cmp": 614.95,
+    "target": 630.16,
+    "sl": 599.74,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -19,17 +19,17 @@
     "strangle": {
       "call_strike": "AMBUJACEM_C",
       "put_strike": "AMBUJACEM_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "APOLLOHOSP",
     "type": "Sniper-Multi",
-    "entry": 7448.0,
-    "cmp": 7448.0,
-    "target": 7635.98,
-    "sl": 7260.02,
+    "entry": 7396.5,
+    "cmp": 7396.5,
+    "target": 7570.56,
+    "sl": 7222.44,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -42,17 +42,17 @@
     "strangle": {
       "call_strike": "APOLLOHOSP_C",
       "put_strike": "APOLLOHOSP_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "BIOCON",
     "type": "Sniper-Multi",
-    "entry": 395.5,
-    "cmp": 395.5,
-    "target": 410.94,
-    "sl": 380.06,
+    "entry": 389.55,
+    "cmp": 389.55,
+    "target": 405.76,
+    "sl": 373.34,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -65,17 +65,17 @@
     "strangle": {
       "call_strike": "BIOCON_C",
       "put_strike": "BIOCON_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "BOSCHLTD",
     "type": "Sniper-Multi",
-    "entry": 40105,
-    "cmp": 40105,
-    "target": 41569.11,
-    "sl": 38640.89,
+    "entry": 39890,
+    "cmp": 39890,
+    "target": 41298.39,
+    "sl": 38481.61,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -88,17 +88,40 @@
     "strangle": {
       "call_strike": "BOSCHLTD_C",
       "put_strike": "BOSCHLTD_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
+    }
+  },
+  {
+    "entry_date": "2025-07-31",
+    "symbol": "BRITANNIA",
+    "type": "Sniper-Multi",
+    "entry": 5791.5,
+    "cmp": 5791.5,
+    "target": 5929.44,
+    "sl": 5653.56,
+    "pop": 85.0,
+    "status": "Open",
+    "sector": "Neutral",
+    "fno_ok": true,
+    "ict_ok": true,
+    "vwap_ok": true,
+    "obv_ok": true,
+    "sector_strength": "Neutral",
+    "strangle_ok": true,
+    "strangle": {
+      "call_strike": "BRITANNIA_C",
+      "put_strike": "BRITANNIA_P",
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "CIPLA",
     "type": "Sniper-Multi",
-    "entry": 1558.2,
-    "cmp": 1558.2,
-    "target": 1598.58,
-    "sl": 1517.82,
+    "entry": 1539.3,
+    "cmp": 1539.3,
+    "target": 1579.89,
+    "sl": 1498.71,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -111,17 +134,17 @@
     "strangle": {
       "call_strike": "CIPLA_C",
       "put_strike": "CIPLA_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "COROMANDEL",
     "type": "Sniper-Multi",
-    "entry": 2637.0,
-    "cmp": 2637.0,
-    "target": 2765.72,
-    "sl": 2508.28,
+    "entry": 2665.0,
+    "cmp": 2665.0,
+    "target": 2794.87,
+    "sl": 2535.13,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -134,17 +157,17 @@
     "strangle": {
       "call_strike": "COROMANDEL_C",
       "put_strike": "COROMANDEL_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "DMART",
     "type": "Sniper-Multi",
-    "entry": 4269.0,
-    "cmp": 4269.0,
-    "target": 4418.56,
-    "sl": 4119.44,
+    "entry": 4314.0,
+    "cmp": 4314.0,
+    "target": 4460.12,
+    "sl": 4167.88,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -157,17 +180,17 @@
     "strangle": {
       "call_strike": "DMART_C",
       "put_strike": "DMART_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "DRREDDY",
     "type": "Sniper-Multi",
-    "entry": 1292.0,
-    "cmp": 1292.0,
-    "target": 1324.62,
-    "sl": 1259.38,
+    "entry": 1273.3,
+    "cmp": 1273.3,
+    "target": 1307.47,
+    "sl": 1239.13,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -180,17 +203,17 @@
     "strangle": {
       "call_strike": "DRREDDY_C",
       "put_strike": "DRREDDY_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
-    "entry_date": "2025-07-30",
-    "symbol": "GLENMARK",
+    "entry_date": "2025-07-31",
+    "symbol": "HEROMOTOCO",
     "type": "Sniper-Multi",
-    "entry": 2152.2,
-    "cmp": 2152.2,
-    "target": 2265.86,
-    "sl": 2038.54,
+    "entry": 4226.0,
+    "cmp": 4226.0,
+    "target": 4365.16,
+    "sl": 4086.84,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -201,42 +224,19 @@
     "sector_strength": "Neutral",
     "strangle_ok": true,
     "strangle": {
-      "call_strike": "GLENMARK_C",
-      "put_strike": "GLENMARK_P",
-      "expiry": "2025-07-30"
-    }
-  },
-  {
-    "entry_date": "2025-07-30",
-    "symbol": "HINDALCO",
-    "type": "Sniper-Multi",
-    "entry": 689.05,
-    "cmp": 689.05,
-    "target": 705.42,
-    "sl": 672.68,
-    "pop": 85.0,
-    "status": "Open",
-    "sector": "Neutral",
-    "fno_ok": true,
-    "ict_ok": true,
-    "vwap_ok": true,
-    "obv_ok": true,
-    "sector_strength": "Neutral",
-    "strangle_ok": true,
-    "strangle": {
-      "call_strike": "HINDALCO_C",
-      "put_strike": "HINDALCO_P",
-      "expiry": "2025-07-30"
+      "call_strike": "HEROMOTOCO_C",
+      "put_strike": "HEROMOTOCO_P",
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "HINDUNILVR",
     "type": "Sniper-Multi",
-    "entry": 2433.9,
-    "cmp": 2433.9,
-    "target": 2495.39,
-    "sl": 2372.42,
+    "entry": 2527.6,
+    "cmp": 2527.6,
+    "target": 2588.57,
+    "sl": 2466.62,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -249,17 +249,17 @@
     "strangle": {
       "call_strike": "HINDUNILVR_C",
       "put_strike": "HINDUNILVR_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "ICICIBANK",
     "type": "Sniper-Multi",
-    "entry": 1480.1,
-    "cmp": 1480.1,
-    "target": 1505.92,
-    "sl": 1454.28,
+    "entry": 1466.1,
+    "cmp": 1466.1,
+    "target": 1492.44,
+    "sl": 1439.76,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -272,17 +272,40 @@
     "strangle": {
       "call_strike": "ICICIBANK_C",
       "put_strike": "ICICIBANK_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
+    }
+  },
+  {
+    "entry_date": "2025-07-31",
+    "symbol": "JSWSTEEL",
+    "type": "Sniper-Multi",
+    "entry": 1044.0,
+    "cmp": 1044.0,
+    "target": 1073.98,
+    "sl": 1014.02,
+    "pop": 85.0,
+    "status": "Open",
+    "sector": "Neutral",
+    "fno_ok": true,
+    "ict_ok": true,
+    "vwap_ok": true,
+    "obv_ok": true,
+    "sector_strength": "Neutral",
+    "strangle_ok": true,
+    "strangle": {
+      "call_strike": "JSWSTEEL_C",
+      "put_strike": "JSWSTEEL_P",
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "LT",
     "type": "Sniper-Multi",
-    "entry": 3659.2,
-    "cmp": 3659.2,
-    "target": 3748.73,
-    "sl": 3569.66,
+    "entry": 3642.5,
+    "cmp": 3642.5,
+    "target": 3731.28,
+    "sl": 3553.72,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -295,17 +318,17 @@
     "strangle": {
       "call_strike": "LT_C",
       "put_strike": "LT_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
-    "entry_date": "2025-07-30",
-    "symbol": "M&M",
+    "entry_date": "2025-07-31",
+    "symbol": "NAUKRI",
     "type": "Sniper-Multi",
-    "entry": 3224.9,
-    "cmp": 3224.9,
-    "target": 3329.92,
-    "sl": 3119.88,
+    "entry": 1378.8,
+    "cmp": 1378.8,
+    "target": 1436.14,
+    "sl": 1321.46,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -316,19 +339,19 @@
     "sector_strength": "Neutral",
     "strangle_ok": true,
     "strangle": {
-      "call_strike": "M&M_C",
-      "put_strike": "M&M_P",
-      "expiry": "2025-07-30"
+      "call_strike": "NAUKRI_C",
+      "put_strike": "NAUKRI_P",
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "PGHH",
     "type": "Sniper-Multi",
-    "entry": 13870,
-    "cmp": 13870,
-    "target": 14276.06,
-    "sl": 13463.94,
+    "entry": 13750,
+    "cmp": 13750,
+    "target": 14167.44,
+    "sl": 13332.56,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -341,40 +364,17 @@
     "strangle": {
       "call_strike": "PGHH_C",
       "put_strike": "PGHH_P",
-      "expiry": "2025-07-30"
-    }
-  },
-  {
-    "entry_date": "2025-07-30",
-    "symbol": "RBLBANK",
-    "type": "Sniper-Multi",
-    "entry": 261.41,
-    "cmp": 261.41,
-    "target": 273.94,
-    "sl": 248.89,
-    "pop": 85.0,
-    "status": "Open",
-    "sector": "Neutral",
-    "fno_ok": true,
-    "ict_ok": true,
-    "vwap_ok": true,
-    "obv_ok": true,
-    "sector_strength": "Neutral",
-    "strangle_ok": true,
-    "strangle": {
-      "call_strike": "RBLBANK_C",
-      "put_strike": "RBLBANK_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "SUNPHARMA",
     "type": "Sniper-Multi",
-    "entry": 1733.1,
-    "cmp": 1733.1,
-    "target": 1768.78,
-    "sl": 1697.42,
+    "entry": 1720.0,
+    "cmp": 1720.0,
+    "target": 1755.98,
+    "sl": 1684.02,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -387,17 +387,40 @@
     "strangle": {
       "call_strike": "SUNPHARMA_C",
       "put_strike": "SUNPHARMA_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
+    }
+  },
+  {
+    "entry_date": "2025-07-31",
+    "symbol": "TVSMOTOR",
+    "type": "Sniper-Multi",
+    "entry": 2789.7,
+    "cmp": 2789.7,
+    "target": 2874.36,
+    "sl": 2705.04,
+    "pop": 85.0,
+    "status": "Open",
+    "sector": "Neutral",
+    "fno_ok": true,
+    "ict_ok": true,
+    "vwap_ok": true,
+    "obv_ok": true,
+    "sector_strength": "Neutral",
+    "strangle_ok": true,
+    "strangle": {
+      "call_strike": "TVSMOTOR_C",
+      "put_strike": "TVSMOTOR_P",
+      "expiry": "2025-07-31"
     }
   },
   {
     "entry_date": "2025-07-30",
     "symbol": "UPL",
     "type": "Sniper-Multi",
-    "entry": 721.75,
-    "cmp": 721.75,
-    "target": 745.9,
-    "sl": 697.6,
+    "entry": 716.2,
+    "cmp": 716.2,
+    "target": 740.91,
+    "sl": 691.5,
     "pop": 85.0,
     "status": "Open",
     "sector": "Neutral",
@@ -410,7 +433,7 @@
     "strangle": {
       "call_strike": "UPL_C",
       "put_strike": "UPL_P",
-      "expiry": "2025-07-30"
+      "expiry": "2025-07-31"
     }
   }
 ]
